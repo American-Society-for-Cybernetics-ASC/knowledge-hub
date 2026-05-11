@@ -12,6 +12,9 @@ Alternatively from a specific package
 - Run `uv run server` from `/backend/server`
 - Run `uv run auth-server`  from `/backend/auth_server`
 
+# Type Checking
+Run `uv run mypy -p database -p auth_server -p server` from `/backend`.
+
 # Testing
 Run `uv run pytest` from `/backend` to run all backend tests.
 
