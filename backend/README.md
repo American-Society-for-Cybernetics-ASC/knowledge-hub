@@ -3,6 +3,15 @@ This is the uv workspace root.
 - It helps with inter-package dependencies (see the `[tool.uv.sources]` table) 
 - It holds dev dependencies
 
+# Running
+From `/backend`:
+- Run `uv run --package server server` to run the server.
+- Run `uv run --package auth-server auth-server` to run the auth server.
+
+Alternatively from a specific package
+- Run `uv run server` from `/backend/server`
+- Run `uv run auth-server`  from `/backend/auth_server`
+
 # Testing
 Run `uv run pytest` from `/backend` to run all backend tests.
 
