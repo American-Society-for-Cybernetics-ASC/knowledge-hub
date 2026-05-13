@@ -16,7 +16,7 @@ dev = [
 database = { workspace = true }
 
 [tool.mypy]
-disable_error_code = "empty-body"
+disable_error_code = "empty-body" # This allows our dummy methods
 
 # This root project is not a real package
 [tool.uv]
