@@ -1,3 +1,7 @@
+# Development
+## uv
+Install uv with `pip install uv`
+
 # Install Docker
 For WSL2
 ```bash
