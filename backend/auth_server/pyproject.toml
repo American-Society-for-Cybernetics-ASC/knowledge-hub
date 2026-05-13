@@ -6,11 +6,5 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "database", # Workspace dependency
+    "fastapi[standard-no-fastapi-cloud-cli]>=0.136.1",
 ]
-
-[project.scripts]
-auth-server = "auth_server:main"
-
-[build-system]
-requires = ["uv_build>=0.10.4,<0.11.0"]
-build-backend = "uv_build"
