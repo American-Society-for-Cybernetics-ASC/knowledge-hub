@@ -22,9 +22,13 @@ services:
       POSTGRES_USER: username
       POSTGRES_PASSWORD: password
       POSTGRES_DB: database
+    volumes:
+      - pgdata:/var/lib/postgresql
     networks:
       - isolated
 networks:
   isolated:
     internal: true
   public:
+volumes:
+  pgdata:
