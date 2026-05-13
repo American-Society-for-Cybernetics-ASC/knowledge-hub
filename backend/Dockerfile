@@ -5,5 +5,6 @@ WORKDIR /code
 # Copy separately, so that we only reinstall dependencies if one of these two files change
 COPY pyproject.toml .
 COPY uv.lock .
+COPY database .
 RUN uv sync
 COPY . .

@@ -7,11 +7,11 @@ class TokenPayload:
     Contains user identity and role information.
     """
 
-    sub: str        # User UUID
-    email: str      # User email
-    roles: dict     # Dictionary of module specific roles
-    exp: datetime   # Token expiry time
-    iss: str        # Issuer - ckh.asc-cybernetics.org
+    sub: str  # User UUID
+    email: str  # User email
+    roles: dict  # Dictionary of module specific roles
+    exp: datetime  # Token expiry time
+    iss: str  # Issuer - ckh.asc-cybernetics.org
 
 
 class JWTService:

@@ -1,25 +1,29 @@
 from enum import Enum
 from datetime import datetime
 from uuid import UUID
+from pydantic import BaseModel
 
-class RegistrationRequest:
+
+class RegistrationRequest(BaseModel):
     """
     Represents the data sent by the frontend
     when a user registers a new account.
     """
+
     email: str
     password: str
     display_name: str
 
 
-class LoginRequest:
+class LoginRequest(BaseModel):
     """
     Represents the data sent by the frontend
     when a user attempts to login.
     """
+
     email: str
     password: str
-    
+
 
 class Role(Enum):
     GUEST = "guest"
@@ -36,9 +40,9 @@ class MemberStatus(Enum):
     ARCHIVED = "archived"
     DECEASED = "deceased"
     RESIGNED = "resigned"
-    
 
-class UserAccount:
+
+class UserAccount(BaseModel):
     """
     Represents a user account stored in the database.
     Contains credentials, role, and account status.

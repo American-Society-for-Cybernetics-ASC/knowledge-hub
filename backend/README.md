@@ -3,7 +3,7 @@ This is the uv workspace root.
 - It helps with inter-package dependencies (see the `[tool.uv.sources]` table) 
 - It holds dev dependencies
 
-# Running
+# Running (Without Docker)
 Run `uv run fastapi dev` from `/backend/server`
 Run `uv run fastapi dev` from `/backend/auth_server`
 - Replaec `dev` with `run` for a production build
@@ -13,7 +13,14 @@ Alternatively form `backend`:
 - `uv run --package server fastapi dev server/main.py`
 
 # Type Checking
-Run `uv run mypy -p database -p auth_server -p server` from `/backend`.
+From `/backend`:
+```bash
+uv run mypy ./server
+uv run mypy ./auth_server
+uv run mypy ./database
+```
+
+or just run `uv run mypy .` from any package's directory.
 
 # Testing
 Run `uv run pytest` from `/backend` to run all backend tests.
