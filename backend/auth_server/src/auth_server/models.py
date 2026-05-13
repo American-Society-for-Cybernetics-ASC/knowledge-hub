@@ -2,6 +2,24 @@ from enum import Enum
 from datetime import datetime
 from uuid import UUID
 
+class RegistrationRequest:
+    """
+    Represents the data sent by the frontend
+    when a user registers a new account.
+    """
+    email: str
+    password: str
+    display_name: str
+
+
+class LoginRequest:
+    """
+    Represents the data sent by the frontend
+    when a user attempts to login.
+    """
+    email: str
+    password: str
+    
 
 class Role(Enum):
     GUEST = "guest"
@@ -31,7 +49,7 @@ class UserAccount:
     hashed_password: str
     totp_secret: str
     totp_enabled: bool
-    role: Role
+    role: dict
     status: MemberStatus
     failed_attempts: int
     locked_until: datetime

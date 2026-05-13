@@ -1,20 +1,4 @@
-class RegistrationRequest:
-    """
-    Represents the data sent by the frontend
-    when a user registers a new account.
-    """
-    email: str
-    password: str
-    display_name: str
-
-
-class LoginRequest:
-    """
-    Represents the data sent by the frontend
-    when a user attempts to login.
-    """
-    email: str
-    password: str
+from models import LoginRequest, RegistrationRequest
 
 
 class AuthModule:
@@ -45,7 +29,7 @@ class AuthModule:
     def login(self, req: LoginRequest):
         """
         POST /auth/login
-        Validates email and password.
+        Validates email and pasSsword.
         Checks account lock status and member status.
         Issues a short lived challenge token on success.
         """
