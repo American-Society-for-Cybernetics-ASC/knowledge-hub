@@ -4,6 +4,8 @@ services:
     command: ["uv", "run", "--package", "server", "fastapi", "dev", "server/main.py", "--host", "0.0.0.0", "--port", "80"]
     ports:
       - 8000:80
+    links: # Allows the server to reach the database at host:port=db:5432
+      - db
     networks:
       - public
       - isolated
@@ -12,6 +14,8 @@ services:
     command: ["uv", "run", "--package", "auth_server", "fastapi", "dev", "auth_server/main.py", "--host", "0.0.0.0", "--port", "80"]
     ports:
       - 8001:80
+    links: # Allows the server to reach the database at host:port=db:5432
+      - db
     networks:
       - public
       - isolated
@@ -24,6 +28,8 @@ services:
       POSTGRES_DB: database
     volumes:
       - pgdata:/var/lib/postgresql
+    ports:
+      - 5432:5432
     networks:
       - isolated
 networks:
