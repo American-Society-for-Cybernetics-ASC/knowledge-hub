@@ -1,0 +1,11 @@
+services:
+  server:
+    build: backend
+    ports:
+      - 8000:80
+    command: ["uv", "run", "--package", "server", "fastapi", "dev", "server/main.py", "--host", "0.0.0.0", "--port", "80"]
+  auth_server:
+    build: backend
+    ports:
+      - 8001:80
+    command: ["uv", "run", "--package", "auth_server", "fastapi", "dev", "auth_server/main.py", "--host", "0.0.0.0", "--port", "80"]

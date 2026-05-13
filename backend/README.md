@@ -4,13 +4,13 @@ This is the uv workspace root.
 - It holds dev dependencies
 
 # Running
-From `/backend`:
-- Run `uv run --package server server` to run the server.
-- Run `uv run --package auth-server auth-server` to run the auth server.
+Run `uv run fastapi dev` from `/backend/server`
+Run `uv run fastapi dev` from `/backend/auth_server`
+- Replaec `dev` with `run` for a production build
 
-Alternatively from a specific package
-- Run `uv run server` from `/backend/server`
-- Run `uv run auth-server`  from `/backend/auth_server`
+Alternatively form `backend`:
+- `uv run --package auth_server fastapi dev auth_server/main.py`
+- `uv run --package server fastapi dev server/main.py`
 
 # Type Checking
 Run `uv run mypy -p database -p auth_server -p server` from `/backend`.

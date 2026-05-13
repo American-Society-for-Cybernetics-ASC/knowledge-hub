@@ -25,4 +25,6 @@ version = "0.1.0"
 description = "The workspace's root. Not a real package."
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [ # Useful for IDEs and the dockerfile's caching.
+    "fastapi[standard-no-fastapi-cloud-cli]>=0.136.1",
+]
