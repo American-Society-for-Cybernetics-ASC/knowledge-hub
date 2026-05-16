@@ -7,15 +7,14 @@ It is designed as a reusable authentication server for future ASC applications u
 RS256 asymmetric JWT signing.
 
 ## Folder Structure
-src/
-    auth_server/
-        __init__.py         - Package initialisation
-        models.py           - UserAccount database model and enums
-        routes.py           - All authentication endpoints and AuthModule
-        jwt_service.py      - JWT issuing, verification and refresh
-        totp_service.py     - TOTP secret generation and verification
-    auth_server_tests/
-        - Test files for the authentication server
+auth/
+    __init__.py         - Package initialisation
+    models.py           - UserAccount database model and enums
+    routes.py           - All authentication endpoints and AuthModule
+    jwt_service.py      - JWT issuing, verification and refresh
+    totp_service.py     - TOTP secret generation and verification
+auth_server_tests/
+    - Test files for the authentication server
 
 ## Environment Variables
 Copy .env.example to .env and fill in the required values:
