@@ -9,7 +9,7 @@ def register_singleton[T](type: type[T], value: T):
 
     type/value as separate parameters allows subclassing:
     ```python
-    register_singleton(InterfaceA, MyInterfaceAImplementation)
+    register_singleton(InterfaceA, MyInterfaceAImplementation())
     ```
     """
     if not isinstance(value, type):
