@@ -5,7 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "database", # Workspace dependency
+     # Workspace dependencies
+    "shared",
+    # Other dependencies
     "fastapi[standard-no-fastapi-cloud-cli]>=0.136.1",
     "pydantic>=2.13.4",
 ]

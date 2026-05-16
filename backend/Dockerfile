@@ -2,9 +2,13 @@
 # This comes with UV:
 FROM ghcr.io/astral-sh/uv:python3.14-alpine
 WORKDIR /code
-# Copy separately, so that we only reinstall dependencies if one of these two files change
-COPY pyproject.toml .
-COPY uv.lock .
-COPY database .
-RUN uv sync
+
+# Cache dependency installation
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-workspace
+
 COPY . .
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked

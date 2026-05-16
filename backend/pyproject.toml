@@ -2,7 +2,7 @@
 members = [
     "server",
     "auth_server",
-    "database",
+    "shared",
 ]
 
 [dependency-groups]
@@ -13,7 +13,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-database = { workspace = true }
+shared = { workspace = true }
 
 [tool.mypy]
 disable_error_code = "empty-body" # This allows our dummy methods
@@ -29,9 +29,5 @@ description = "The workspace's root. Not a real package."
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "fastapi[standard-no-fastapi-cloud-cli]>=0.136.1",
-    "database",
-    "pydantic>=2.13.4",
-    "psycopg2-binary>=2.9.12",
-    "sqlalchemy>=2.0.49",
+    "shared",
 ]
