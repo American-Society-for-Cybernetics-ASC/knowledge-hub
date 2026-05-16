@@ -3,12 +3,13 @@
 FROM ghcr.io/astral-sh/uv:python3.14-alpine
 WORKDIR /code
 
-# Cache dependency installation
+# Install dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-workspace
 
+# Install project
 COPY . .
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked
+    uv sync --locked --all-packages
