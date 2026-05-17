@@ -42,6 +42,7 @@ class Group(Base):
 
     # relationship to all tables
     members = relationship("Member", back_populates="group")
+    memberships = relationship("Membership", back_populates="group")
 
 
 class Profile(Base):
@@ -82,8 +83,8 @@ class Repository(Base):
     schema = Column(JSONB)
 
     # Relationships
-    submissions = relationship("Submissions", back_populates="repository")
-    event = relationship("Event", back_populates="reposiroty", uselist=False)
+    submissions = relationship("Submission", back_populates="repository")
+    event = relationship("Event", back_populates="Reposiroty", uselist=False)
 
 
 class Event(Base):
@@ -123,11 +124,11 @@ class MemberMatching(Base):
 
     # Two relationship  with Member table
     active_member = relationship(
-        "Member", foreign_keys=[active_member_id], back_populates="active_matches"
+        "Member", foreign_keys=[active_member_id], back_populates="outgoing_matches"
     )
 
     suggested_member = relationship(
-        "Member", foreign_keys=[suggested_member_id], back_populates="suggested_matches"
+        "Member", foreign_keys=[suggested_member_id], back_populates="incoming_matches"
     )
 
 
