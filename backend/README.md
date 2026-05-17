@@ -14,6 +14,21 @@ Alternatively from `backend`:
 - `uv run --package auth_server fastapi dev auth_server/main.py`
 - `uv run --package server fastapi dev server/main.py`
 
+# Claude API
+The main backend server includes an isolated Claude API adapter for the automated newsletter and other features.
+
+Create a local environment file from `server/.env.example`:
+```bash
+cp server/.env.example server/.env
+```
+
+Set `ANTHROPIC_API_KEY` to the API key. The optional variables are:
+- `CLAUDE_MODEL`, defaulting to `claude-sonnet-4-6`
+- `CLAUDE_MAX_TOKENS`, defaulting to `1024`
+- `CLAUDE_SYSTEM_PROMPT_PATH`, defaulting to `server/claude_interface/prompts/synthesis_system.txt`
+
+For Docker, export the variables in your shell or place them in a root `.env` file before running `docker compose up`
+
 # Type Checking
 From `/backend`:
 ```bash
