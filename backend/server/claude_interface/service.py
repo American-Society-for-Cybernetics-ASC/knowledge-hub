@@ -7,7 +7,7 @@ from .models import SynthesisInput, SynthesisOutput
 DEFAULT_MODEL = "claude-sonnet-4-6"
 DEFAULT_MAX_TOKENS = 1024
 DEFAULT_PROMPT_PATH = Path(__file__).parent / "prompts" / "prompt.txt"
-SERVER_ENV_PATH = Path(__file__).resolve().parents[1] / ".env" 
+SERVER_ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
 
 
 class ClaudeConfigurationError(RuntimeError):
@@ -21,7 +21,7 @@ class ClaudeService:
     The service can be constructed without an API key so local development and tests
     can start normally. It raises a config error only when a call is made.
     """
-    
+
     # Initialise the service
     def __init__(
         self,
@@ -33,7 +33,7 @@ class ClaudeService:
         self.model = model
         self.max_tokens = max_tokens
         self.system_prompt_path = system_prompt_path
-        self._client = AsyncAnthropic(api_key=api_key) if api_key else None 
+        self._client = AsyncAnthropic(api_key=api_key) if api_key else None
 
     # Loads the service from the environment
     @classmethod

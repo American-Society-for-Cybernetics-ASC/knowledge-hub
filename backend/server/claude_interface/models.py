@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+
 class SynthesisInput(BaseModel):
     """Structured input prepared by backend modules before calling Claude."""
 
