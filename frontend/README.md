@@ -44,7 +44,7 @@ npm test
 From `/frontend`:
 
 ```bash
-npm test -- src/<path to file>/file.test.tsx
+npm test -- src//file.test.tsx
 ```
 
 ## Linting
