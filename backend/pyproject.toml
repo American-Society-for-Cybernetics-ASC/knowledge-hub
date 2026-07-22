@@ -1,8 +1,15 @@
-[tool.uv.workspace]
-members = [
-    "server",
-    "auth_server",
-    "shared",
+[project]
+name = "server"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard-no-fastapi-cloud-cli]>=0.136.1",
+    "anthropic>=0.102.0",
+    "python-dotenv>=1.2.2",
+    "psycopg2-binary>=2.9.12",
+    "sqlalchemy>=2.0.49",
 ]
 
 [dependency-groups]
@@ -12,22 +19,5 @@ dev = [
     "ruff>=0.15.12",
 ]
 
-[tool.uv.sources]
-shared = { workspace = true }
-
 [tool.mypy]
 disable_error_code = "empty-body" # This allows our dummy methods
-
-# This root project is not a real package
-[tool.uv]
-package = false
-
-[project]
-name = "workspace_root"
-version = "0.1.0"
-description = "The workspace's root. Not a real package."
-readme = "README.md"
-requires-python = ">=3.14"
-dependencies = [
-    "shared",
-]
