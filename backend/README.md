@@ -39,3 +39,16 @@ Run `uv run ruff format` from `/backend/<package>` to format all of that package
 
 # Linting
 Run `uv run ruff check`, which is called equivalently to formatting.
+
+# Vercel
+## Development
+```bash
+vercel dev
+```
+
+## Deployment
+```bash
+vercel build
+vercel deploy --prebuilt
+```
+
