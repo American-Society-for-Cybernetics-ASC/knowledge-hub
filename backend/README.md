@@ -41,7 +41,9 @@ Run `uv run ruff format` from `/backend/<package>` to format all of that package
 Run `uv run ruff check`, which is called equivalently to formatting.
 
 # Vercel
-## Development
+From the `/backend` repository
+
+## Local Testing
 ```bash
 vercel dev
 ```
