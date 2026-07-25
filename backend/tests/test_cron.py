@@ -78,7 +78,7 @@ def test_queued(test_server, mock_get_session: Callable[[], Session]):
     ]
 
 
-def test_execut_cron(test_server, mock_get_session: Callable[[], Session]):
+def test_execute_cron(test_server, mock_get_session: Callable[[], Session]):
     session: Session = mock_get_session()
     session.add(
         model.CronJob(

@@ -27,9 +27,13 @@ def test_settings(monkeypatch):
         yield m
 
 
-@pytest.fixture(autouse=True)
+# This is the default scope, but it must not be changed
+@pytest.fixture(autouse=True, scope="function")
 def mock_get_session(monkeypatch):
+    """Overrides database connections with an in-memory SQLite database"""
     with monkeypatch.context() as m:
+        # Using the engine configuration from: https://docs.sqlalchemy.org/en/21/dialects/sqlite.html#using-staticpool-for-single-connection-memory-databases
+        # Pytest runs fixtures and tests on separate threads, and this configuration makes that behave appropriately
         engine = create_engine(
             "sqlite://",
             connect_args={"check_same_thread": False},
