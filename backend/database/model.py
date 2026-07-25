@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import mapped_column, relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from .base import Base
 
@@ -84,7 +84,7 @@ class Repository(Base):
 
     # Relationships
     submissions = relationship("Submission", back_populates="repository")
-    event = relationship("Event", back_populates="Reposiroty", uselist=False)
+    event = relationship("Event", back_populates="repository", uselist=False)
 
 
 class Event(Base):
@@ -194,3 +194,13 @@ class Module(Base):
 
     module_id = Column(Integer, primary_key=True, index=True)
     config = Column(String)
+
+
+class CronJob(Base):
+    __tablename__ = "cron_jobs"
+
+    id = mapped_column(Integer, primary_key=True, index=True)
+    enabled = mapped_column(Boolean)
+    last_executed = mapped_column(DateTime)
+    period = mapped_column(Integer)
+    job = mapped_column(JSONB)

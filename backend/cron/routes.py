@@ -23,4 +23,4 @@ def run_cron_jobs(
     module: Annotated[CronModule, Depends(CronModule)],
     _: Annotated[None, Depends(cron_guard)],
 ):
-    module.run_cron_jobs()
+    module.get_all_cron_jobs()
