@@ -1,16 +1,43 @@
 from abc import abstractmethod
-
 from datetime import datetime, timedelta
 from typing import Annotated, Literal, Union
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from sqlalchemy import select, update
+
+import database
+from database import model
 
 
 class CronModule:
     def get_all_cron_jobs(self) -> list[ScheduledCronJob]:
-        pass
+        """Returns all registered cron jobs"""
+        session = database.get_session()
 
-    def get_active_cron_jobs(self) -> list[ScheduledCronJob]:
-        pass
+        return list(
+            map(
+                ScheduledCronJob.model_validate,
+                session.execute(select(model.CronJob)).scalars().all(),
+            )
+        )
+
+    def get_queued_cron_jobs(self) -> list[ScheduledCronJob]:
+        """Returns the cron jobs currently queued for the next execution cycle"""
+        now = datetime.now()
+        return list(
+            filter(
+                lambda job: job.enabled and (job.last_executed + job.period < now),
+                self.get_all_cron_jobs(),
+            )
+        )
+
+    def patch_cron_job(self, job: ScheduledCronJob):
+        session = database.get_session()
+        session.execute(
+            update(model.CronJob)
+            .where(model.CronJob.id == job.id)
+            .values(**job.model_dump())
+        )
+        session.commit()
 
 
 class ScheduledCronJob(BaseModel):

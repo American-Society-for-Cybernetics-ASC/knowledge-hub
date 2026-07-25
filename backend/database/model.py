@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import JSON, Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import mapped_column, relationship
-from sqlalchemy.dialects.postgresql import JSONB
 from .base import Base
 
 
@@ -51,8 +50,8 @@ class Profile(Base):
     # Profile is a weak entity
     member_id = Column(Integer, ForeignKey("members.member_id"), primary_key=True)
 
-    tags = Column(JSONB)
-    content = Column(JSONB)
+    tags = Column(JSON)
+    content = Column(JSON)
 
     member = relationship("Member", back_populates="profile")
 
@@ -62,8 +61,8 @@ class Submission(Base):
 
     submission_id = Column(Integer, primary_key=True, index=True)
     provider = Column(String)
-    content = Column(JSONB)
-    tags = Column(JSONB)
+    content = Column(JSON)
+    tags = Column(JSON)
     status = Column(String)
     title = Column(String)
 
@@ -80,7 +79,7 @@ class Repository(Base):
     __tablename__ = "repositories"
 
     repository_id = Column(Integer, primary_key=True, index=True)
-    schema = Column(JSONB)
+    schema = Column(JSON)
 
     # Relationships
     submissions = relationship("Submission", back_populates="repository")
@@ -203,4 +202,4 @@ class CronJob(Base):
     enabled = mapped_column(Boolean)
     last_executed = mapped_column(DateTime)
     period = mapped_column(Integer)
-    job = mapped_column(JSONB)
+    job = mapped_column(JSON)
