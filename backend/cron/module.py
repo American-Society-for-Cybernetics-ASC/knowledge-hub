@@ -9,18 +9,18 @@ from database import model
 
 
 class CronModule:
-    def get_all_cron_jobs(self) -> list[ScheduledCronJob]:
+    def get_all_cron_jobs(self) -> list[CronJob]:
         """Returns all registered cron jobs"""
         session = database.get_session()
 
         return list(
             map(
-                ScheduledCronJob.model_validate,
-                session.execute(select(model.CronJob)).scalars().all(),
+                CronJob.model_validate,
+                session.execute(select(model.CronJobTable)).scalars().all(),
             )
         )
 
-    def get_queued_cron_jobs(self) -> list[ScheduledCronJob]:
+    def get_queued_cron_jobs(self) -> list[CronJob]:
         """Returns the cron jobs currently queued for the next execution cycle"""
         now = datetime.now()
         return list(
@@ -30,17 +30,17 @@ class CronModule:
             )
         )
 
-    def patch_cron_job(self, job: ScheduledCronJob):
+    def patch_cron_job(self, job: CronJob):
         session = database.get_session()
         session.execute(
-            update(model.CronJob)
-            .where(model.CronJob.id == job.id)
+            update(model.CronJobTable)
+            .where(model.CronJobTable.id == job.id)
             .values(**job.model_dump())
         )
         session.commit()
 
 
-class ScheduledCronJob(BaseModel):
+class CronJob(BaseModel):
     # from_attributes allows SQLAlchemy record conversion
     model_config = ConfigDict(from_attributes=True)
 

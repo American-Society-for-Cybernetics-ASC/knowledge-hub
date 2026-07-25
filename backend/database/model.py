@@ -195,7 +195,7 @@ class Module(Base):
     config = Column(String)
 
 
-class CronJob(Base):
+class CronJobTable(Base):
     __tablename__ = "cron_jobs"
 
     id = mapped_column(Integer, primary_key=True, index=True)

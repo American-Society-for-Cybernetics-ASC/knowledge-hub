@@ -3,7 +3,7 @@ from typing import Callable
 
 from sqlalchemy.orm import Session
 
-from cron.module import CronModule, ExampleCronJob, ScheduledCronJob
+from cron.module import CronModule, ExampleCronJob, CronJob
 from settings import SETTINGS
 import database.model as model
 
@@ -34,7 +34,7 @@ def test_check_auth_in_prod(test_server, monkeypatch):
 
 
 def test_conversion():
-    job = model.CronJob(
+    job = model.CronJobTable(
         id=1,
         enabled=False,
         last_executed=datetime(2026, 1, 1),
@@ -42,11 +42,11 @@ def test_conversion():
         job={"job_type": "example_job"},
     )
 
-    converted_job = ScheduledCronJob.model_validate(job)
+    converted_job = CronJob.model_validate(job)
 
     assert isinstance(converted_job.job, ExampleCronJob)
 
-    round_trip = model.CronJob(**converted_job.model_dump())
+    round_trip = model.CronJobTable(**converted_job.model_dump())
 
     assert round_trip.job == {"job_type": "example_job"}
 
@@ -54,7 +54,7 @@ def test_conversion():
 def test_queued(test_server, mock_get_session: Callable[[], Session]):
     session: Session = mock_get_session()
     session.add(
-        model.CronJob(
+        model.CronJobTable(
             id=1,
             enabled=False,
             last_executed=datetime(2026, 1, 1),
@@ -81,7 +81,7 @@ def test_queued(test_server, mock_get_session: Callable[[], Session]):
 def test_execute_cron(test_server, mock_get_session: Callable[[], Session]):
     session: Session = mock_get_session()
     session.add(
-        model.CronJob(
+        model.CronJobTable(
             id=1,
             enabled=True,
             last_executed=datetime(2026, 1, 1),

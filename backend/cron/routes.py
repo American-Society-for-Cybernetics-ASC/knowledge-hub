@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from settings import SETTINGS
-from .module import CronModule, ScheduledCronJob
+from .module import CronModule, CronJob
 
 
 cron_router = APIRouter()
@@ -35,7 +35,7 @@ def run_cron_jobs(
 def get_queued_jobs(
     module: Annotated[CronModule, Depends(CronModule)],
     # TODO permissions
-) -> list[ScheduledCronJob]:
+) -> list[CronJob]:
     return module.get_queued_cron_jobs()
 
 
@@ -43,5 +43,5 @@ def get_queued_jobs(
 def get_all_jobs(
     module: Annotated[CronModule, Depends(CronModule)],
     # TODO permissions
-) -> list[ScheduledCronJob]:
+) -> list[CronJob]:
     return module.get_all_cron_jobs()
