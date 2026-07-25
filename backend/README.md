@@ -54,3 +54,8 @@ vercel build
 vercel deploy --prebuilt
 ```
 
+# Cron
+Cron jobs are handled
+
+## Local Testing
+Cron can be triggered manually by calling the `/cron` GET endpoint.

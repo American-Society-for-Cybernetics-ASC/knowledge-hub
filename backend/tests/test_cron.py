@@ -3,7 +3,8 @@ from settings import settings
 
 def test_require_auth_in_prod(test_server, monkeypatch):
     with monkeypatch.context() as m:
-        m.setattr(settings, "local_env", False)
+        # The Cron endpoint doesn't check authentication locally
+        m.setattr(settings, "local_deployment", False)
 
         response = test_server.get("cron")
         assert response.status_code == 401
@@ -11,7 +12,8 @@ def test_require_auth_in_prod(test_server, monkeypatch):
 
 def test_check_auth_in_prod(test_server, monkeypatch):
     with monkeypatch.context() as m:
-        m.setattr(settings, "local_env", False)
+        # The Cron endpoint doesn't check authentication locally
+        m.setattr(settings, "local_deployment", False)
 
         response = test_server.get(
             "cron", headers={"authorization": "Bearer wrong_secret"}

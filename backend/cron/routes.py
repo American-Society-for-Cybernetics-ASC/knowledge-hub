@@ -10,7 +10,8 @@ cron_router = APIRouter()
 
 
 def cron_guard(request: Request):
-    if settings.local_env:
+    """Check that the caller has authorisation to run cron jobs (Doesn't apply to local deployments)"""
+    if settings.local_deployment:
         return
 
     if request.headers.get("authorization") != f"Bearer {settings.cron_secret}":
@@ -22,4 +23,4 @@ def run_cron_jobs(
     module: Annotated[CronModule, Depends(CronModule)],
     _: Annotated[None, Depends(cron_guard)],
 ):
-    pass
+    module.run_cron_jobs()

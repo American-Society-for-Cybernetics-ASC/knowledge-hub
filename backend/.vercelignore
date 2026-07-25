@@ -7,3 +7,5 @@ dist
 Dockerfile
 .dockerignore
 tests
+.env
+.env.*
