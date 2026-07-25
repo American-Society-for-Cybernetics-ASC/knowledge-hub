@@ -55,7 +55,7 @@ vercel deploy --prebuilt
 ```
 
 # Cron
-Cron jobs are handled
+A single cron job is defined in `vercel.json`. This calls the `/cron` endpoint daily. This endpoint will run tasks as configured by the managers/administrators.
 
 ## Local Testing
 Cron can be triggered manually by calling the `/cron` GET endpoint.
