@@ -61,6 +61,12 @@ class ScheduledCronJob(BaseModel):
 
 
 type CronJobTypes = Annotated[Union[ExampleCronJob], Field(discriminator="job_type")]
+"""
+Update this Union to add new Job types.
+
+Make sure your subclass has class variable `job_type: Literal[discriminant]`
+where discriminant is a unique string literal (see ExampleCronJob).
+"""
 
 
 class CronJobInterface(BaseModel):
