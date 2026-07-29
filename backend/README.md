@@ -39,3 +39,23 @@ Run `uv run ruff format` from `/backend/<package>` to format all of that package
 
 # Linting
 Run `uv run ruff check`, which is called equivalently to formatting.
+
+# Vercel
+From the `/backend` repository
+
+## Local Testing
+```bash
+vercel dev
+```
+
+## Deployment
+```bash
+vercel build
+vercel deploy --prebuilt
+```
+
+# Cron
+A single cron job is defined in `vercel.json`. This calls the `/cron` endpoint daily. This endpoint will run tasks as configured by the managers/administrators.
+
+## Local Testing
+Cron can be triggered manually by calling the `/cron` GET endpoint.
