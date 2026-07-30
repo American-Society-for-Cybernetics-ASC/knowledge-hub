@@ -63,7 +63,7 @@ type CronJobTypes = Annotated[Union[ExampleCronJob], Field(discriminator="job_ty
 Update this Union to add new Job types. Make sure all members implement CronJobInterface
 
 Make sure your subclass has class variable `job_type: Literal[discriminant]`
-where discriminant is a unique string literal (see ExampleCronJob ).
+where discriminant is a unique string literal (see ExampleCronJob).
 """
 
 

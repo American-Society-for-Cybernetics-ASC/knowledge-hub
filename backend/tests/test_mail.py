@@ -13,5 +13,5 @@ def test_email_failure(test_server):
 
     assert len(MockMailProvider.sent_mail()) == 0
     assert MailModule().get_failed_emails()[0].email.content == "Content"
-    # Content gets redacted
+    # Content gets redacted when exposed publicly
     assert "content" not in test_server.get("/mail/failed").json()[0]["email"]

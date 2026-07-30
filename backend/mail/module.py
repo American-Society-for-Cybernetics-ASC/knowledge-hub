@@ -31,7 +31,7 @@ class MailModule:
             return self.get_config()
 
     def get_failed_emails(self) -> list[FailedEmail[Email]]:
-        """Get all emails that are yet to be sent"""
+        """Get all emails that have failed to send"""
         session = database.get_session()
 
         return list(
@@ -42,7 +42,7 @@ class MailModule:
         )
 
     def send_mail(self, mail: Email):
-        """Attempt to send an email"""
+        """Attempt to send an email. Adds it to :class:`~database.model.FailedEmailTable` on failure"""
         config = self.get_config()
         if config.provider:
             try:
@@ -53,6 +53,7 @@ class MailModule:
         else:
             error = "No email provider configured"
 
+        # Failed to send: add it to the failed email table.
         session = database.get_session()
         session.add(model.FailedEmailTable(email=mail.model_dump(), error=error))
         session.commit()
@@ -62,7 +63,7 @@ type MailProvider = Annotated[
     Union[MockMailProvider, GmailProvider], Field(discriminator="service_name")
 ]
 """
-Update this Union to add new Job types. Make sure all members implement MailProviderInterface
+Update this Union to add new MailProvider types. Make sure all members implement MailProviderInterface
 
 Make sure your subclass has class variable `service_name: Literal[discriminant]`
 where discriminant is a unique string literal (see MockMailProvider ).

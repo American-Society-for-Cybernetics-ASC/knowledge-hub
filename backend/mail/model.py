@@ -40,7 +40,8 @@ class RedactedEmail(BaseModel):
     sender: str
     recipients: list[str]
     subject: str
-    # We don't bother sending the redacted email
+    # It's a waste to serialize or deserialize a non-discriminant literalfield
+    # It only exists as a convenience for `t: Email | RedactedEmail` to have `t.content` be accessible.
     content: Literal["[Redacted]"] = Field(exclude=True)
 
     # Method defined so that if `t: Email | RedactedEmail`, then `t.redact()` is valid
