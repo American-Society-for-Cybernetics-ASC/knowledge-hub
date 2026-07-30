@@ -125,8 +125,7 @@ class AuthModule:
             raise ValueError("Invalid email or password")
 
         # Check permanent admin lock
-        if user.admin_locked:
-            raise ValueError("Account locked. Please contact an administrator.")
+        # TODO: (to be implemented after the admin_locked column is added in AuthUser table)
 
         # Check temporary lockout
         if user.locked_until and user.locked_until > datetime.now(timezone.utc):
