@@ -1,0 +1,33 @@
+[tool.uv.workspace]
+members = [
+    "server",
+    "auth_server",
+    "shared",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=2.0.0",
+    "pytest>=9.0.3",
+    "ruff>=0.15.12",
+]
+
+[tool.uv.sources]
+shared = { workspace = true }
+
+[tool.mypy]
+disable_error_code = "empty-body" # This allows our dummy methods
+
+# This root project is not a real package
+[tool.uv]
+package = false
+
+[project]
+name = "workspace_root"
+version = "0.1.0"
+description = "The workspace's root. Not a real package."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "shared",
+]

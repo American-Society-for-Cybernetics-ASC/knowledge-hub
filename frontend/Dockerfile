@@ -1,14 +1,15 @@
 # syntax=docker/dockerfile:1
-FROM node:24-alpine AS BASE
+ARG NODE_VERSION=24
 
 # Dependency Stage
-ARG NODE_VERSION=20.19.41
+ARG NODE_VERSION
 FROM node:${NODE_VERSION} AS dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN --mount=type=cache, target=/root/.npm npm ci --no-audit --no-fund
+RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
 
 # Build Stage
+ARG NODE_VERSION
 FROM node:${NODE_VERSION} AS builder
 WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
@@ -17,6 +18,7 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # Run Stage
+ARG NODE_VERSION
 FROM node:${NODE_VERSION} AS runner
 WORKDIR /app
 ENV NODE_ENV=production
