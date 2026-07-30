@@ -1,12 +1,14 @@
-from .gmail_provider import GmailProvider
 import database
 from database import model
 
 from abc import abstractmethod
 from email.message import EmailMessage
-from typing import Annotated, Literal, LiteralString, Optional, Union
+from typing import Annotated, Literal, Optional, Union, TYPE_CHECKING
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import NoResultFound
+
+if TYPE_CHECKING:
+    from .gmail_provider import GmailProvider
 
 
 class MailModule:
@@ -30,9 +32,16 @@ class MailModule:
     def send_mail(self, mail: EmailMessage):
         config = self.get_config()
         if config.provider:
-            config.provider.send_mail(mail)
+            try:
+                config.provider.send_mail(mail)
+                return
+            except Exception as e:
+                failure = str(e)
+        else:
+            failure = "No email provider configured"
 
         # TODO: dead letter queue
+        print(failure)
 
 
 class MailModuleConfig(BaseModel):
@@ -49,11 +58,6 @@ type MailProvider = Annotated[
 
 
 class MailProviderInterface(BaseModel):
-    @property
-    @abstractmethod
-    def service_name(self) -> LiteralString:
-        pass
-
     @abstractmethod
     def send_mail(self, mail: EmailMessage): ...
 

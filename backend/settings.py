@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,6 +10,9 @@ class Settings(BaseSettings):
     Set to False if this deployment is a production deployment."""
     testing: bool = False
     """Set to true when tests are currently executing"""
+
+    google_username: Optional[str] = None
+    google_password: Optional[str] = None
 
     cron_secret: str = "Local"
     """The Vercel Cron job secret"""
