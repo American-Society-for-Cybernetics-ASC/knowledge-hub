@@ -10,8 +10,13 @@ dist/
 # Compiled Java class files
 *.class
 
-# Compiled Python bytecode
+# Python 
 *.py[cod]
+.ruff_cache
+__pycache__
+.pytest_cache
+dist
+.mypy_cache
 
 # Log files
 *.log
@@ -51,3 +56,6 @@ Thumbs.db
 # Environment Variables
 .env
 .env.local
+.venv
+.env.*
+!.env.example
