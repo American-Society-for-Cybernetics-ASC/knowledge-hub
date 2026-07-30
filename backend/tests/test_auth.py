@@ -82,3 +82,27 @@ def test_register_and_login_success(test_server: TestClient, mock_get_session: C
     assert login_response.status_code == 200
     data = login_response.json()
     assert "challenge_token" in data
+
+def test_account_lockout_after_failed_attempts(test_server: TestClient, mock_get_session: Callable[[], Session]):
+    """Test that account locks temporarily after 3 failed attempts"""
+    # Register first
+    test_server.post("/auth/register", json={
+        "email": "test@example.com",
+        "password": "TestPassword123!",
+        "display_name": "Test User"
+    })
+
+    # Fail 3 times
+    for _ in range(3):
+        test_server.post("/auth/login", json={
+            "email": "test@example.com",
+            "password": "WrongPassword!"
+        })
+
+    # Should now be locked
+    response = test_server.post("/auth/login", json={
+        "email": "test@example.com",
+        "password": "TestPassword123!"
+    })
+    assert response.status_code == 401
+    assert "locked" in response.json()["detail"].lower()

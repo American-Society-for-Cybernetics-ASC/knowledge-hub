@@ -129,7 +129,7 @@ class AuthModule:
             raise ValueError("Account locked. Please contact an administrator.")
 
         # Check temporary lockout
-        if user.locked_until and user.locked_until > datetime.now(timezone.utc):
+        if user.locked_until and user.locked_until > datetime.now():
             raise ValueError("Account temporarily locked. Please try again later.")
 
         # Verify password
@@ -141,7 +141,7 @@ class AuthModule:
 
             # After 3 failures - temporary lockout
             if user.failed_attempt >= 3:
-                user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=10)
+                user.locked_until = datetime.now() + timedelta(minutes=10)
 
             # After 6 total failures - permanent lock
             if user.failed_attempt >= 6:
