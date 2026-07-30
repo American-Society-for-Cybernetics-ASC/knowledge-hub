@@ -2,7 +2,8 @@ from mail.module import Email, MailModule
 from mail.provider.mock_provider import MockMailProvider
 
 
-def test_dead_letter(test_server):
+def test_email_failure(test_server):
+    """Test that a failed email gets recorded in the database"""
     MockMailProvider.fail_next_n_mail(1)
     MailModule().send_mail(
         Email(
@@ -12,4 +13,5 @@ def test_dead_letter(test_server):
 
     assert len(MockMailProvider.sent_mail()) == 0
     assert MailModule().get_failed_emails()[0].email.content == "Content"
+    # Content gets redacted
     assert "content" not in test_server.get("/mail/failed").json()[0]["email"]

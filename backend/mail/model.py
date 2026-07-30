@@ -7,23 +7,16 @@ from pydantic import Field
 from utils import BaseModel
 
 
-class RedactedEmail(BaseModel):
-    sender: str
-    recipients: list[str]
-    subject: str
-    content: Literal["[Redacted]"] = Field(exclude=True)
-
-    def redact(self) -> RedactedEmail:
-        return self
-
-
 class Email(BaseModel):
+    """All metadata and content for an email"""
+
     sender: str
     recipients: list[str]
     subject: str
     content: str
 
     def redact(self) -> RedactedEmail:
+        """Create a :class:`~RedactedEmail` by redacting the content of this email"""
         return RedactedEmail(
             sender=self.sender,
             recipients=self.recipients,
@@ -32,6 +25,7 @@ class Email(BaseModel):
         )
 
     def into_py_email(self) -> EmailMessage:
+        """Converts to the python standard library email type, :class:`~EmailMessage`."""
         message = EmailMessage()
         message.set_content(self.content)
         message["To"] = ", ".join(self.recipients)
@@ -40,7 +34,23 @@ class Email(BaseModel):
         return message
 
 
+class RedactedEmail(BaseModel):
+    """The metadata of an Email, without the content. (See also the :class:`~Email` class)"""
+
+    sender: str
+    recipients: list[str]
+    subject: str
+    # We don't bother sending the redacted email
+    content: Literal["[Redacted]"] = Field(exclude=True)
+
+    # Method defined so that if `t: Email | RedactedEmail`, then `t.redact()` is valid
+    def redact(self) -> RedactedEmail:
+        return self
+
+
 class FailedEmail[T: Email | RedactedEmail](BaseModel):
+    """An email that failed to send."""
+
     id: int
     last_sent: datetime
     retries: int
@@ -48,6 +58,7 @@ class FailedEmail[T: Email | RedactedEmail](BaseModel):
     error: Optional[str]
 
     def redact(self) -> FailedEmail[RedactedEmail]:
+        """Returns an identical FailedEmail, except the email content has been redacted"""
         return FailedEmail(
             id=self.id,
             last_sent=self.last_sent,

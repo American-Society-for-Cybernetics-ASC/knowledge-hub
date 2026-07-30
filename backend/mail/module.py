@@ -31,6 +31,7 @@ class MailModule:
             return self.get_config()
 
     def get_failed_emails(self) -> list[FailedEmail[Email]]:
+        """Get all emails that are yet to be sent"""
         session = database.get_session()
 
         return list(
@@ -41,6 +42,7 @@ class MailModule:
         )
 
     def send_mail(self, mail: Email):
+        """Attempt to send an email"""
         config = self.get_config()
         if config.provider:
             try:
@@ -59,6 +61,12 @@ class MailModule:
 type MailProvider = Annotated[
     Union[MockMailProvider, GmailProvider], Field(discriminator="service_name")
 ]
+"""
+Update this Union to add new Job types. Make sure all members implement MailProviderInterface
+
+Make sure your subclass has class variable `service_name: Literal[discriminant]`
+where discriminant is a unique string literal (see MockMailProvider ).
+"""
 
 
 class MailModuleConfig(BaseModel):

@@ -14,4 +14,5 @@ def get_failed_emails(
     module: Annotated[MailModule, Depends(MailModule)],
     # TODO permissions
 ) -> list[FailedEmail[RedactedEmail]]:
+    """Get all failed emails"""
     return list(map(FailedEmail.redact, module.get_failed_emails()))

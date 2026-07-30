@@ -4,6 +4,12 @@ import pydantic
 
 
 class BaseModel(pydantic.BaseModel):
+    """
+    Wrapper around pydantic.BaseModel.
+
+    - Adds "model_validate_sqlalchemy", which ensures sqlalchemy mapped types are validated correctly.
+    """
+
     @classmethod
     def model_validate_sqlalchemy(
         cls,
@@ -15,6 +21,10 @@ class BaseModel(pydantic.BaseModel):
         by_alias: bool | None = None,
         by_name: bool | None = None,
     ) -> Self:
+        """
+        Calls pydantic's :func:`~pydantic.BaseModel.model_validate`, with the correct parameters,
+        to support validating a mapped sqlalchemy model.
+        """
         return cls.model_validate(
             obj,
             from_attributes=True,
