@@ -1,18 +1,8 @@
-This is the uv workspace root.
-- It makes our packages share a lock file, so we're all using the same versions of libraries
-- It helps with inter-package dependencies (see the `[tool.uv.sources]` table) 
-- It holds dev dependencies
-
 # Running
 See the root README for running using docker.
 
-Run `uv run fastapi dev` from `/backend/server`
-Run `uv run fastapi dev` from `/backend/auth_server`
+Run `uv run fastapi dev` from `/backend/`
 - Replace `dev` with `run` for a production build
-
-Alternatively from `backend`:
-- `uv run --package auth_server fastapi dev auth_server/main.py`
-- `uv run --package server fastapi dev server/main.py`
 
 # Claude API
 The main backend server includes an isolated Claude API adapter for the automated newsletter and other features.
@@ -30,14 +20,7 @@ Set `ANTHROPIC_API_KEY` to the API key. The optional variables are:
 For Docker, export the variables in your shell or place them in a root `.env` file before running `docker compose up`
 
 # Type Checking
-From `/backend`:
-```bash
-uv run mypy ./server
-uv run mypy ./auth_server
-uv run mypy ./database
-```
-
-or just run `uv run mypy .` from any package's directory.
+From `/backend` run `uv run mypy .`
 
 # Testing
 Run `uv run pytest` from `/backend` to run all backend tests.
