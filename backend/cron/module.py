@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from datetime import datetime, timedelta
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal, LiteralString, Union
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 from sqlalchemy import select, update
 
@@ -70,13 +70,18 @@ where discriminant is a unique string literal (see ExampleCronJob).
 
 
 class CronJobInterface(BaseModel):
+    @property
+    @abstractmethod
+    def job_type(self) -> LiteralString:
+        pass
+
     @abstractmethod
     def execute(self):
         pass
 
 
 class ExampleCronJob(CronJobInterface):
-    job_type: Literal["example_job"]
+    job_type: Literal["example_job"] = Field(default="example_job")
 
     def execute(self):
         pass

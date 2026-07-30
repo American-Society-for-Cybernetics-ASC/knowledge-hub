@@ -191,8 +191,8 @@ class AuthLog(Base):
 class Module(Base):
     __tablename__ = "modules"
 
-    module_id = Column(Integer, primary_key=True, index=True)
-    config = Column(String)
+    module_name = mapped_column(String, primary_key=True, index=True)
+    config = mapped_column(JSON)
 
 
 class CronJobTable(Base):
