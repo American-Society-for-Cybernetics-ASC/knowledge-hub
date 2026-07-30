@@ -21,6 +21,9 @@ dist
 # Log files
 *.log
 
+# Vercel
+.vercel
+
 # Package files
 *.jar
 
