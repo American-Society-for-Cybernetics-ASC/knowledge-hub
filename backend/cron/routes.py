@@ -7,7 +7,7 @@ from settings import SETTINGS
 from .module import CronModule, CronJob
 
 
-cron_router = APIRouter()
+cron_router = APIRouter(prefix="/cron")
 
 
 def cron_guard(request: Request):
@@ -19,7 +19,7 @@ def cron_guard(request: Request):
         raise HTTPException(401, "Unauthorized")
 
 
-@cron_router.get("/cron")
+@cron_router.get("/")
 def run_cron_jobs(
     module: Annotated[CronModule, Depends(CronModule)],
     _: Annotated[None, Depends(cron_guard)],
@@ -31,7 +31,7 @@ def run_cron_jobs(
         module.patch_cron_job(queued_job)
 
 
-@cron_router.get("/cron/queued_jobs")
+@cron_router.get("/queued_jobs")
 def get_queued_jobs(
     module: Annotated[CronModule, Depends(CronModule)],
     # TODO permissions
@@ -39,7 +39,7 @@ def get_queued_jobs(
     return module.get_queued_cron_jobs()
 
 
-@cron_router.get("/cron/jobs")
+@cron_router.get("/jobs")
 def get_all_jobs(
     module: Annotated[CronModule, Depends(CronModule)],
     # TODO permissions

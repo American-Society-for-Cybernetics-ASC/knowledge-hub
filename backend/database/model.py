@@ -1,5 +1,6 @@
 from sqlalchemy import JSON, Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import mapped_column, relationship
+from sqlalchemy.sql import func
 from .base import Base
 
 
@@ -203,3 +204,13 @@ class CronJobTable(Base):
     last_executed = mapped_column(DateTime)
     period = mapped_column(Integer)
     job = mapped_column(JSON)
+
+
+class FailedEmailTable(Base):
+    __tablename__ = "failed_emails"
+
+    id = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    last_sent = mapped_column(DateTime, server_default=func.now())
+    retries = mapped_column(Integer, default=0)
+    email = mapped_column(JSON)
+    error = mapped_column(String, nullable=True)

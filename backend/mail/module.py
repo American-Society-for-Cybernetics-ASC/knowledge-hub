@@ -1,14 +1,15 @@
+from sqlalchemy import select
+
+from mail.model import Email, FailedEmail
 import database
 from database import model
 
-from abc import abstractmethod
-from email.message import EmailMessage
-from typing import Annotated, Literal, Optional, Union, TYPE_CHECKING
+from typing import Annotated, Optional, Union
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import NoResultFound
 
-if TYPE_CHECKING:
-    from .gmail_provider import GmailProvider
+from .provider.gmail_provider import GmailProvider
+from .provider.mock_provider import MockMailProvider
 
 
 class MailModule:
@@ -23,25 +24,41 @@ class MailModule:
         except NoResultFound:
             config_record = model.Module(
                 module_name=MailModule.MODULE_ID,
-                config=MailModuleConfig.default().model_dump_json(),
+                config=MailModuleConfig.default().model_dump(),
             )
             session.add(config_record)
             session.commit()
             return self.get_config()
 
-    def send_mail(self, mail: EmailMessage):
+    def get_failed_emails(self) -> list[FailedEmail[Email]]:
+        session = database.get_session()
+
+        return list(
+            map(
+                FailedEmail[Email].model_validate_sqlalchemy,
+                session.execute(select(model.FailedEmailTable)).scalars().all(),
+            )
+        )
+
+    def send_mail(self, mail: Email):
         config = self.get_config()
         if config.provider:
             try:
                 config.provider.send_mail(mail)
                 return
             except Exception as e:
-                failure = str(e)
+                error = str(e)
         else:
-            failure = "No email provider configured"
+            error = "No email provider configured"
 
-        # TODO: dead letter queue
-        print(failure)
+        session = database.get_session()
+        session.add(model.FailedEmailTable(email=mail.model_dump(), error=error))
+        session.commit()
+
+
+type MailProvider = Annotated[
+    Union[MockMailProvider, GmailProvider], Field(discriminator="service_name")
+]
 
 
 class MailModuleConfig(BaseModel):
@@ -50,27 +67,3 @@ class MailModuleConfig(BaseModel):
     @staticmethod
     def default() -> MailModuleConfig:
         return MailModuleConfig(provider=None)
-
-
-type MailProvider = Annotated[
-    Union[TestMailProvider, GmailProvider], Field(discriminator="service_name")
-]
-
-
-class MailProviderInterface(BaseModel):
-    @abstractmethod
-    def send_mail(self, mail: EmailMessage): ...
-
-
-_sent_mail: list[EmailMessage] = []
-
-
-class TestMailProvider(MailProviderInterface):
-    service_name: Literal["test"] = Field(default="test")
-
-    def send_mail(self, mail: EmailMessage):
-        _sent_mail.append(mail)
-
-    @staticmethod
-    def sent_mail() -> list[EmailMessage]:
-        return _sent_mail

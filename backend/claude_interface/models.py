@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from utils import BaseModel
+from pydantic import Field
 
 
 class SynthesisInput(BaseModel):

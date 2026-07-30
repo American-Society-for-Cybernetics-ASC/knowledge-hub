@@ -1,8 +1,9 @@
 from abc import abstractmethod
 from datetime import datetime, timedelta
 from typing import Annotated, Literal, Union
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from pydantic import Field, field_serializer, field_validator
 from sqlalchemy import select, update
+from utils import BaseModel
 
 import database
 from database import model
@@ -15,7 +16,7 @@ class CronModule:
 
         return list(
             map(
-                CronJob.model_validate,
+                CronJob.model_validate_sqlalchemy,
                 session.execute(select(model.CronJobTable)).scalars().all(),
             )
         )
@@ -41,9 +42,6 @@ class CronModule:
 
 
 class CronJob(BaseModel):
-    # from_attributes allows SQLAlchemy record conversion
-    model_config = ConfigDict(from_attributes=True)
-
     id: int
     enabled: bool
     last_executed: datetime
