@@ -2,6 +2,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env")
+    
     local_deployment: bool = True
     """Set to True if this deployment is a local deployment."""
     testing: bool = False
@@ -9,8 +11,6 @@ class Settings(BaseSettings):
 
     cron_secret: str = "Local"
     """The Vercel Cron job secret"""
-
-    model_config = SettingsConfigDict(env_file=".env")
     
     supabase_database_url: str = ""
     """Connection string for the production Supabase database"""
