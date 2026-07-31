@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     """The Vercel Cron job secret"""
 
     model_config = SettingsConfigDict(env_file=".env")
+    
+    supabase_database_url: str = ""
+    """Connection string for the production Supabase database"""
 
 
 SETTINGS = Settings()
