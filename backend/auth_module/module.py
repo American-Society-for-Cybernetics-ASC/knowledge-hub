@@ -70,6 +70,32 @@ class AuthModule:
         )
 
         return qr_uri
+    def get_totp_setup(self, email: str) -> str:
+        """
+        Returns the QR code URI for a user to set up TOTP.
+
+        """
+        session = database.get_session()
+
+        user = session.query(model.AuthUser).filter(
+            model.AuthUser.email == email
+        ).first()
+
+        if not user:
+            raise ValueError("User not found")
+
+        # Decrypt TOTP secret
+        f = self._get_fernet()
+        decrypted_secret = f.decrypt(user.totp_secret.encode()).decode()
+
+        # Generate QR code URI
+        totp = pyotp.TOTP(decrypted_secret)
+        qr_uri = totp.provisioning_uri(
+            name=email,
+            issuer_name="CKH ASC"
+        )
+
+        return qr_uri
 
     def confirm_totp(self, email: str, code: str) -> bool:
         """

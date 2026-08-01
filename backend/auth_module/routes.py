@@ -90,6 +90,25 @@ def confirm_totp(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@auth_router.get("/auth/totp-setup")
+def get_totp_setup(
+    email: str,
+    module: Annotated[AuthModule, Depends(AuthModule)],
+) -> RegisterResponse:
+    """
+    Returns the QR code URI for a user who wants to set up TOTP later.
+    Can be called after registration if the user skipped the QR code step.
+    """
+    try:
+        qr_uri = module.get_totp_setup(email=email)
+        return RegisterResponse(
+            qr_uri=qr_uri,
+            message="Scan this QR code with your authenticator app."
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))    
+
+
 @auth_router.post("/auth/login")
 def login(
     req: LoginRequest,
