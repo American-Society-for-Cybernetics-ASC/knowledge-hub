@@ -8,10 +8,11 @@ from cron.routes import cron_router
 from mail.routes import mail_router
 
 if SETTINGS.local_deployment and not SETTINGS.testing:
-    session = database.get_session()
-    conn = session.connection()
-    database.base.Base.metadata.create_all(conn)
-    conn.commit()
+    with database.get_session() as session:
+        conn = session.connection()
+        database.base.Base.metadata.create_all(conn)
+        conn.commit()
+        session.close()
 
 app = FastAPI()
 

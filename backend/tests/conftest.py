@@ -65,11 +65,11 @@ def mock_get_session(monkeypatch):
 # Keep the scope in sync with mock_get_session
 @pytest.fixture(scope="function")
 def default_database(mock_get_session: Callable[[], Session]):
-    session = mock_get_session()
-    session.add(
-        model.Module(
-            module_name=MailModule.MODULE_ID,
-            config=MailModuleConfig(provider=MockMailProvider()).model_dump(),
+    with mock_get_session() as session:
+        session.add(
+            model.Module(
+                module_name=MailModule.MODULE_ID,
+                config=MailModuleConfig(provider=MockMailProvider()).model_dump(),
+            )
         )
-    )
-    session.commit()
+        session.commit()
