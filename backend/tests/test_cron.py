@@ -42,7 +42,7 @@ def test_conversion():
         job={"job_type": "example_job"},
     )
 
-    converted_job = CronJob.model_validate(job)
+    converted_job = CronJob.model_validate_sqlalchemy(job)
 
     assert isinstance(converted_job.job, ExampleCronJob)
 
