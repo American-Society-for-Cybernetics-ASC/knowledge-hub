@@ -10,8 +10,14 @@ import database
 from database import model
 from database.base import Base
 
-from main import app
 from settings import SETTINGS
+
+from pytest import MonkeyPatch
+
+# Stops us from running startup scripts
+with MonkeyPatch().context() as m:
+    m.setattr(SETTINGS, "testing", True)
+    from main import app
 
 import pytest
 from fastapi.testclient import TestClient
@@ -30,7 +36,7 @@ def test_server() -> TestClient:
 def test_settings(monkeypatch):
     """Override settings as needed for tests"""
     with monkeypatch.context() as m:
-        monkeypatch.setattr(SETTINGS, "testing", True)
+        m.setattr(SETTINGS, "testing", True)
         yield m
 
 
