@@ -20,6 +20,7 @@ function LinkTab(props: LinkTabProps): JSX.Element {
 }
 
 export function NavTabs(props: NavTabsProps & { children?: ReactNode }) {
+    // Children have to be rendered first for <Tabs/>'s "value" property to work correctly
     const tabs = props.tabs.map(p => LinkTab(p));
     
     return <Tabs value={usePathname()} role="navigation">
