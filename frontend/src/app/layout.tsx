@@ -30,7 +30,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <PublicEnvProvider publicEnv={{backendUrl: process.env.BACKEND_URL || ""}}>
+        <PublicEnvProvider>
           <AppRouterCacheProvider options={{ enableCssLayer: true }}>
             {children}
           </AppRouterCacheProvider>
