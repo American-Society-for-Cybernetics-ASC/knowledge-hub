@@ -1,8 +1,15 @@
 # Define global fixtures
 
 
+from typing import Callable
+
+from mail.module import MailModule, MailModuleConfig
+from mail.provider.mock_provider import MockMailProvider
+
 import database
+from database import model
 from database.base import Base
+
 from main import app
 from settings import SETTINGS
 
@@ -47,3 +54,16 @@ def mock_get_session(monkeypatch):
         m.setattr(database, "get_session", get_session)
 
         yield get_session
+
+
+# Keep the scope in sync with mock_get_session
+@pytest.fixture(scope="function")
+def default_database(mock_get_session: Callable[[], Session]):
+    session = mock_get_session()
+    session.add(
+        model.Module(
+            module_name=MailModule.MODULE_ID,
+            config=MailModuleConfig(provider=MockMailProvider()).model_dump(),
+        )
+    )
+    session.commit()
