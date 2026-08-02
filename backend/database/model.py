@@ -30,6 +30,7 @@ class Member(Base):
     memberships = relationship("Membership", back_populates="member")
     auth_user_id = Column(Integer, ForeignKey("auth_users.user_id"))
     auth_user = relationship("AuthUser", back_populates="members")
+    mailing_lists = relationship("MailingListMember", back_populates="member")
 
 
 class Group(Base):
@@ -43,6 +44,7 @@ class Group(Base):
     # relationship to all tables
     members = relationship("Member", back_populates="group")
     memberships = relationship("Membership", back_populates="group")
+    mailing_list_members = relationship("MailingListMember", back_populates="group")
 
 
 class Profile(Base):
@@ -84,7 +86,7 @@ class Repository(Base):
 
     # Relationships
     submissions = relationship("Submission", back_populates="repository")
-    event = relationship("Event", back_populates="Reposiroty", uselist=False)
+    event = relationship("Event", back_populates="repository", uselist=False)
 
 
 class Event(Base):
@@ -194,3 +196,20 @@ class Module(Base):
 
     module_id = Column(Integer, primary_key=True, index=True)
     config = Column(String)
+
+class MailingListMember(Base):
+    __tablename__ = "mailing_list_members"
+
+    mailing_list_member_id = Column(Integer, primary_key=True, index=True)
+
+    email = Column(String, nullable=False)
+
+    group_id = Column(Integer, ForeignKey("groups.group_id"), nullable=False)
+
+    #nullable because external emails aren't members
+    member_id = Column(Integer, ForeignKey("members.member_id"), nullable=True)
+    is_member = Column(Boolean, default=False)
+
+    #relationships
+    group = relationship("Group", back_populates="mailing_list_members")
+    member = relationship("Member", back_populates="mailing_lists")
