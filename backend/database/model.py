@@ -1,6 +1,6 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import JSON, Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy.orm import mapped_column, relationship
+from sqlalchemy.sql import func
 from .base import Base
 
 
@@ -53,8 +53,8 @@ class Profile(Base):
     # Profile is a weak entity
     member_id = Column(Integer, ForeignKey("members.member_id"), primary_key=True)
 
-    tags = Column(JSONB)
-    content = Column(JSONB)
+    tags = Column(JSON)
+    content = Column(JSON)
 
     member = relationship("Member", back_populates="profile")
 
@@ -64,8 +64,8 @@ class Submission(Base):
 
     submission_id = Column(Integer, primary_key=True, index=True)
     provider = Column(String)
-    content = Column(JSONB)
-    tags = Column(JSONB)
+    content = Column(JSON)
+    tags = Column(JSON)
     status = Column(String)
     title = Column(String)
 
@@ -82,7 +82,7 @@ class Repository(Base):
     __tablename__ = "repositories"
 
     repository_id = Column(Integer, primary_key=True, index=True)
-    schema = Column(JSONB)
+    schema = Column(JSON)
 
     # Relationships
     submissions = relationship("Submission", back_populates="repository")
@@ -170,6 +170,7 @@ class AuthUser(Base):
 
     failed_attempt = Column(Integer, default=0)
     locked_until = Column(DateTime)
+    admin_locked = Column(Boolean, default=False)
 
     last_login = Column(DateTime)
     hash_password = Column(String)
@@ -194,8 +195,8 @@ class AuthLog(Base):
 class Module(Base):
     __tablename__ = "modules"
 
-    module_id = Column(Integer, primary_key=True, index=True)
-    config = Column(String)
+    module_name = mapped_column(String, primary_key=True, index=True)
+    config = mapped_column(JSON)
 
 class MailingListMember(Base):
     __tablename__ = "mailing_list_members"
@@ -213,3 +214,24 @@ class MailingListMember(Base):
     #relationships
     group = relationship("Group", back_populates="mailing_list_members")
     member = relationship("Member", back_populates="mailing_lists")
+
+
+class CronJobTable(Base):
+    __tablename__ = "cron_jobs"
+
+    id = mapped_column(Integer, primary_key=True, index=True)
+    enabled = mapped_column(Boolean)
+    last_executed = mapped_column(DateTime)
+    period = mapped_column(Integer)
+    job = mapped_column(JSON)
+
+
+class FailedEmailTable(Base):
+    __tablename__ = "failed_emails"
+
+    id = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    last_sent = mapped_column(DateTime, server_default=func.now())
+    retries = mapped_column(Integer, default=0)
+    email = mapped_column(JSON)
+    error = mapped_column(String, nullable=True)
+

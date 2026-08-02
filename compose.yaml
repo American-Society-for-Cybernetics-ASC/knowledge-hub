@@ -27,6 +27,14 @@ services:
       - 5432:5432
     networks:
       - isolated
+  frontend:
+    build: frontend
+    ports:
+      - 3000:3000
+    networks:
+      - public
+    depends_on:
+      - server
 networks:
   isolated:
     internal: true

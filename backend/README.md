@@ -39,3 +39,34 @@ Run `uv run ruff format` from `/backend/<package>` to format all of that package
 
 # Linting
 Run `uv run ruff check`, which is called equivalently to formatting.
+
+# Vercel
+From the `/backend` repository
+
+## Local Testing
+```bash
+vercel dev
+```
+
+## Deployment
+```bash
+vercel build
+vercel deploy --prebuilt
+```
+
+# Cron
+A single cron job is defined in `vercel.json`. This calls the `/cron` endpoint daily. This endpoint will run tasks as configured by the managers/administrators.
+
+## Local Testing
+Cron can be triggered manually by calling the `/cron` GET endpoint.
+
+# Auth Module Setup
+To run the auth module locally, generate the following keys and add them to the .env file in the backend folder
+
+## Generating Keys
+
+**FERNET_KEY** : Used to encrypt TOTP secrets before storing in the database:
+uv run python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+
+**SECRET_KEY** : RSA private key used for signing JWT tokens:
+uv run python -c "from cryptography.hazmat.primitives.asymmetric import rsa; from cryptography.hazmat.primitives import serialization; key = rsa.generate_private_key(public_exponent=65537, key_size=2048); print(key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.TraditionalOpenSSL, serialization.NoEncryption()).decode())"
