@@ -59,3 +59,14 @@ A single cron job is defined in `vercel.json`. This calls the `/cron` endpoint d
 
 ## Local Testing
 Cron can be triggered manually by calling the `/cron` GET endpoint.
+
+# Auth Module Setup
+To run the auth module locally, generate the following keys and add them to the .env file in the backend folder
+
+## Generating Keys
+
+**FERNET_KEY** : Used to encrypt TOTP secrets before storing in the database:
+uv run python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+
+**SECRET_KEY** : RSA private key used for signing JWT tokens:
+uv run python -c "from cryptography.hazmat.primitives.asymmetric import rsa; from cryptography.hazmat.primitives import serialization; key = rsa.generate_private_key(public_exponent=65537, key_size=2048); print(key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.TraditionalOpenSSL, serialization.NoEncryption()).decode())"

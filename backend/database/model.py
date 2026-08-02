@@ -168,6 +168,7 @@ class AuthUser(Base):
 
     failed_attempt = Column(Integer, default=0)
     locked_until = Column(DateTime)
+    admin_locked = Column(Boolean, default=False)
 
     last_login = Column(DateTime)
     hash_password = Column(String)
