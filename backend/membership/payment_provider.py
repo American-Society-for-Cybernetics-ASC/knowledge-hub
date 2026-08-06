@@ -25,8 +25,6 @@ class PaymentProvider(ABC):
  
  
 class StubPaymentProvider(PaymentProvider):
-    """Always succeeds — lets you build and test the Membership module
-    end-to-end without a working Stripe integration."""
  
     def create_one_off(self) -> dict[str, Any]:
         return {"status": PaymentStatus.PAID.value}
