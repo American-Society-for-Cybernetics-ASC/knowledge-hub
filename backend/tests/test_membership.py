@@ -18,7 +18,7 @@ def db_session(monkeypatch):
  
     session = Session(engine, expire_on_commit=False)
  
-    # test session instead of hitting Postgres/Supabase.
+    #Test session instead of hitting Postgres/Supabase.
     monkeypatch.setattr("membership.module.get_session", lambda: session)
  
     yield session
@@ -55,6 +55,7 @@ def test_start_membership_succeeds_for_approved_member(db_session, approved_memb
     assert membership.payment_id is not None
  
  
+ 
 def test_start_membership_rejects_unapproved_member(db_session):
     # A Member with NO approved application at all
     member = Member(status="Applied")
@@ -67,20 +68,22 @@ def test_start_membership_rejects_unapproved_member(db_session):
     with pytest.raises(Exception) as exc_info:
         module.start_membership(data)
  
-    # HTTPException carries a status_code — 403 means "not approved"
+    
     assert getattr(exc_info.value, "status_code", None) == 403
+ 
  
  
 def test_start_membership_rejects_duplicate_active_membership(db_session, approved_member):
     module = MembershipModule()
     data = MembershipCreate(member_id=approved_member.member_id, tier="Standard")
  
-    module.start_membership(data)  # first one succeeds
+    module.start_membership(data) 
  
     with pytest.raises(Exception) as exc_info:
-        module.start_membership(data)  # second one should be rejected
+        module.start_membership(data)  
  
     assert getattr(exc_info.value, "status_code", None) == 409
+ 
  
  
 def test_get_membership_returns_correct_record(db_session, approved_member):
@@ -95,6 +98,7 @@ def test_get_membership_returns_correct_record(db_session, approved_member):
     assert fetched.tier == "Standard"
  
  
+ 
 def test_get_membership_missing_raises_404(db_session):
     module = MembershipModule()
  
@@ -102,6 +106,7 @@ def test_get_membership_missing_raises_404(db_session):
         module.get_membership(9999)
  
     assert getattr(exc_info.value, "status_code", None) == 404
+ 
  
  
 def test_cancel_then_uncancel_membership(db_session, approved_member):
@@ -117,6 +122,7 @@ def test_cancel_then_uncancel_membership(db_session, approved_member):
     assert reinstated.status == "Current"
  
  
+ 
 def test_cancel_already_cancelled_membership_raises_409(db_session, approved_member):
     module = MembershipModule()
     membership = module.start_membership(
@@ -128,6 +134,7 @@ def test_cancel_already_cancelled_membership_raises_409(db_session, approved_mem
         module.cancel_membership(membership.membership_id)
  
     assert getattr(exc_info.value, "status_code", None) == 409
+
  
  
 def test_list_memberships_filters_by_status(db_session, approved_member):
