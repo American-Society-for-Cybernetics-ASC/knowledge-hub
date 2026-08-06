@@ -35,7 +35,7 @@ class MembershipActionResult(BaseModel):
     membership: MembershipRead
     message: str
     
-class MembershipLidtParams(BaseModel):
+class MembershipListParams(BaseModel):
     status: Optional[MembershipStatus] = None
     member_id: Optional[int] = None #Filter to one member's membership
     

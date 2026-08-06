@@ -28,7 +28,7 @@ class MembershipModule:
             if existing:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    DETAIL="Member already has an active membership",
+                    detail="Member already has an active membership",
                 )
             
             approved_application = (
