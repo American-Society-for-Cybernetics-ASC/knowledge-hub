@@ -222,10 +222,9 @@ class Notification(Base):
 
     notification_id = mapped_column(Integer, primary_key=True, index=True)
     user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"))
+    subject = mapped_column(String, nullable=False)
     message = mapped_column(String, nullable=False)
-    notification_type = mapped_column(String, nullable=False)
-    status = mapped_column(String, default="unread")
-    send_email = mapped_column(Boolean, default=False)
+    read = mapped_column(Boolean, default="False")
     created_at = mapped_column(DateTime, server_default=func.now())
 
     # Relationship

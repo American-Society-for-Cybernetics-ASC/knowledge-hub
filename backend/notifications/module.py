@@ -10,11 +10,9 @@ from utils import BaseModel
 
 class NotificationData(BaseModel):
     user_id: int
+    subject: str
     message: str
-    notification_type: str
     send_email: bool = False
-    email_subject: str = ""
-    email_content: str = ""
 
 
 class NotificationsModule:
@@ -30,29 +28,28 @@ class NotificationsModule:
 
         new_notification = model.Notification(
             user_id=notification.user_id,
+            subject=notification.subject,
             message=notification.message,
-            notification_type=notification.notification_type,
-            status="unread",
-            send_email=notification.send_email,
+            read=False,
         )
         session.add(new_notification)
         session.commit()
 
-        if notification.send_email and notification.email_subject and notification.email_content:
+        if notification.send_email:
             user = session.get(model.AuthUser, notification.user_id)
             if user and user.email:
                 mail = Email(
                     sender=self._get_sender(),
                     recipients=[user.email],
-                    subject=notification.email_subject,
-                    content=notification.email_content,
+                    subject=f"CKH Notification: {notification.subject}",
+                    content=notification.message,
                 )
                 MailModule().send_mail(mail)
 
     def get_notifications(
         self,
         user_id: int,
-        status: str | None = None,
+        unread_only: bool = False,
     ) -> list[model.Notification]:
         """
         To return a list of notification to a user. 
@@ -63,14 +60,14 @@ class NotificationsModule:
             model.Notification.user_id == user_id
         )
 
-        if status:
-            query = query.where(model.Notification.status == status)
+        if unread_only:
+            query = query.where(model.Notification.read == False)
 
         query = query.order_by(model.Notification.created_at.desc())
 
         return list(session.execute(query).scalars().all())
 
-    def mark_as_read(self, notification_id: int, user_id: int) -> bool:
+    def mark_as_read(self, notification_id: int) -> bool:
         """
         Modify the status of the notification for a particular user
         """
@@ -78,10 +75,10 @@ class NotificationsModule:
 
         notification = session.get(model.Notification, notification_id)
 
-        if not notification or notification.user_id != user_id:
+        if not notification:
             return False
 
-        notification.status = "read"
+        notification.read = True
         session.commit()
 
         return True
