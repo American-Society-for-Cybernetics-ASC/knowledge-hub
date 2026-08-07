@@ -35,7 +35,7 @@ def run_cron_jobs(
 @cron_router.get("/queued_jobs")
 def get_queued_jobs(
     module: Annotated[CronModule, Depends(CronModule)],
-    _: Annotated[None, Depends(authorized(["cron"], PermissionTier.manager))],
+    _=Depends(authorized(["cron"], PermissionTier.manager)),
 ) -> list[CronJob]:
     return module.get_queued_cron_jobs()
 
@@ -43,6 +43,6 @@ def get_queued_jobs(
 @cron_router.get("/jobs")
 def get_all_jobs(
     module: Annotated[CronModule, Depends(CronModule)],
-    _: Annotated[None, Depends(authorized(["cron"], PermissionTier.manager))],
+    _=Depends(authorized(["cron"], PermissionTier.manager)),
 ) -> list[CronJob]:
     return module.get_all_cron_jobs()

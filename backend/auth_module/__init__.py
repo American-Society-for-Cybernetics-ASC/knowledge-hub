@@ -58,13 +58,30 @@ class Permissions(BaseModel):
 
 
 def user_id(request: Request) -> int:
+    """
+    Extract the user's id.
+
+    ```python
+    @app.get("")
+    def my_route(user_id: Annotated[int, Depends(user_id)]):
+        ...
+    ```
+    """
     _authorization = request.get("authorization")
     # TODO: actually get the user id
     return 0
 
 
-def permissions(request: Request) -> Permissions:
-    _authorization = request.get("authorization")
+def permissions(user_id: Annotated[Permissions, Depends(user_id)]) -> Permissions:
+    """
+    Extracts the user's permissions.
+
+    ```python
+    @app.get("")
+    def my_route(permissions: Annotated[Permissions, Depends(permissions)]):
+        ...
+    ```
+    """
 
     if SETTINGS.local_deployment:
         return Permissions(tier=PermissionTier.adminstrator, children={})
@@ -74,7 +91,16 @@ def permissions(request: Request) -> Permissions:
 
 
 def authorized(heirarchy: list[str], tier: PermissionTier) -> Callable:
-    """Check that the caller has the given permission"""
+    """
+    Check that the caller has the given permission.
+
+    Usage example:
+    ```python
+    @app.get("")
+    def my_route(_ = Depends(authorized(["module", "subpermission"], PermissionTier.manager))):
+        ...
+    ```
+    """
 
     def inner(permissions: Annotated[Permissions, Depends(permissions)]):
         if not permissions.includes(heirarchy, tier):
