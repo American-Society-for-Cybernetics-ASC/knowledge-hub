@@ -10,15 +10,18 @@ class MemberNotFoundError(LookupError):
 class MembersModule:
     """Business logic for member profile retrieval and updates."""
 
-    # Private helper method to serialize the profile into the API model.
-    # 1. Get the content from the profile.
-    # 2. Get the tags from the profile.
-    # 3. Return the serialized profile.
     @staticmethod
     def _serialize_profile(
         member: database_model.Member,
         profile: database_model.Profile,
     ) -> MemberProfile:
+        """ 
+        Helper method to serialize the profile into the API model.
+
+        1. Get the content from the profile.
+        2. Get the tags from the profile.
+        3. Return the serialized profile.
+        """
         content = ProfileContent.model_validate(profile.content or {})
         tags = ProfileUpdate.model_validate({"tags": profile.tags or []}).tags or []
 
@@ -29,15 +32,18 @@ class MembersModule:
             tags=tags,
         )
 
-    # Private helper method to get or create the profile for a member.
-    # 1. If the member has a profile, return it.
-    # 2. If the member does not have a profile, create a new one.
-    # 3. Return the profile.
     @staticmethod
     def _get_or_create_profile(
         session: Any,
         member: database_model.Member,
     ) -> database_model.Profile:
+        """
+        Helper method to get or create the profile for a member.
+
+        1. If the member has a profile, return it.
+        2. If the member does not have a profile, create a new one.
+        3. Return the profile.
+        """
         if member.profile is not None:
             return member.profile
 
@@ -50,8 +56,15 @@ class MembersModule:
         session.flush()
         return profile
 
-    # Public method to get member profile.
     def get_profile(self, member_id: int) -> MemberProfile:
+        """
+        Method to get member profile.
+
+        1. Get the member from the database.
+        2. If the member is not found, raise a MemberNotFoundError.
+        3. Get or create the profile for the member.
+        4. Return the serialized profile.
+        """
         with database.get_session() as session:
             member = session.get(database_model.Member, member_id)
 
@@ -63,12 +76,20 @@ class MembersModule:
 
             return self._serialize_profile(member, profile)
 
-    # Public method to update member profile.
     def update_profile(
         self,
         member_id: int,
         update: ProfileUpdate,
     ) -> MemberProfile:
+        """
+        Method to update member profile.
+
+        1. Get the member from the database.
+        2. If the member is not found, raise a MemberNotFoundError.
+        3. Get or create the profile for the member.
+        4. Update the profile with the new content.
+        5. Return the serialized profile.
+        """
         with database.get_session() as session:
             member = session.get(database_model.Member, member_id)
 
@@ -102,15 +123,15 @@ class MembersModule:
                 "affiliations",
                 "publications",
             }
-
             for field in collection_fields:
                 if field in update_data and update_data[field] is None:
                     update_data[field] = []
 
+            # Update the profile content with the new data.
             content_data.update(update_data)
             profile.content = ProfileContent.model_validate(content_data).model_dump(
                 mode = "json"
-            )
+            )   
 
             session.commit()
             session.refresh(profile)
