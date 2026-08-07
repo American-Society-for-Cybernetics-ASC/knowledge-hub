@@ -194,7 +194,7 @@ class AuthLog(Base):
 class Module(Base):
     __tablename__ = "modules"
 
-    module_name = mapped_column(String, primary_key=True, index=True)
+    module_id = mapped_column(Integer, primary_key=True, index=True)
     config = mapped_column(JSON)
 
 
