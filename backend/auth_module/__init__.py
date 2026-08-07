@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Callable, Optional
+from typing import Annotated, Callable, Optional
 
-from fastapi import HTTPException, Request
+from fastapi import Depends, HTTPException, Request
 
 from utils import BaseModel
 from settings import SETTINGS
@@ -57,18 +57,26 @@ class Permissions(BaseModel):
         return False
 
 
+def user_id(request: Request) -> int:
+    _authorization = request.get("authorization")
+    # TODO: actually get the user id
+    return 0
+
+
+def permissions(request: Request) -> Permissions:
+    _authorization = request.get("authorization")
+
+    if SETTINGS.local_deployment:
+        return Permissions(tier=PermissionTier.adminstrator, children={})
+    else:
+        # TODO: don't default to admin on prod
+        return Permissions(tier=PermissionTier.adminstrator, children={})
+
+
 def authorized(heirarchy: list[str], tier: PermissionTier) -> Callable:
     """Check that the caller has the given permission"""
 
-    def inner(request: Request):
-        _authorization = request.get("authorization")
-
-        if SETTINGS.local_deployment:
-            permissions = Permissions(tier=PermissionTier.adminstrator, children={})
-        else:
-            # TODO: don't default to admin on prod
-            permissions = Permissions(tier=PermissionTier.adminstrator, children={})
-
+    def inner(permissions: Annotated[Permissions, Depends(permissions)]):
         if not permissions.includes(heirarchy, tier):
             raise HTTPException(401, "Unauthorized")
 
