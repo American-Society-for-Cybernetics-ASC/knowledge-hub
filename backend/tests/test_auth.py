@@ -13,6 +13,9 @@ def test_ordering():
     )
     assert Permissions(
         children={"blah": Permissions(tier=PermissionTier.manager)}
+    ).includes(["blah", "boo"], PermissionTier.moderator)
+    assert Permissions(
+        children={"blah": Permissions(tier=PermissionTier.manager)}
     ).includes(["blah"], PermissionTier.moderator)
     assert not Permissions(
         tier=None, children={"blah": Permissions(tier=PermissionTier.manager)}
