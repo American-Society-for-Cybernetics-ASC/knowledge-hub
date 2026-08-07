@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable
+from typing import Callable, Optional
 
 from fastapi import HTTPException, Request
 
@@ -35,38 +35,41 @@ class PermissionTier(Enum):
         return NotImplemented
 
 
-class Permission(BaseModel):
-    """Note that these do not have a total ordering: there are some permissions where neither is greater than the other"""
+class Permissions(BaseModel):
+    """A User's permissions, structured as a tree"""
 
-    heirarchy: list[str]
-    tier: PermissionTier
+    tier: Optional[PermissionTier] = None
+    """Optional for e.g. a normal member with no permissions, who was made moderator of a single repository"""
 
-    def includes(self, other: Permission) -> bool:
-        return (
-            self.tier >= other.tier
-            and len(self.heirarchy) <= len(other.heirarchy)
-            and self.heirarchy == other.heirarchy[: len(self.heirarchy)]
-        )
+    children: dict[str, Permissions] = {}
+
+    def includes(self, heirarchy: list[str], tier: PermissionTier) -> bool:
+        if self.tier and self.tier > tier:
+            return True
+
+        if len(heirarchy) == 0:
+            return False
+
+        next = self.children.get(heirarchy[0])
+        if next:
+            return next.includes(heirarchy[1:], tier)
+
+        return False
 
 
 def authorized(heirarchy: list[str], tier: PermissionTier) -> Callable:
     """Check that the caller has the given permission"""
-    permission = Permission(heirarchy=heirarchy, tier=tier)
 
     def inner(request: Request):
         _authorization = request.get("authorization")
 
         if SETTINGS.local_deployment:
-            user_permissions = [
-                Permission(heirarchy=[], tier=PermissionTier.adminstrator)
-            ]
+            permissions = Permissions(tier=PermissionTier.adminstrator, children={})
         else:
             # TODO: don't default to admin on prod
-            user_permissions = [
-                Permission(heirarchy=[], tier=PermissionTier.adminstrator)
-            ]
+            permissions = Permissions(tier=PermissionTier.adminstrator, children={})
 
-        if not any((p.includes(permission) for p in user_permissions)):
+        if not permissions.includes(heirarchy, tier):
             raise HTTPException(401, "Unauthorized")
 
     return inner

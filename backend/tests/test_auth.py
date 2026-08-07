@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from auth_module import Permission, PermissionTier
+from auth_module import Permissions, PermissionTier
 
 
 def test_ordering():
@@ -8,18 +8,18 @@ def test_ordering():
     assert PermissionTier.adminstrator >= PermissionTier.manager
     assert PermissionTier.moderator < PermissionTier.manager
 
-    assert Permission(heirarchy=[], tier=PermissionTier.adminstrator).includes(
-        Permission(heirarchy=["blah"], tier=PermissionTier.moderator)
+    assert Permissions(tier=PermissionTier.adminstrator).includes(
+        ["blah"], PermissionTier.moderator
     )
-    assert Permission(heirarchy=["blah"], tier=PermissionTier.manager).includes(
-        Permission(heirarchy=["blah", "blah"], tier=PermissionTier.moderator)
-    )
-    assert not Permission(heirarchy=["blah"], tier=PermissionTier.manager).includes(
-        Permission(heirarchy=["boo"], tier=PermissionTier.manager)
-    )
-    assert not Permission(heirarchy=["boo"], tier=PermissionTier.manager).includes(
-        Permission(heirarchy=["blah"], tier=PermissionTier.manager)
-    )
+    assert Permissions(
+        children={"blah": Permissions(tier=PermissionTier.manager)}
+    ).includes(["blah"], PermissionTier.moderator)
+    assert not Permissions(
+        tier=None, children={"blah": Permissions(tier=PermissionTier.manager)}
+    ).includes(["boo"], PermissionTier.moderator)
+    assert not Permissions(
+        tier=None, children={"boo": Permissions(tier=PermissionTier.manager)}
+    ).includes(["blah"], PermissionTier.moderator)
 
 
 def test_register_success(test_server: TestClient):
