@@ -29,8 +29,5 @@ class StubPaymentProvider(PaymentProvider):
     def create_one_off(self) -> dict[str, Any]:
         return {"status": PaymentStatus.PAID.value}
  
-    def create_recurring(self) -> dict[str, Any]:
-        return {"status": PaymentStatus.PAID.value}
- 
     def check(self, info: dict[str, Any]) -> PaymentStatus:
         return PaymentStatus.PAID
