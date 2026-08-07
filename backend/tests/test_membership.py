@@ -1,95 +1,80 @@
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
- 
+import database
 
-from database.base import Base
 from database.model import Member, MembershipApplication
 from membership.module import MembershipModule
 from membership.schema import MembershipCreate, MembershipListParams
  
  
-@pytest.fixture
-def db_session(monkeypatch):
-    """Creates a fresh in-memory SQLite database for each test, and makes
-    the Membership module use it instead of the real database."""
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
- 
-    session = Session(engine, expire_on_commit=False)
- 
-    #Test session instead of hitting Postgres/Supabase.
-    monkeypatch.setattr("membership.module.get_session", lambda: session)
- 
-    yield session
- 
-    session.close()
- 
- 
-@pytest.fixture
-def approved_member(db_session):
+def approved_member():
     """Creates a Member with an approved MembershipApplication"""
-    member = Member(status="Applied")
-    db_session.add(member)
-    db_session.flush()
+    with database.get_session() as db:
+        member = Member(status="Applied")
+        db.add(member)
+        db.flush()
  
-    application = MembershipApplication(
-        member_id=member.member_id,
-        status="approved",
-    )
-    db_session.add(application)
-    db_session.commit()
+        application = MembershipApplication(
+            member_id=member.member_id,
+            status="approved",
+        )
+        db.add(application)
+        db.commit()
  
-    return member
+        return member.member_id
  
  
-def test_start_membership_succeeds_for_approved_member(db_session, approved_member):
+ 
+def test_start_membership_succeeds_for_approved_member(approved_member):
+    """An approved member should be able to start a membership successfully"""
     module = MembershipModule()
-    data = MembershipCreate(member_id=approved_member.member_id, tier="Standard")
+    data = MembershipCreate(member_id=approved_member, tier="Standard")
  
     membership = module.start_membership(data)
  
-    assert membership.member_id == approved_member.member_id
+    assert membership.member_id == approved_member
     assert membership.tier == "Standard"
     assert membership.status == "Current"
     assert membership.payment_id is not None
  
  
  
-def test_start_membership_rejects_unapproved_member(db_session):
-    # A Member with NO approved application at all
-    member = Member(status="Applied")
-    db_session.add(member)
-    db_session.commit()
+def test_start_membership_rejects_unapproved_member():
+    """A member with no approved application should be rejected"""
+    with database.get_session() as db:
+        member = Member(status="Applied")
+        db.add(member)
+        db.commit()
+        member_id = member.member_id
  
     module = MembershipModule()
-    data = MembershipCreate(member_id=member.member_id, tier="Standard")
+    data = MembershipCreate(member_id=member_id, tier="Standard")
  
     with pytest.raises(Exception) as exc_info:
         module.start_membership(data)
  
-    
     assert getattr(exc_info.value, "status_code", None) == 403
  
  
  
-def test_start_membership_rejects_duplicate_active_membership(db_session, approved_member):
+def test_start_membership_rejects_duplicate_active_membership(approved_member):
+    """A member who already has a Current membership can't start a second one"""
     module = MembershipModule()
-    data = MembershipCreate(member_id=approved_member.member_id, tier="Standard")
+    data = MembershipCreate(member_id=approved_member, tier="Standard")
  
-    module.start_membership(data) 
+    module.start_membership(data)
  
     with pytest.raises(Exception) as exc_info:
-        module.start_membership(data)  
+        module.start_membership(data)
  
     assert getattr(exc_info.value, "status_code", None) == 409
  
  
  
-def test_get_membership_returns_correct_record(db_session, approved_member):
+def test_get_membership_returns_correct_record(approved_member):
+    """Fetching a membership by ID should return the exact record created"""
     module = MembershipModule()
     created = module.start_membership(
-        MembershipCreate(member_id=approved_member.member_id, tier="Standard")
+        MembershipCreate(member_id=approved_member, tier="Standard")
     )
  
     fetched = module.get_membership(created.membership_id)
@@ -99,7 +84,8 @@ def test_get_membership_returns_correct_record(db_session, approved_member):
  
  
  
-def test_get_membership_missing_raises_404(db_session):
+def test_get_membership_missing_raises_404():
+    """Fetching a membership that doesn't exist should raise 404"""
     module = MembershipModule()
  
     with pytest.raises(Exception) as exc_info:
@@ -109,10 +95,11 @@ def test_get_membership_missing_raises_404(db_session):
  
  
  
-def test_cancel_then_uncancel_membership(db_session, approved_member):
+def test_cancel_then_uncancel_membership(approved_member):
+    """A membership can be cancelled and then reinstated via uncancel"""
     module = MembershipModule()
     membership = module.start_membership(
-        MembershipCreate(member_id=approved_member.member_id, tier="Standard")
+        MembershipCreate(member_id=approved_member, tier="Standard")
     )
  
     cancelled = module.cancel_membership(membership.membership_id)
@@ -123,10 +110,11 @@ def test_cancel_then_uncancel_membership(db_session, approved_member):
  
  
  
-def test_cancel_already_cancelled_membership_raises_409(db_session, approved_member):
+def test_cancel_already_cancelled_membership_raises_409(approved_member):
+    """Cancelling an already-cancelled membership should raise 409"""
     module = MembershipModule()
     membership = module.start_membership(
-        MembershipCreate(member_id=approved_member.member_id, tier="Standard")
+        MembershipCreate(member_id=approved_member, tier="Standard")
     )
     module.cancel_membership(membership.membership_id)
  
@@ -134,13 +122,14 @@ def test_cancel_already_cancelled_membership_raises_409(db_session, approved_mem
         module.cancel_membership(membership.membership_id)
  
     assert getattr(exc_info.value, "status_code", None) == 409
-
  
  
-def test_list_memberships_filters_by_status(db_session, approved_member):
+ 
+def test_list_memberships_filters_by_status(approved_member):
+    """Listing memberships with a status filter should only return matches"""
     module = MembershipModule()
     membership = module.start_membership(
-        MembershipCreate(member_id=approved_member.member_id, tier="Standard")
+        MembershipCreate(member_id=approved_member, tier="Standard")
     )
  
     current_results, current_total = module.list_memberships(
