@@ -1,2 +1,2 @@
-from .module import PaymentModule as PaymentModule
+from .module import PaymentsModule as PaymentsModule
 
