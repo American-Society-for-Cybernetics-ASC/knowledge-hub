@@ -6,6 +6,7 @@ from fastapi import Depends, HTTPException, Request
 from utils import BaseModel
 from settings import SETTINGS
 from .module import AuthModule as AuthModule
+from jose import jwt
 
 
 class PermissionTier(Enum):
@@ -67,12 +68,23 @@ def user_id(request: Request) -> int:
         ...
     ```
     """
-    _authorization = request.get("authorization")
-    # TODO: actually get the user id
-    return 0
+    if SETTINGS.testing:
+        return 0
+    
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        from auth_module.module import AuthModule
+        public_key_pem = AuthModule()._get_public_key_pem()
+        payload = jwt.decode(token, public_key_pem, algorithms=["RS256"])
+        return int(payload["sub"])
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
-def permissions(user_id: Annotated[Permissions, Depends(user_id)]) -> Permissions:
+def permissions(user_id: Annotated[int, Depends(user_id)]) -> Permissions:
     """
     Extracts the user's permissions.
 
@@ -82,12 +94,26 @@ def permissions(user_id: Annotated[Permissions, Depends(user_id)]) -> Permission
         ...
     ```
     """
+    if SETTINGS.testing:
+        return Permissions(tier=PermissionTier.adminstrator, children={})
 
-    if SETTINGS.local_deployment:
-        return Permissions(tier=PermissionTier.adminstrator, children={})
-    else:
-        # TODO: don't default to admin on prod
-        return Permissions(tier=PermissionTier.adminstrator, children={})
+    import database
+    from database import model
+
+    session = database.get_session()
+    user = session.get(model.AuthUser, user_id)
+
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    if not user.role:
+        return Permissions(tier=None, children={})
+
+    try:
+        tier = PermissionTier(user.role)
+        return Permissions(tier=tier, children={})
+    except ValueError:
+        return Permissions(tier=None, children={})
 
 
 def authorized(heirarchy: list[str], tier: PermissionTier) -> Callable:
