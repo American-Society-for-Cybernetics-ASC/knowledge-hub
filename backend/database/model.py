@@ -228,3 +228,17 @@ class MembershipApplication(Base):
     member_id = mapped_column(Integer, ForeignKey("members.member_id"))
     member = relationship("Member", back_populates="applications")
  
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    notification_id = mapped_column(Integer, primary_key=True, index=True)
+    user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"))
+    subject = mapped_column(String, nullable=False)
+    message = mapped_column(String, nullable=False)
+    read = mapped_column(Boolean, default="False")
+    created_at = mapped_column(DateTime, server_default=func.now())
+
+    # Relationship
+    user = relationship("AuthUser")
