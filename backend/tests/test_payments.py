@@ -7,7 +7,7 @@ from payments.provider.stripe_provider import STATUS_MAP, StripeTransaction
 def test_create_one_off_has_succeeded_default():
     transaction = MockTransaction.create_one_off(100)
 
-    assert transaction.amount() == 500
+    assert transaction.amount() == 100
     assert transaction.check() == PaymentStatus.SUCCEEDED
 
 def test_create_one_off_generates_unique_payment_id():
