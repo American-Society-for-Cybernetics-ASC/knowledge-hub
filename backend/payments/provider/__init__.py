@@ -6,17 +6,17 @@ from model import PaymentStatus
 
 class PaymentProviderInterface(BaseModel):
     @abstractmethod
-    def create_one_off(
-        self,
-        amount: int,
-        currency: str,
-        customer_id: str,
-        data: Optional[dict[str, str]] = None,
-        idempotency_key: Optional[str] = None
-        ) -> dict: ...
+    def create_one_off(self, amount: int) -> "PaymentProviderInterface": ...
 
     @abstractmethod
-    def create_recurring(self) -> dict: ...
+    def check(self) -> PaymentStatus: ...
 
     @abstractmethod
-    def check(self, info: dict) -> PaymentStatus: ...
+    def amount(self) -> int: ...
+
+class TransactionInterface(BaseModel):
+    @abstractmethod
+    def check(self) -> PaymentStatus: ...
+
+    @abstractmethod
+    def amount(self) -> int: ...
