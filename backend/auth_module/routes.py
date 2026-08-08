@@ -10,6 +10,7 @@ auth_router = APIRouter()
 
 # Request schemas
 
+
 class RegisterRequest(BaseModel):
     email: str
     password: str
@@ -33,6 +34,7 @@ class ConfirmTOTPRequest(BaseModel):
 
 # Response schemas
 
+
 class RegisterResponse(BaseModel):
     qr_uri: str
     message: str
@@ -51,6 +53,7 @@ class VerifyOTPResponse(BaseModel):
 
 # Endpoints
 
+
 @auth_router.post("/auth/register")
 def register(
     req: RegisterRequest,
@@ -68,7 +71,7 @@ def register(
         )
         return RegisterResponse(
             qr_uri=qr_uri,
-            message="Registration successful. Please scan the QR code with your authenticator app."
+            message="Registration successful. Please scan the QR code with your authenticator app.",
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -102,11 +105,10 @@ def get_totp_setup(
     try:
         qr_uri = module.get_totp_setup(email=email)
         return RegisterResponse(
-            qr_uri=qr_uri,
-            message="Scan this QR code with your authenticator app."
+            qr_uri=qr_uri, message="Scan this QR code with your authenticator app."
         )
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))    
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @auth_router.post("/auth/login")
@@ -125,7 +127,7 @@ def login(
         )
         return LoginResponse(
             challenge_token=challenge_token,
-            message="Password verified. Please enter the One-Time Passcode."
+            message="Password verified. Please enter the One-Time Passcode.",
         )
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
