@@ -62,21 +62,6 @@ def add_member(
             detail=str(e),
         )
 
-@groups_router.delete("/{group_id}/emails/{email}")
-def remove_email(
-    group_id: int,
-    email: str,
-    manager_id: int,
-    module: Annotated[GroupModule, Depends(GroupModule)],
-) -> None:
-    try:
-        module.remove_email(group_id, email, manager_id)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=404,
-            detail=str(e),
-        )
-
 @groups_router.post("/{group_id}/leave")
 def leave_group(
     group_id: int,
@@ -90,3 +75,17 @@ def leave_group(
             status_code=404,
             detail=str(e),
         )
+
+@groups_router.post("/{group_id}/members/{member_id}/kick")
+def kick_member(
+    group_id: int,
+    member_id: int,
+    module: Annotated[GroupModule, Depends(GroupModule)],
+) -> None:
+    try:
+            module.kick_member(group_id, member_id)
+    except MemberNotFoundError as e:
+         raise HTTPException(
+              status_code=404,
+              detail=str(e),
+         )

@@ -12,7 +12,7 @@ class GroupModule:
     """Handle all group operations"""
 
     def get_groups(self) -> list[Group]:
-        """returns a list of all groups"""
+        """Returns a list of all groups"""
         session = database.get_session()
         groups = session.execute(select(model.Group)).scalars().all()
         return [
@@ -21,7 +21,7 @@ class GroupModule:
         ]
     
     def join_group(self, group_id: int, member_id: int) -> None:
-        """add a member to a group and syncs with Google Workspace mailing list"""
+        """Add a member to a group and syncs with Google Workspace mailing list (to be added)"""
         session = database.get_session()
         member = session.get(model.Member, member_id)
         if member is None:
@@ -32,7 +32,7 @@ class GroupModule:
         session.commit()
 
     def leave_group(self, group_id: int, member_id: int) -> None:
-        """remove a member from a group"""
+        """Remove a member from a group"""
         session = database.get_session()
         member = session.get(model.Member, member_id)
         if member is None:
@@ -43,7 +43,7 @@ class GroupModule:
         session.commit()
 
     def get_group_members(self, group_id: int) -> list[GroupMember]:
-        """return all members of a group"""
+        """Return all members of a group"""
         session = database.get_session()
         members = session.execute(
             select(model.Member).where(
@@ -62,7 +62,7 @@ class GroupModule:
             member_id: int, 
             manager_id: int
     ) -> None:
-        """assign a member to a group by a manager"""
+        """Assign a member to a group by a manager"""
         session = database.get_session()
         member = session.get(model.Member, member_id)
         if member is None:
@@ -72,29 +72,26 @@ class GroupModule:
         member.group_id = group_id
         session.commit()
 
-    def remove_email(
+    def kick_member(
             self,
             group_id: int,
-            email: str,
+            member_id: int,
             manager_id: int
     ) -> None:
-        """remove a member from a group by a manager"""
+        """Allows manager to remove a member from a group"""
         session = database.get_session()
-        mailing_member = session.execute(
-            select(model.MailingListMember).where(
-                model.MailingListMember.group_id == group_id,
-                model.MailingListMember.email == email,
+        member = session.get(model.Member, member_id)
+
+        if member is None:
+            raise MemberNotFoundError(
+                f"Member {member_id} cannot be found"
             )
-        ).scalar_one_or_none()
 
-        if mailing_member is None:
-            raise ValueError(f"{email} is not in group {group_id}")
-
-        session.delete(mailing_member)
+        member.group_id = None
         session.commit()
 
     def register_group(self, mailing_list_email: str, manager_id: int) -> Group:
-        """manually register an existing group. Doesn't automatically import all Google Workspace Groups"""
+        """Allows a manager to manually register an existing group. Doesn't automatically import all Google Workspace Groups"""
         session = database.get_session()
         group = model.Group(
             name=mailing_list_email,
