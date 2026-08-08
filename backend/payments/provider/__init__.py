@@ -2,7 +2,7 @@ from abc import abstractmethod
 from pydantic import BaseModel
 from typing import Optional
 
-from model import PaymentStatus
+from payments.model import PaymentStatus
 
 class PaymentProviderInterface(BaseModel):
     @abstractmethod

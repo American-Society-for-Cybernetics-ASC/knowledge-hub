@@ -1,7 +1,7 @@
 from typing import Literal
 from pydantic import Field
 
-from . import TransactionInterface
+from payments.provider import TransactionInterface
 from model import PaymentStatus
 from settings import SETTINGS
 

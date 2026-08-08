@@ -2,8 +2,8 @@ from typing import Literal
 from pydantic import Field
 from uuid import uuid4
 
-from . import PaymentProviderInterface
-from model import PaymentStatus
+from payments.provider import PaymentProviderInterface
+from payments.model import PaymentStatus
 
 class MockTransaction(PaymentProviderInterface):
     transaction_type: Literal["mock"] = Field(default = "mock")
