@@ -64,7 +64,7 @@ class MembershipModule:
             if provider.check(result) != PaymentStatus.PAID:
                 raise HTTPException(
                     status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                    detail="Payment cpuld not be confirmed",
+                    detail="Payment could not be confirmed",
                 )
             
             payment = Payment(
