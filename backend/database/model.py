@@ -215,3 +215,17 @@ class FailedEmailTable(Base):
     retries = mapped_column(Integer, default=0)
     email = mapped_column(JSON)
     error = mapped_column(String, nullable=True)
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    notification_id = mapped_column(Integer, primary_key=True, index=True)
+    user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"))
+    subject = mapped_column(String, nullable=False)
+    message = mapped_column(String, nullable=False)
+    read = mapped_column(Boolean, default="False")
+    created_at = mapped_column(DateTime, server_default=func.now())
+
+    # Relationship
+    user = relationship("AuthUser")
