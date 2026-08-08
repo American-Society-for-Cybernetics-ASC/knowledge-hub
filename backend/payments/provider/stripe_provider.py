@@ -2,12 +2,10 @@ from typing import Literal
 from pydantic import Field
 
 from payments.provider import TransactionInterface
-from model import PaymentStatus
+from payments.model import PaymentStatus
 from settings import SETTINGS
 
 from stripe import PaymentIntent
-
-# TODO: Read config inside here
 
 STATUS_MAP = {
     "requires_payment_method": PaymentStatus.PENDING,
@@ -20,6 +18,7 @@ STATUS_MAP = {
 }
 
 class StripeTransaction(TransactionInterface):
+    """Interface for a Stripe Transaction"""
     transaction_type: Literal["stripe"] = Field(default="stripe")
 
     payment_id: str

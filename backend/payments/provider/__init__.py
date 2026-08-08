@@ -1,6 +1,5 @@
 from abc import abstractmethod
 from pydantic import BaseModel
-from typing import Optional
 
 from payments.model import PaymentStatus
 
