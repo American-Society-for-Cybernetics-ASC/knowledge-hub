@@ -17,29 +17,28 @@ class MailModule:
 
     def get_config(self) -> MailModuleConfig:
         """Fetch the module's config from the database"""
-        session = database.get_session()
-        try:
-            config_record = session.get_one(model.Module, MailModule.MODULE_ID)
-            return MailModuleConfig.model_validate(config_record.config)
-        except NoResultFound:
-            config_record = model.Module(
-                module_name=MailModule.MODULE_ID,
-                config=MailModuleConfig.default().model_dump(),
-            )
-            session.add(config_record)
-            session.commit()
-            return self.get_config()
+        with database.get_session() as session:
+            try:
+                config_record = session.get_one(model.Module, MailModule.MODULE_ID)
+                return MailModuleConfig.model_validate(config_record.config)
+            except NoResultFound:
+                config_record = model.Module(
+                    module_name=MailModule.MODULE_ID,
+                    config=MailModuleConfig.default().model_dump(),
+                )
+                session.add(config_record)
+                session.commit()
+                return self.get_config()
 
     def get_failed_emails(self) -> list[FailedEmail[Email]]:
         """Get all emails that have failed to send"""
-        session = database.get_session()
-
-        return list(
-            map(
-                FailedEmail[Email].model_validate_sqlalchemy,
-                session.execute(select(model.FailedEmailTable)).scalars().all(),
+        with database.get_session() as session:
+            return list(
+                map(
+                    FailedEmail[Email].model_validate_sqlalchemy,
+                    session.execute(select(model.FailedEmailTable)).scalars().all(),
+                )
             )
-        )
 
     def send_mail(self, mail: Email):
         """Attempt to send an email. Adds it to :class:`~database.model.FailedEmailTable` on failure"""
@@ -54,9 +53,9 @@ class MailModule:
             error = "No email provider configured"
 
         # Failed to send: add it to the failed email table.
-        session = database.get_session()
-        session.add(model.FailedEmailTable(email=mail.model_dump(), error=error))
-        session.commit()
+        with database.get_session() as session:
+            session.add(model.FailedEmailTable(email=mail.model_dump(), error=error))
+            session.commit()
 
 
 type MailProvider = Annotated[

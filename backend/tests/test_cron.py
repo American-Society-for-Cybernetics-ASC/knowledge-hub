@@ -52,17 +52,17 @@ def test_conversion():
 
 
 def test_queued(test_server, mock_get_session: Callable[[], Session]):
-    session: Session = mock_get_session()
-    session.add(
-        model.CronJobTable(
-            id=1,
-            enabled=False,
-            last_executed=datetime(2026, 1, 1),
-            period=60 * 60 * 24,
-            job={"job_type": "example_job"},
+    with mock_get_session() as session:
+        session.add(
+            model.CronJobTable(
+                id=1,
+                enabled=False,
+                last_executed=datetime(2026, 1, 1),
+                period=60 * 60 * 24,
+                job={"job_type": "example_job"},
+            )
         )
-    )
-    session.commit()
+        session.commit()
 
     r = test_server.get("cron/jobs")
     assert r.status_code == 200
@@ -79,17 +79,17 @@ def test_queued(test_server, mock_get_session: Callable[[], Session]):
 
 
 def test_execute_cron(test_server, mock_get_session: Callable[[], Session]):
-    session: Session = mock_get_session()
-    session.add(
-        model.CronJobTable(
-            id=1,
-            enabled=True,
-            last_executed=datetime(2026, 1, 1),
-            period=60 * 60 * 24,
-            job={"job_type": "example_job"},
+    with mock_get_session() as session:
+        session.add(
+            model.CronJobTable(
+                id=1,
+                enabled=True,
+                last_executed=datetime(2026, 1, 1),
+                period=60 * 60 * 24,
+                job={"job_type": "example_job"},
+            )
         )
-    )
-    session.commit()
+        session.commit()
 
     assert len(CronModule().get_queued_cron_jobs()) == 1
 

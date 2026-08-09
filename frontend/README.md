@@ -4,6 +4,8 @@ This is the Next.js frontend root.
 
 ## Running
 
+Ensure you created a `.env` based on `.env.example`.
+
 ### Development Build
 
 From `/frontend`:
