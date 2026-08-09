@@ -199,7 +199,7 @@ class AuthModule:
         # Return challenge token (TODO: Proper chellenge token)
         return f"challenge:{user.user_id}"
 
-    def verify_otp(self, email: str, code: str) -> dict:
+    def verify_otp(self, email: str, code: str) -> str:
         """
         Second step of login - verifies TOTP code and issues JWT.
 
