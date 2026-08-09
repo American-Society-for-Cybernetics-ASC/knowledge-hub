@@ -1,11 +1,8 @@
-// TODO: Implement register page
-// POST /auth/register
-// On success, display TOTP setup
-
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { register, confirmTOTP } from "@/lib/api/auth";
 
 export default function RegisterPage() {
@@ -58,16 +55,14 @@ export default function RegisterPage() {
         }
     }
 
-    if (step === "totp") {
+    //step === "register"
+    if (step === "register") {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="max-w-md w-full bg-white rounded-lg shadow p-8">
-                    <h1 className="text-2xl font-bold text-center mb-2">
-                        Set up Two-Factor Authentication
+                    <h1 className="text-2xl font-bold text-center mb-6">
+                        Create your account
                     </h1>
-                    <p className="text-sm text-gray-600 text-center mb-6">
-                        Scan the QR code below with your authenticator app
-                    </p>
 
                     {error && (
                         <div className="bg-red-50 text-red-700 p-3 rounded mb-4 text-sm">
@@ -75,28 +70,46 @@ export default function RegisterPage() {
                         </div>
                     )}
 
-                    <div className="flex justify-center mb-6">
-                        <img
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUri)}`}
-                            alt="TOTP QR Code"
-                            width={200}
-                            height={200}
-                        />
-                    </div>
-
-                    <form onSubmit={handleConfirmTOTP} className="space-y-4">
+                    <form onSubmit={handleRegister} className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Enter the 6-digit code from your authenticator app
+                                Display Name
                             </label>
                             <input
                                 type="text"
-                                value={totpCode}
-                                onChange={(e) => setTotpCode(e.target.value)}
+                                value={displayName}
+                                onChange={(e) => setDisplayName(e.target.value)}
                                 required
-                                maxLength={6}
-                                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg tracking-widest"
-                                placeholder="000000"
+                                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="John Doe"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Email
+                            </label>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="you@example.com"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Password
+                            </label>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="••••••••"
                             />
                         </div>
 
@@ -105,20 +118,31 @@ export default function RegisterPage() {
                             disabled={loading}
                             className="w-full bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 disabled:opacity-50"
                         >
-                            {loading ? "Verifying..." : "Confirm"}
+                            {loading ? "Creating account..." : "Create account"}
                         </button>
                     </form>
+
+                    <p className="text-center text-sm text-gray-600 mt-4">
+                        Already have an account?
+                        <Link href="/auth/login" className="text-blue-600 hover:underline ml-1">
+                            Sign in
+                        </Link>
+                    </p>
                 </div>
             </div>
         );
     }
 
+    //step === "totp"
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
             <div className="max-w-md w-full bg-white rounded-lg shadow p-8">
-                <h1 className="text-2xl font-bold text-center mb-6">
-                    Create your account
+                <h1 className="text-2xl font-bold text-center mb-2">
+                    Set up Two-Factor Authentication
                 </h1>
+                <p className="text-sm text-gray-600 text-center mb-6">
+                    Scan the QR code below with your authenticator app
+                </p>
 
                 {error && (
                     <div className="bg-red-50 text-red-700 p-3 rounded mb-4 text-sm">
@@ -126,46 +150,28 @@ export default function RegisterPage() {
                     </div>
                 )}
 
-                <form onSubmit={handleRegister} className="space-y-4">
+                <div className="flex justify-center mb-6">
+                    <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUri)}`}
+                        alt="TOTP QR Code"
+                        width={200}
+                        height={200}
+                    />
+                </div>
+
+                <form onSubmit={handleConfirmTOTP} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Display Name
+                            Enter the 6-digit code from your authenticator app
                         </label>
                         <input
                             type="text"
-                            value={displayName}
-                            onChange={(e) => setDisplayName(e.target.value)}
+                            value={totpCode}
+                            onChange={(e) => setTotpCode(e.target.value)}
                             required
-                            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="John Doe"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="you@example.com"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="••••••••"
+                            maxLength={6}
+                            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg tracking-widest"
+                            placeholder="000000"
                         />
                     </div>
 
@@ -174,16 +180,9 @@ export default function RegisterPage() {
                         disabled={loading}
                         className="w-full bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 disabled:opacity-50"
                     >
-                        {loading ? "Creating account..." : "Create account"}
+                        {loading ? "Verifying..." : "Confirm"}
                     </button>
                 </form>
-
-                <p className="text-center text-sm text-gray-600 mt-4">
-                    Already have an account?{" "}
-                    <a href="/auth/login" className="text-blue-600 hover:underline">
-                        Sign in
-                    </a>
-                </p>
             </div>
         </div>
     );

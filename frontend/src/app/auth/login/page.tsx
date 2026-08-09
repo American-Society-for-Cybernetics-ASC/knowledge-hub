@@ -1,11 +1,8 @@
-// TODO: Implement login page
-// POST /auth/login
-// On success, redirect to /auth/verify-otp
-
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { login } from "@/lib/api/auth";
 
 export default function LoginPage() {
@@ -88,10 +85,10 @@ export default function LoginPage() {
                 </form>
 
                 <p className="text-center text-sm text-gray-600 mt-4">
-                    Don&apos;t have an account?{" "}
-                    <a href="/auth/register" className="text-blue-600 hover:underline">
+                    Don't have an account?
+                    <Link href="/auth/register" className="text-blue-600 hover:underline ml-1">
                         Register
-                    </a>
+                    </Link>
                 </p>
             </div>
         </div>
