@@ -3,7 +3,7 @@ from pydantic import Field
 from uuid import uuid4
 
 from payments.provider import PaymentProviderInterface
-from payments.model import PaymentStatus
+from payments.enums import PaymentStatus
 
 class MockTransaction(PaymentProviderInterface):
     transaction_type: Literal["mock"] = Field(default = "mock")

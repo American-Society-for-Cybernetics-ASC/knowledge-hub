@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from pydantic import BaseModel
 
-from payments.model import PaymentStatus
+from payments.enums import PaymentStatus
 
 class PaymentProviderInterface(BaseModel):
     @abstractmethod

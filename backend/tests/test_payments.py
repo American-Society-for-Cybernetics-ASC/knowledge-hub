@@ -1,6 +1,6 @@
-from payments.provider import PaymentProviderInterface, PaymentStatus
+from payments.enums import PaymentStatus
 from payments.provider.mock_provider import MockTransaction
-from payments.provider.stripe_provider import STATUS_MAP, StripeTransaction
+from payments.provider.stripe_provider import StripeTransaction
 
 # Test Resources
 

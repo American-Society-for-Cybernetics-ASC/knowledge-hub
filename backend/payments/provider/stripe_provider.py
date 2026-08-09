@@ -1,11 +1,11 @@
 from typing import Literal
 from pydantic import Field
 
-from payments.provider import TransactionInterface
-from payments.model import PaymentStatus
-from settings import SETTINGS
-
 from stripe import PaymentIntent
+
+from payments.provider import TransactionInterface
+from payments.enums import PaymentStatus
+from settings import SETTINGS
 
 STATUS_MAP = {
     "requires_payment_method": PaymentStatus.PENDING,
