@@ -10,7 +10,7 @@ from .schema import (
     MembershipRead,
 )
 
-membership_router = APIRouter(prefix="/membership", tags=["Membership"])
+membership_router = APIRouter(prefix="/membership", tags=["membership"])
 
 
 @membership_router.post("", response_model=MembershipRead, status_code=201)

@@ -6,7 +6,7 @@ from mail.module import MailModule
 from mail.model import FailedEmail, RedactedEmail
 
 
-mail_router = APIRouter(prefix="/mail")
+mail_router = APIRouter(prefix="/mail", tags=["mail"])
 
 
 @mail_router.get("/failed")

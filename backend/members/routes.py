@@ -6,7 +6,7 @@ import database
 from auth_module import user_id as get_authenticated_user_id
 from database import model
 
-members_router = APIRouter(prefix="/members", tags=["members"])
+members_router = APIRouter(prefix="/members", tags=["member-profiles"])
 
 
 def get_current_member_id(

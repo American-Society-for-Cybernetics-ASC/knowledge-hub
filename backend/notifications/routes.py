@@ -5,7 +5,7 @@ from utils import BaseModel
 from . import NotificationsModule
 
 
-notifications_router = APIRouter(prefix="/notifications")
+notifications_router = APIRouter(prefix="/notifications", tags=["notifications"])
 
 
 class NotificationResponse(BaseModel):
