@@ -2,7 +2,7 @@ from typing import Any
 
 import database
 from database import model as database_model
-from members.model import MemberProfile, ProfileContent, ProfileSettings, ProfileUpdate
+from members.model import MemberProfile, ProfileContent, ProfileUpdate
 
 class MemberNotFoundError(LookupError):
     """Raised when a requested member is not found."""
