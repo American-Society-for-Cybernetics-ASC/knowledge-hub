@@ -3,7 +3,7 @@ from pydantic import Field
 
 from stripe import PaymentIntent
 
-from payments.provider import TransactionInterface
+from payments.transactions import TransactionInterface
 from payments.enums import PaymentStatus
 from settings import SETTINGS
 
@@ -29,7 +29,7 @@ class StripeTransaction(TransactionInterface):
     def create_one_off(amount: int, currency: str = "usd") -> "StripeTransaction":
         if not SETTINGS.stripe_api_key:
             raise PermissionError(
-                "Using StripeProvider without a configured Stripe API key"
+                "Creating a StripeTransaction without a configured Stripe API key"
             )
 
         intent: PaymentIntent = PaymentIntent.create(

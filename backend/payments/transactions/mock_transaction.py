@@ -2,10 +2,10 @@ from typing import Literal
 from pydantic import Field
 from uuid import uuid4
 
-from payments.provider import PaymentProviderInterface
+from payments.transactions import TransactionInterface
 from payments.enums import PaymentStatus
 
-class MockTransaction(PaymentProviderInterface):
+class MockTransaction(TransactionInterface):
     transaction_type: Literal["mock"] = Field(default = "mock")
 
     payment_id: str

@@ -1,6 +1,6 @@
 from payments.enums import PaymentStatus
-from payments.provider.mock_provider import MockTransaction
-from payments.provider.stripe_provider import StripeTransaction
+from payments.transactions.mock_transaction import MockTransaction
+from payments.transactions.stripe_transaction import StripeTransaction
 
 # Test Resources
 
@@ -16,8 +16,8 @@ def mock_retrieve(payment_id):
     return MockPaymentIntent(status = "pending")
 
 def mock_stripe_transaction(monkeypatch, amount = 100):
-    monkeypatch.setattr("payments.provider.stripe_provider.SETTINGS.stripe_api_key", "sk_test_key")
-    monkeypatch.setattr("payments.provider.stripe_provider.PaymentIntent.create", mock_create)
+    monkeypatch.setattr("payments.transactions.stripe_transaction.SETTINGS.stripe_api_key", "sk_test_key")
+    monkeypatch.setattr("payments.transactions.stripe_transaction.PaymentIntent.create", mock_create)
     return StripeTransaction.create_one_off(amount)
 
 # Mock Transaction Tests
@@ -59,8 +59,8 @@ def test_stripe_create_one_off_calls_stripe_with_parameters(monkeypatch):
         calls.update(kwargs)
         return MockPaymentIntent(id = "pi_test_id")
 
-    monkeypatch.setattr("payments.provider.stripe_provider.SETTINGS.stripe_api_key", "sk_test_key")
-    monkeypatch.setattr("payments.provider.stripe_provider.PaymentIntent.create", mock_create_and_record)
+    monkeypatch.setattr("payments.transactions.stripe_transaction.SETTINGS.stripe_api_key", "sk_test_key")
+    monkeypatch.setattr("payments.transactions.stripe_transaction.PaymentIntent.create", mock_create_and_record)
 
     transaction = StripeTransaction.create_one_off(100, currency = "usd")
 
@@ -91,7 +91,7 @@ def test_stripe_check_always_calls_stripe(monkeypatch):
         call_count += 1
         return MockPaymentIntent(status = "pending")
 
-    monkeypatch.setattr("payments.provider.stripe_provider.PaymentIntent.retrieve", mock_retrieve_and_count)
+    monkeypatch.setattr("payments.transactions.stripe_transaction.PaymentIntent.retrieve", mock_retrieve_and_count)
 
     transaction.check()
     transaction.check()
