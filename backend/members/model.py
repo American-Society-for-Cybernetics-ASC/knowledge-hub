@@ -33,6 +33,7 @@ Doi = Annotated[
     ),
 ]
 
+
 def normalize_string_list(values: list[str]) -> list[str]:
     """Trim values and remove blanks and duplicates."""
 
@@ -49,6 +50,7 @@ def normalize_string_list(values: list[str]) -> list[str]:
 
     return normalized
 
+
 class ProfileIdentity(BaseModel):
     """Basic member identity."""
 
@@ -59,6 +61,7 @@ class ProfileIdentity(BaseModel):
     location: str | None = Field(default=None, max_length=150)
     website: HttpUrl | None = None
     orcid: Orcid | None = None
+
 
 class Affiliation(BaseModel):
     """An organisation which the member is affiliated with."""
@@ -92,18 +95,22 @@ class ProfilePublication(BaseModel):
     doi: Doi | None = None
     url: HttpUrl | None = None
 
+
 class MetadataBase(BaseModel):
     """Common config for metadata values."""
 
     model_config = ConfigDict(extra="forbid")
 
+
 class StringMetadata(MetadataBase):
     type: Literal["str"]
-    value: str = Field(max_length=5000)    
+    value: str = Field(max_length=5000)
+
 
 class IntegerMetadata(MetadataBase):
     type: Literal["int"]
     value: int
+
 
 class TagListMetadata(MetadataBase):
     type: Literal["tag_list"]
@@ -114,21 +121,26 @@ class TagListMetadata(MetadataBase):
     def normalize_tags(cls, values: list[str]) -> list[str]:
         return [value.lower() for value in normalize_string_list(values)]
 
+
 class AffiliationMetadata(MetadataBase):
     type: Literal["affiliation"]
     value: Affiliation
+
 
 class AffiliationsMetadata(MetadataBase):
     type: Literal["affiliations"]
     value: list[Affiliation] = Field(default_factory=list, max_length=20)
 
+
 class PublicationMetadata(MetadataBase):
     type: Literal["publication"]
     value: ProfilePublication
 
+
 class PublicationsMetadata(MetadataBase):
     type: Literal["publications"]
     value: list[ProfilePublication] = Field(default_factory=list, max_length=50)
+
 
 Metadata = Annotated[
     StringMetadata
@@ -139,17 +151,18 @@ Metadata = Annotated[
     | PublicationMetadata
     | PublicationsMetadata,
     Field(discriminator="type"),
-]    
+]
+
 
 class ProfileContent(BaseModel):
-    """ 
+    """
     Main profile content.
 
-    Contains no knowledge hub submission or repository links.     
+    Contains no knowledge hub submission or repository links.
 
     Matching-related fields remain fixed, while optional profile sections
     are stored as typed metadata.
-    """  
+    """
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
@@ -168,14 +181,15 @@ class ProfileContent(BaseModel):
     def normalize_matching_fields(cls, values: list[str]) -> list[str]:
         return normalize_string_list(values)
 
+
 class ProfileUpdate(BaseModel):
     """
     Partial profile update.
 
-    Service layer should merge supplied fields into the existing 
+    Service layer should merge supplied fields into the existing
     ProfileContent rather than replacing the entire profile.
     """
-    
+
     model_config = ConfigDict(extra="forbid")
 
     identity: ProfileIdentity | None = None
@@ -190,7 +204,7 @@ class ProfileUpdate(BaseModel):
     @classmethod
     def normalize_matching_fields(
         cls,
-        values: list[str]| None,
+        values: list[str] | None,
     ) -> list[str] | None:
         if values is None:
             return None
@@ -205,6 +219,7 @@ class ProfileUpdate(BaseModel):
             return None
 
         return [tag.lower() for tag in normalize_string_list(tags)]
+
 
 class MemberProfile(BaseModel):
     """The API response for a member profile."""

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from . import AuthModule
 
 
-auth_router = APIRouter()
+auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 # Request schemas
@@ -48,7 +48,7 @@ class LoginResponse(BaseModel):
 # Endpoints
 
 
-@auth_router.post("/auth/register")
+@auth_router.post("/register")
 def register(
     req: RegisterRequest,
     module: Annotated[AuthModule, Depends(AuthModule)],
@@ -70,7 +70,7 @@ def register(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@auth_router.post("/auth/confirm-totp")
+@auth_router.post("/confirm-totp")
 def confirm_totp(
     req: ConfirmTOTPRequest,
     module: Annotated[AuthModule, Depends(AuthModule)],
@@ -85,7 +85,7 @@ def confirm_totp(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@auth_router.get("/auth/totp-setup")
+@auth_router.get("/totp-setup")
 def get_totp_setup(
     email: str,
     module: Annotated[AuthModule, Depends(AuthModule)],
@@ -102,7 +102,7 @@ def get_totp_setup(
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@auth_router.post("/auth/login")
+@auth_router.post("/login")
 def login(
     req: LoginRequest,
     module: Annotated[AuthModule, Depends(AuthModule)],
@@ -124,7 +124,7 @@ def login(
         raise HTTPException(status_code=401, detail=str(e))
 
 
-@auth_router.post("/auth/verify-otp")
+@auth_router.post("/verify-otp")
 def verify_otp(
     req: VerifyOTPRequest,
     response: Response,
@@ -151,7 +151,7 @@ def verify_otp(
         raise HTTPException(status_code=401, detail=str(e))
 
 
-@auth_router.get("/auth/public-key")
+@auth_router.get("/public-key")
 def get_public_key(
     module: Annotated[AuthModule, Depends(AuthModule)],
 ) -> dict:

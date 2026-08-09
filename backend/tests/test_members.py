@@ -7,6 +7,7 @@ from database import model
 from members.model import ProfileUpdate
 from members.module import MemberNotFoundError, MembersModule
 
+
 def create_member(get_session: Callable[[], Session]) -> int:
     """Create a basic member and return its database ID."""
 
@@ -17,6 +18,7 @@ def create_member(get_session: Callable[[], Session]) -> int:
         session.refresh(member)
 
         return member.member_id
+
 
 def test_get_profile_creates_empty_profile(mock_get_session):
     """Getting a profile creates one when the member has no profile yet."""
@@ -37,6 +39,7 @@ def test_get_profile_creates_empty_profile(mock_get_session):
         stored_profile = session.get(model.Profile, member_id)
         assert stored_profile is not None
 
+
 def test_update_profile(mock_get_session):
     """A member can update their profile content and matching tags."""
 
@@ -50,7 +53,7 @@ def test_update_profile(mock_get_session):
         personal_statement="Interested in cybernetics.",
         research_interests=["Cybernetics"],
         expertise=["Python", "SQL"],
-        tags=["cybernetics", "PYTHON", " sql "]
+        tags=["cybernetics", "PYTHON", " sql "],
     )
 
     profile = MembersModule().update_profile(member_id, update)
@@ -63,6 +66,7 @@ def test_update_profile(mock_get_session):
 
     # Trim, convert to lowercase, remove duplicates
     assert profile.tags == ["cybernetics", "python", "sql"]
+
 
 def test_update_preserves_existing_fields(mock_get_session):
     """Updating one field does not affect other fields."""
@@ -93,6 +97,7 @@ def test_update_preserves_existing_fields(mock_get_session):
     assert updated_profile.content.expertise == ["Python"]
     assert updated_profile.content.personal_statement == "Updated statement."
 
+
 def test_profile_update_persistent(mock_get_session):
     """Profile updates remain available in later sessions."""
 
@@ -102,8 +107,8 @@ def test_profile_update_persistent(mock_get_session):
     members.update_profile(
         member_id,
         ProfileUpdate(
-            personal_statement = "Saved statement.",
-            tags = ["cybernetics"],
+            personal_statement="Saved statement.",
+            tags=["cybernetics"],
         ),
     )
 
@@ -112,13 +117,15 @@ def test_profile_update_persistent(mock_get_session):
     assert profile.content.personal_statement == "Saved statement."
     assert profile.tags == ["cybernetics"]
 
+
 def test_missing_member_raises_error():
     """Getting a profile for a missing member raises an error."""
 
     with pytest.raises(MemberNotFoundError):
         MembersModule().get_profile(999)
-    
-# Wrap affiliations in metadata    
+
+
+# Wrap affiliations in metadata
 def test_invalid_affiliation_years():
     """Affiliation cannot finish before it starts."""
     with pytest.raises(ValueError):

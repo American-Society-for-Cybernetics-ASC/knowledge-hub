@@ -1,3 +1,1 @@
-from .module import MailingListModule 
-
-
+from .module import MailingListModule as MailingListModule

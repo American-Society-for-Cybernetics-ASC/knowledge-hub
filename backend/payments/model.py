@@ -4,6 +4,7 @@ from uuid import UUID
 from payments.types import TransactionTypes
 from payments.enums import PaymentStatus
 
+
 class Payment(BaseModel):
     id: UUID
     member_id: UUID

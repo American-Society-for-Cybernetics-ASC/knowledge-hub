@@ -22,22 +22,18 @@ class AuthModule:
     def _get_private_key(self):
         """Loads the RSA private key from settings for JWT signing"""
         key_data = SETTINGS.secret_key.strip()
-    
+
         # Add PEM framing if not present during testing
         if not key_data.startswith("-----"):
             key_data = f"-----BEGIN RSA PRIVATE KEY-----\n{key_data}\n-----END RSA PRIVATE KEY-----"
-    
-        return serialization.load_pem_private_key(
-            key_data.encode(),
-            password=None
-    )
+
+        return serialization.load_pem_private_key(key_data.encode(), password=None)
 
     def _get_public_key_pem(self) -> str:
         private_key = self._get_private_key()
         public_key = private_key.public_key()
         return public_key.public_bytes(
-            serialization.Encoding.PEM,
-            serialization.PublicFormat.SubjectPublicKeyInfo
+            serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
         ).decode()
 
     def register(self, email: str, password: str, display_name: str) -> str:
@@ -203,7 +199,7 @@ class AuthModule:
         # Return challenge token (TODO: Proper chellenge token)
         return f"challenge:{user.user_id}"
 
-    def verify_otp(self, email: str, code: str) -> dict:
+    def verify_otp(self, email: str, code: str) -> str:
         """
         Second step of login - verifies TOTP code and issues JWT.
 
@@ -242,7 +238,8 @@ class AuthModule:
             "sub": str(user.user_id),
             "email": user.email,
             "iss": SETTINGS.jwt_issuer,
-            "exp": datetime.now(timezone.utc) + timedelta(minutes=SETTINGS.jwt_expiry_minutes),
+            "exp": datetime.now(timezone.utc)
+            + timedelta(minutes=SETTINGS.jwt_expiry_minutes),
         }
 
         # Sign the JWT with RSA private key
