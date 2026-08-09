@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     google_username: Optional[str] = None
     google_password: Optional[str] = None
 
+    stripe_api_key: Optional[str] = None
+    stripe_publishable_key: Optional[str] = None
+    stripe_webhook_secret: Optional[str] = None
+
     cron_secret: str = "Local"
     """The Vercel Cron job secret"""
 
