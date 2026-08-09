@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 import database
 from database.model import Membership, MembershipApplication, Payment
 from .payment_provider import PaymentStatus, StubPaymentProvider
-from .schema import MembershipCreate, MembershipListParams, MembershipStatus, PaymentKind
+from .schema import MembershipCreate, MembershipListParams, MembershipStatus
 
 
 MEMBERSHIP_DURATION = timedelta(days=365)
@@ -56,11 +56,8 @@ class MembershipModule:
                 )
             
             provider = self._get_payment_provider()
-            result = (
-                provider.create_recurring()
-                if data.payment_kind == PaymentKind.RECURRING
-                else provider.create_one_off()
-            )
+            result = provider.create_one_off()
+            
             if provider.check(result) != PaymentStatus.PAID:
                 raise HTTPException(
                     status_code=status.HTTP_402_PAYMENT_REQUIRED,
