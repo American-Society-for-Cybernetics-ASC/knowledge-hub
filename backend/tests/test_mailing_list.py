@@ -26,7 +26,7 @@ def create_member(get_session: Callable[[], Session]) -> int:
         auth_user = model.AuthUser(
             name="User",
             email="member@gmail.com",
-            permission={"role": "member"},
+            permissions={"role": "member"},
         )
         session.add(auth_user)
         session.flush()
