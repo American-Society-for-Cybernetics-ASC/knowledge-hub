@@ -73,7 +73,7 @@ def user_id(request: Request) -> int | None:
     """
     if SETTINGS.testing:
         return 0
-    
+
     token = request.cookies.get("access_token")
     if not token:
         return None

@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 from payments.enums import PaymentStatus
 
+
 class PaymentProviderInterface(BaseModel):
     @abstractmethod
     def create_one_off(self, amount: int) -> "PaymentProviderInterface": ...
@@ -12,6 +13,7 @@ class PaymentProviderInterface(BaseModel):
 
     @abstractmethod
     def amount(self) -> int: ...
+
 
 class TransactionInterface(BaseModel):
     @abstractmethod

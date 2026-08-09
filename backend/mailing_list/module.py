@@ -1,23 +1,26 @@
 from sqlalchemy import select
 from mailing_list.model import MailingListMember, MailingList
 
-import database 
+import database
 from database import model
+
 
 class MemberNotFoundError(Exception):
     """raised when a member cannot be found"""
+
     pass
 
-class MailingListModule:
 
+class MailingListModule:
     def get_mailing_lists(self) -> list[MailingList]:
         """Returns a list of all mailing lists"""
         with database.get_session() as session:
-            mailing_lists = session.execute(
-                select(model.MailingList)
-            ).scalars().all()
-            return [MailingList.model_validate_sqlalchemy(mailing_list) for mailing_list in mailing_lists]
-    
+            mailing_lists = session.execute(select(model.MailingList)).scalars().all()
+            return [
+                MailingList.model_validate_sqlalchemy(mailing_list)
+                for mailing_list in mailing_lists
+            ]
+
     def join_mailing_list(self, mailing_list_id: int, member_id: int) -> None:
         """Add a member to a mailing list and syncs with Google Workspace mailing list
         TODO: sync with Google Workspace once google workspace interface is done
@@ -25,9 +28,7 @@ class MailingListModule:
         with database.get_session() as session:
             member = session.get(model.Member, member_id)
             if member is None:
-                raise MemberNotFoundError(
-                    f"Member {member_id} cannot be found"
-                    )    
+                raise MemberNotFoundError(f"Member {member_id} cannot be found")
             mailing_list = session.get(model.MailingList, mailing_list_id)
             if mailing_list is None:
                 raise MemberNotFoundError(
@@ -42,8 +43,12 @@ class MailingListModule:
 
             if existing_membership is not None:
                 return
-            
-            membership = model.MailingListMember(mailing_list_id=mailing_list_id, member_id=member_id, email=member.auth_user.email)
+
+            membership = model.MailingListMember(
+                mailing_list_id=mailing_list_id,
+                member_id=member_id,
+                email=member.auth_user.email,
+            )
             session.add(membership)
             session.commit()
 
@@ -59,20 +64,22 @@ class MailingListModule:
                 )
             ).scalar_one_or_none()
             if membership is None:
-                raise MemberNotFoundError(
-                    f"Member {member_id} cannot be found"
-                    )
+                raise MemberNotFoundError(f"Member {member_id} cannot be found")
             session.delete(membership)
             session.commit()
 
     def get_mailing_list_members(self, mailing_list_id: int) -> list[MailingListMember]:
         """Return all members of a mailing list"""
         with database.get_session() as session:
-            members = session.execute(
-                select(model.MailingListMember).where(
-                    model.MailingListMember.mailing_list_id == mailing_list_id
+            members = (
+                session.execute(
+                    select(model.MailingListMember).where(
+                        model.MailingListMember.mailing_list_id == mailing_list_id
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
 
             return [MailingListMember.model_validate_sqlalchemy(m) for m in members]
 
@@ -96,7 +103,7 @@ class MailingListModule:
             ).scalar_one_or_none()
 
             member_id = member.member_id if member is not None else None
-            
+
             membership = model.MailingListMember(
                 mailing_list_id=mailing_list_id,
                 member_id=member_id,
@@ -110,15 +117,13 @@ class MailingListModule:
         with database.get_session() as session:
             mailing_list_member = session.execute(
                 select(model.MailingListMember).where(
-                    model.MailingListMember.email ==  email,
+                    model.MailingListMember.email == email,
                     model.MailingListMember.mailing_list_id == mailing_list_id,
                 )
             ).scalar_one_or_none()
 
             if mailing_list_member is None:
-                raise MemberNotFoundError(
-                    f"Member with email {email} cannot be found"
-                )
+                raise MemberNotFoundError(f"Member with email {email} cannot be found")
 
             session.delete(mailing_list_member)
             session.commit()
@@ -134,7 +139,9 @@ class MailingListModule:
             session.commit()
             return MailingList.model_validate_sqlalchemy(mailing_list)
 
-    def add_email(self, mailing_list_id: int, email: str, member_id: int | None = None) -> None:
+    def add_email(
+        self, mailing_list_id: int, email: str, member_id: int | None = None
+    ) -> None:
         """Add a mailing list email"""
         with database.get_session() as session:
             mailing_member = model.MailingListMember(
@@ -144,7 +151,6 @@ class MailingListModule:
             )
             session.add(mailing_member)
             session.commit()
-
 
     def sync(self) -> None:
         """sync membership that have been explicitly registered. Doesn't automatically import unregistered groups."""

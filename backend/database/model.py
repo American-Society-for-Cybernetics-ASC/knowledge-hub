@@ -28,9 +28,10 @@ class Member(Base):
     memberships = relationship("Membership", back_populates="member")
     auth_user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"))
     auth_user = relationship("AuthUser", back_populates="members")
-    mailing_list_memberships = relationship("MailingListMember", back_populates="member")
+    mailing_list_memberships = relationship(
+        "MailingListMember", back_populates="member"
+    )
     applications = relationship("MembershipApplication", back_populates="member")
-
 
 
 class MailingList(Base):
@@ -48,7 +49,9 @@ class Profile(Base):
     __tablename__ = "profiles"
 
     # Profile is a weak entity
-    member_id = mapped_column(Integer, ForeignKey("members.member_id"), primary_key=True)
+    member_id = mapped_column(
+        Integer, ForeignKey("members.member_id"), primary_key=True
+    )
 
     tags = mapped_column(JSON)
     content = mapped_column(JSON)
@@ -190,21 +193,24 @@ class AuthLog(Base):
 class Module(Base):
     __tablename__ = "modules"
 
-    module_id = mapped_column(Integer, primary_key=True, index=True)
+    module_name = mapped_column(String, primary_key=True, index=True)
     config = mapped_column(JSON)
+
 
 class MailingListMember(Base):
     __tablename__ = "mailing_list_members"
 
     mailing_list_member_id = mapped_column(Integer, primary_key=True, index=True)
 
-    mailing_list_id = mapped_column(Integer, ForeignKey("mailing_lists.mailing_list_id"), nullable=False)
+    mailing_list_id = mapped_column(
+        Integer, ForeignKey("mailing_lists.mailing_list_id"), nullable=False
+    )
 
     email = mapped_column(String, nullable=False)
-    #nullable for external emails
+    # nullable for external emails
     member_id = mapped_column(Integer, ForeignKey("members.member_id"), nullable=True)
 
-    #relationships
+    # relationships
     mailing_list = relationship("MailingList", back_populates="members")
     member = relationship("Member", back_populates="mailing_list_memberships")
 
@@ -228,18 +234,19 @@ class FailedEmailTable(Base):
     email = mapped_column(JSON)
     error = mapped_column(String, nullable=True)
 
-    
+
 class MembershipApplication(Base):
     __tablename__ = "membership_applications"
- 
+
     application_id = mapped_column(Integer, primary_key=True, index=True)
-    status = mapped_column(String, nullable=False)  # pending, approved, denied, revision_requested
+    status = mapped_column(
+        String, nullable=False
+    )  # pending, approved, denied, revision_requested
     submitted_at = mapped_column(DateTime)
     content = mapped_column(JSON)  # the application form's fields
- 
+
     member_id = mapped_column(Integer, ForeignKey("members.member_id"))
     member = relationship("Member", back_populates="applications")
- 
 
 
 class Notification(Base):
@@ -254,4 +261,3 @@ class Notification(Base):
 
     # Relationship
     user = relationship("AuthUser")
-

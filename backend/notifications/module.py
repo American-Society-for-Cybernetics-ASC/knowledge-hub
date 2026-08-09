@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import false, select
 
 import database
 from database import model
@@ -16,13 +16,12 @@ class NotificationData(BaseModel):
 
 
 class NotificationsModule:
-
     def _get_sender(self) -> str:
         return SETTINGS.google_username or "noreply@ckh.asc-cybernetics.org"
 
     def create_notification(self, notification: NotificationData):
         """
-       To create a notification and send an email if the conditions are met
+        To create a notification and send an email if the conditions are met
         """
         session = database.get_session()
 
@@ -52,16 +51,14 @@ class NotificationsModule:
         unread_only: bool = False,
     ) -> list[model.Notification]:
         """
-        To return a list of notification to a user. 
+        To return a list of notification to a user.
         """
         session = database.get_session()
 
-        query = select(model.Notification).where(
-            model.Notification.user_id == user_id
-        )
+        query = select(model.Notification).where(model.Notification.user_id == user_id)
 
         if unread_only:
-            query = query.where(model.Notification.read == False)
+            query = query.where(model.Notification.read == false())
 
         query = query.order_by(model.Notification.created_at.desc())
 

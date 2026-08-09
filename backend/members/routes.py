@@ -8,6 +8,7 @@ from database import model
 
 members_router = APIRouter(prefix="/members", tags=["members"])
 
+
 def get_current_member_id(
     auth_user_id: Annotated[int, Depends(get_authenticated_user_id)],
 ) -> int:
@@ -28,6 +29,7 @@ def get_current_member_id(
 
         return member.member_id
 
+
 # GET /members/me
 @members_router.get("/me", response_model=MemberProfile)
 def get_my_profile(
@@ -41,6 +43,7 @@ def get_my_profile(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Member not found",
         ) from None
+
 
 # PATCH /members/me
 @members_router.patch("/me", response_model=MemberProfile)
@@ -56,4 +59,3 @@ def update_my_profile(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Member not found",
         ) from None
-    

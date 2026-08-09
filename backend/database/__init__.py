@@ -33,4 +33,3 @@ def get_session() -> Session:
         engine = SupabaseDatabaseInterface().connect()
 
     return Session(engine)
-

@@ -12,16 +12,16 @@ from .schema import (
 
 membership_router = APIRouter(prefix="/membership", tags=["Membership"])
 
+
 @membership_router.post("", response_model=MembershipRead, status_code=201)
 def start_membership(
     data: MembershipCreate,
     module: MembershipModule = Depends(MembershipModule),
 ):
     """Start a membership for an approved member"""
-    membership = module.start_membership(data)
     return module.start_membership(data)
- 
- 
+
+
 @membership_router.get("", response_model=MembershipListResult)
 def list_memberships(
     params: MembershipListParams = Depends(),
@@ -30,22 +30,23 @@ def list_memberships(
     """Lists memberships"""
     memberships, total = module.list_memberships(params)
     return MembershipListResult(
-        memberships=[MembershipRead.model_validate_sqlalchemy(m) for m in memberships], 
+        memberships=[MembershipRead.model_validate_sqlalchemy(m) for m in memberships],
         total=total,
     )
- 
- 
+
+
 @membership_router.get("/{membership_id}", response_model=MembershipRead)
 def get_membership(
     membership_id: int,
     module: MembershipModule = Depends(MembershipModule),
 ):
     """View single membership's status, tier and payment info"""
-    membership = module.get_membership(membership_id)
     return module.get_membership(membership_id)
- 
- 
-@membership_router.post("/{membership_id}/cancel", response_model=MembershipActionResult)
+
+
+@membership_router.post(
+    "/{membership_id}/cancel", response_model=MembershipActionResult
+)
 def cancel_membership(
     membership_id: int,
     module: MembershipModule = Depends(MembershipModule),
@@ -56,9 +57,11 @@ def cancel_membership(
         membership=MembershipRead.model_validate_sqlalchemy(membership),
         message="Membership cancelled.",
     )
- 
- 
-@membership_router.post("/{membership_id}/uncancel", response_model=MembershipActionResult)
+
+
+@membership_router.post(
+    "/{membership_id}/uncancel", response_model=MembershipActionResult
+)
 def uncancel_membership(
     membership_id: int,
     module: MembershipModule = Depends(MembershipModule),
