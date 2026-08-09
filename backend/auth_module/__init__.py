@@ -76,7 +76,7 @@ def user_id(request: Request) -> int | None:
     
     token = request.cookies.get("access_token")
     if not token:
-        raise None
+        return None
 
     try:
         public_key_pem = AuthModule()._get_public_key_pem()
@@ -105,10 +105,10 @@ def permissions(user_id: Annotated[int | None, Depends(user_id)]) -> Permissions
     session = database.get_session()
     user = session.get(model.AuthUser, user_id)
 
-    if not user or not user.role:
+    if not user or not user.permission:
         return Permissions()
 
-    return Permissions.model_validate(user.role)
+    return Permissions.model_validate_sqlalchemy(user.permissions)
 
 
 def authorized(heirarchy: list[str], tier: PermissionTier) -> Callable:
