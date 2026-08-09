@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import (
     ConfigDict,
@@ -32,6 +32,22 @@ Doi = Annotated[
         pattern=r"^10\.\d{4,9}/\S+$",
     ),
 ]
+
+def normalize_string_list(values: list[str]) -> list[str]:
+    """Trim values and remove blanks and duplicates."""
+
+    normalized: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        clean_value = " ".join(value.split())
+        key = clean_value.casefold()
+
+        if clean_value and key not in seen:
+            seen.add(key)
+            normalized.append(clean_value)
+
+    return normalized
 
 class ProfileIdentity(BaseModel):
     """Basic member identity."""
@@ -76,6 +92,55 @@ class ProfilePublication(BaseModel):
     doi: Doi | None = None
     url: HttpUrl | None = None
 
+class MetadataBase(BaseModel):
+    """Common config for metadata values."""
+
+    model_config = ConfigDict(extra="forbid")
+
+class StringMetadata(MetadataBase):
+    type: Literal["str"]
+    value: str = Field(max_length=5000)    
+
+class IntegerMetadata(MetadataBase):
+    type: Literal["int"]
+    value: int
+
+class TagListMetadata(MetadataBase):
+    type: Literal["tag_list"]
+    value: list[Tag] = Field(default_factory=list, max_length=50)
+
+    @field_validator("value")
+    @classmethod
+    def normalize_tags(cls, values: list[str]) -> list[str]:
+        return [value.lower() for value in normalize_string_list(values)]
+
+class AffiliationMetadata(MetadataBase):
+    type: Literal["affiliation"]
+    value: Affiliation
+
+class AffiliationsMetadata(MetadataBase):
+    type: Literal["affiliations"]
+    value: list[Affiliation] = Field(default_factory=list, max_length=20)
+
+class PublicationMetadata(MetadataBase):
+    type: Literal["publication"]
+    value: ProfilePublication
+
+class PublicationsMetadata(MetadataBase):
+    type: Literal["publications"]
+    value: list[ProfilePublication] = Field(default_factory=list, max_length=50)
+
+Metadata = Annotated[
+    StringMetadata
+    | IntegerMetadata
+    | TagListMetadata
+    | AffiliationMetadata
+    | AffiliationsMetadata
+    | PublicationMetadata
+    | PublicationsMetadata,
+    Field(discriminator="type"),
+]    
+
 class ProfileSettings(BaseModel):
     """Profile preferences retained for future member-matching work."""
 
@@ -87,56 +152,59 @@ class ProfileContent(BaseModel):
     """ 
     Main profile content.
 
-    Contains no knowledge hub submission or repository links.      
+    Contains no knowledge hub submission or repository links.     
+
+    Matching-related fields remain fixed, while optional profile sections
+    are stored as typed metadata.
     """  
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     identity: ProfileIdentity = Field(default_factory=ProfileIdentity)
     personal_statement: str | None = Field(default=None, max_length=5000)
+
+    # Remain fixed for member matching.
     research_interests: list[str] = Field(default_factory=list, max_length=30)
     expertise: list[str] = Field(default_factory=list, max_length=30)
-    affiliations: list[Affiliation] = Field(default_factory=list, max_length=20)
-    publications: list[ProfilePublication] = Field(default_factory=list, max_length=50)
+
     settings: ProfileSettings = Field(default_factory=ProfileSettings)
-    
-    # Remove duplicate and blank values.
+    metadata: dict[str, Metadata] = Field(default_factory=dict)
+
+    # Normalize matching fields.
     @field_validator("research_interests", "expertise")
     @classmethod
-    def remove_blank_and_duplicate_values(cls, values: list[str]) -> list[str]:
-        normalized: list[str] = []
-        seen: set[str] = set()
-
-        for value in values:
-            clean_value = " ".join(value.split())
-            key = clean_value.casefold()
-
-            if not clean_value or key in seen:
-                continue
-
-            seen.add(key)
-            normalized.append(clean_value)
-
-        return normalized
+    def normalize_matching_fields(cls, values: list[str]) -> list[str]:
+        return normalize_string_list(values)
 
 class ProfileUpdate(BaseModel):
     """
     Partial profile update.
 
-    Serivce layer should merge supplied fields into the existing 
+    Service layer should merge supplied fields into the existing 
     ProfileContent rather than replacing the entire profile.
     """
-
+    
     model_config = ConfigDict(extra="forbid")
 
     identity: ProfileIdentity | None = None
     personal_statement: str | None = Field(default=None, max_length=5000)
     research_interests: list[str] | None = Field(default=None, max_length=30)
     expertise: list[str] | None = Field(default=None, max_length=30)
-    affiliations: list[Affiliation] | None = Field(default=None, max_length=20)
-    publications: list[ProfilePublication] | None = Field(default=None, max_length=50)
     settings: ProfileSettings | None = None
+    metadata: dict[str, Metadata] | None = None
     tags: list[Tag] | None = Field(default=None, max_length=50)
+
+    # Normalize matching fields.
+    @field_validator("research_interests", "expertise")
+    @classmethod
+    def normalize_matching_fields(
+        cls,
+        values: list[str]| None,
+    ) -> list[str] | None:
+        if values is None:
+            return None
+
+        return normalize_string_list(values)
 
     # Remove duplicate and blank tags.
     @field_validator("tags")
@@ -145,22 +213,10 @@ class ProfileUpdate(BaseModel):
         if tags is None:
             return None
 
-        normalized: list[str] = []
-        seen: set[str] = set()
-
-        for tag in tags:
-            clean_tag = " ".join(tag.split()).lower()
-
-            if clean_tag and clean_tag not in seen:
-                seen.add(clean_tag)
-                normalized.append(clean_tag)
-
-        return normalized
+        return [tag.lower() for tag in normalize_string_list(tags)]
 
 class MemberProfile(BaseModel):
     """The API response for a member profile."""
-
-    model_config = ConfigDict(from_attributes=True)
 
     member_id: int
     status: str

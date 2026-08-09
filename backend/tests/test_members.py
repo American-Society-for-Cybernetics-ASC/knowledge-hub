@@ -118,16 +118,19 @@ def test_missing_member_raises_error():
     with pytest.raises(MemberNotFoundError):
         MembersModule().get_profile(999)
     
+# Wrap affiliations in metadata    
 def test_invalid_affiliation_years():
     """Affiliation cannot finish before it starts."""
-
     with pytest.raises(ValueError):
         ProfileUpdate(
-            affiliations=[
-                {
-                    "organisation": "Example University",
-                    "start_year": 2025,
-                    "end_year": 2020,
+            metadata={
+                "current_affiliation": {
+                    "type": "affiliation",
+                    "value": {
+                        "organisation": "Example University",
+                        "start_year": 2025,
+                        "end_year": 2020,
+                    },
                 }
-            ]
+            }
         )

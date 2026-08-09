@@ -113,6 +113,12 @@ class MembersModule:
                 settings_data.update(settings_update)
                 content_data["settings"] = settings_data
 
+            if "metadata" in update_data:
+                metadata_update = update_data.pop("metadata") or {}
+                metadata_data = dict(content_data["metadata"])
+                metadata_data.update(metadata_update)
+                content_data["metadata"] = metadata_data
+
             if "tags" in update_data:
                 profile.tags = update_data.pop("tags") or []    
 
@@ -120,8 +126,6 @@ class MembersModule:
             collection_fields = {
                 "research_interests",
                 "expertise",
-                "affiliations",
-                "publications",
             }
             for field in collection_fields:
                 if field in update_data and update_data[field] is None:
