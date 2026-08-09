@@ -138,3 +138,54 @@ def test_account_lockout_after_failed_attempts(test_server: TestClient):
     )
     assert response.status_code == 401
     assert "locked" in response.json()["detail"].lower()
+
+def test_verify_otp_returns_cookie(test_server: TestClient):
+    """Test that verify_otp issues a JWT cookie for a successful login"""
+    import pyotp
+
+    # Register
+    register_response = test_server.post(
+        "/auth/register",
+        json={
+            "email": "test@example.com",
+            "password": "TestPassword123!",
+            "display_name": "Test User",
+        },
+    )
+    assert register_response.status_code == 200
+    qr_uri = register_response.json()["qr_uri"]
+
+    # Extract TOTP secret from QR URI
+    secret = qr_uri.split("secret=")[1].split("&")[0]
+
+    # Confirm TOTP
+    code = pyotp.TOTP(secret).now()
+    test_server.post(
+        "/auth/confirm-totp",
+        json={"email": "test@example.com", "code": code},
+    )
+
+    # Login
+    test_server.post(
+        "/auth/login",
+        json={"email": "test@example.com", "password": "TestPassword123!"},
+    )
+
+    # Verify OTP
+    code = pyotp.TOTP(secret).now()
+    response = test_server.post(
+        "/auth/verify-otp",
+        json={"email": "test@example.com", "code": code},
+    )
+    assert response.status_code == 200
+    assert response.json()["message"] == "Login successful."
+    assert "access_token" in response.cookies
+
+
+def test_public_key_endpoint(test_server: TestClient):
+    """Test that public key endpoint returns a valid RSA public key"""
+    response = test_server.get("/auth/public-key")
+    assert response.status_code == 200
+    data = response.json()
+    assert "public_key" in data
+    assert "BEGIN PUBLIC KEY" in data["public_key"]

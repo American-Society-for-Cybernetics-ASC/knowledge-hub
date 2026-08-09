@@ -159,7 +159,7 @@ class AuthUser(Base):
 
     name = mapped_column(String)
     email = mapped_column(String, unique=True, index=True, nullable=False)
-    role = mapped_column(String)
+    permission = mapped_column(JSON)
 
     created_at = mapped_column(DateTime)
     updated_at = mapped_column(DateTime)
