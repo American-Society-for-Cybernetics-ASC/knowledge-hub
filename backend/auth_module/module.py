@@ -2,6 +2,8 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from cryptography.fernet import Fernet
 from datetime import datetime, timedelta, timezone
+from jose import jwt
+from cryptography.hazmat.primitives import serialization
 
 import pyotp
 
@@ -16,6 +18,27 @@ class AuthModule:
     def _get_fernet(self) -> Fernet:
         """Returns a Fernet instance using the key from settings"""
         return Fernet(SETTINGS.fernet_key.encode())
+
+    def _get_private_key(self):
+        """Loads the RSA private key from settings for JWT signing"""
+        key_data = SETTINGS.secret_key.strip()
+    
+        # Add PEM framing if not present during testing
+        if not key_data.startswith("-----"):
+            key_data = f"-----BEGIN RSA PRIVATE KEY-----\n{key_data}\n-----END RSA PRIVATE KEY-----"
+    
+        return serialization.load_pem_private_key(
+            key_data.encode(),
+            password=None
+    )
+
+    def _get_public_key_pem(self) -> str:
+        private_key = self._get_private_key()
+        public_key = private_key.public_key()
+        return public_key.public_bytes(
+            serialization.Encoding.PEM,
+            serialization.PublicFormat.SubjectPublicKeyInfo
+        ).decode()
 
     def register(self, email: str, password: str, display_name: str) -> str:
         """
@@ -177,7 +200,7 @@ class AuthModule:
         user.locked_until = None
         session.commit()
 
-        # Return challenge token (simple for now - will be proper JWT later)
+        # Return challenge token (TODO: Proper chellenge token)
         return f"challenge:{user.user_id}"
 
     def verify_otp(self, email: str, code: str) -> dict:
@@ -188,7 +211,7 @@ class AuthModule:
         2. Decrypts stored TOTP secret
         3. Verifies the 6-digit code
         4. Updates last_login timestamp
-        5. Returns user info (JWT will be added later)
+        5. Issue JWT Token
 
         Raises ValueError if user not found or code invalid.
         """
@@ -214,8 +237,15 @@ class AuthModule:
         user.last_login = datetime.now(timezone.utc)
         session.commit()
 
-        return {
-            "user_id": str(user.user_id),
+        # JWT payload
+        payload = {
+            "sub": str(user.user_id),
             "email": user.email,
-            "message": "Login successful",
+            "iss": SETTINGS.jwt_issuer,
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=SETTINGS.jwt_expiry_minutes),
         }
+
+        # Sign the JWT with RSA private key
+        token = jwt.encode(payload, self._get_private_key(), algorithm="RS256")
+
+        return token

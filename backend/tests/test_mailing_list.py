@@ -22,14 +22,14 @@ def create_member(get_session: Callable[[], Session]) -> int:
         auth_user = model.AuthUser(
             name="User",
             email="member@gmail.com",
-            role="member",
+            permission={"role": "member"},
         )
         session.add(auth_user)
         session.flush()
         
         member = model.Member(
             status="active",
-            auth_user=auth_user,
+            auth_user_id=auth_user.user_id,
         )
         session.add(member)
         session.commit()
