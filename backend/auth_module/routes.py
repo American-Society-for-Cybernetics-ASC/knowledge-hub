@@ -1,6 +1,6 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Response
 
 from . import AuthModule
 
@@ -45,12 +45,6 @@ class LoginResponse(BaseModel):
     message: str
 
 
-class VerifyOTPResponse(BaseModel):
-    user_id: str
-    email: str
-    message: str
-
-
 # Endpoints
 
 
@@ -60,8 +54,7 @@ def register(
     module: Annotated[AuthModule, Depends(AuthModule)],
 ) -> RegisterResponse:
     """
-    Register a new user account.
-    Returns a QR code URI for the user to scan with their authenticator app.
+    Register a new user account by issuing a QR code URI for the user to scan with their authenticator app.
     """
     try:
         qr_uri = module.register(
@@ -84,7 +77,6 @@ def confirm_totp(
 ) -> dict:
     """
     Confirm the user has scanned the QR code correctly.
-    Must be called after register before the user can log in.
     """
     try:
         module.confirm_totp(email=req.email, code=req.code)
@@ -100,7 +92,6 @@ def get_totp_setup(
 ) -> RegisterResponse:
     """
     Returns the QR code URI for a user who wants to set up TOTP later.
-    Can be called after registration if the user skipped the QR code step.
     """
     try:
         qr_uri = module.get_totp_setup(email=email)
@@ -136,17 +127,35 @@ def login(
 @auth_router.post("/auth/verify-otp")
 def verify_otp(
     req: VerifyOTPRequest,
+    response: Response,
     module: Annotated[AuthModule, Depends(AuthModule)],
-) -> VerifyOTPResponse:
+) -> dict:
     """
     Second step of login - verify TOTP code.
-    Returns user info on success. JWT will be added in a later sprint.
+    Will be issuing a RS256 signed JWT stored in HttpOnly cookie upon success.
     """
     try:
-        result = module.verify_otp(
+        token = module.verify_otp(
             email=req.email,
             code=req.code,
         )
-        return VerifyOTPResponse(**result)
+        response.set_cookie(
+            key="access_token",
+            value=token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+        )
+        return {"message": "Login successful."}
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
+
+
+@auth_router.get("/auth/public-key")
+def get_public_key(
+    module: Annotated[AuthModule, Depends(AuthModule)],
+) -> dict:
+    """
+    Returns the RSA public key for JWT verification
+    """
+    return {"public_key": module._get_public_key_pem()}
