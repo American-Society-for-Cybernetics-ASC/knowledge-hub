@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-
 from settings import SETTINGS
 
 
@@ -34,3 +33,4 @@ def get_session() -> Session:
         engine = SupabaseDatabaseInterface().connect()
 
     return Session(engine)
+

@@ -10,8 +10,14 @@ import database
 from database import model
 from database.base import Base
 
-from main import app
 from settings import SETTINGS
+
+from pytest import MonkeyPatch
+
+# Stops us from running startup scripts
+with MonkeyPatch().context() as m:
+    m.setattr(SETTINGS, "testing", True)
+    from main import app
 
 import pytest
 from fastapi.testclient import TestClient
@@ -30,8 +36,8 @@ def test_server() -> TestClient:
 def test_settings(monkeypatch):
     """Override settings as needed for tests"""
     with monkeypatch.context() as m:
-        monkeypatch.setattr(SETTINGS, "testing", True)
-        monkeypatch.setattr(
+        m.setattr(SETTINGS, "testing", True)
+        m.setattr(
             SETTINGS,
             "secret_key",
             """
@@ -62,7 +68,7 @@ GXAowr0CgYA4dwd199bs9oETfWIz+wd0UqyIy+MdHa0sZFYoY4dqNWruLVL3SfXO
 z7d7vzeVQ+gPg5K2DCHh6Y9TeZhRaDE4m/UYZOak5YUQu5zyzz7HBw==
 """,
         )
-        monkeypatch.setattr(
+        m.setattr(
             SETTINGS, "fernet_key", "DsitoKkQxZvA1C6LWR_uU_LnyH83S2CNv-w6qxqks50="
         )
         yield m
@@ -93,11 +99,11 @@ def mock_get_session(monkeypatch):
 # Keep the scope in sync with mock_get_session
 @pytest.fixture(scope="function")
 def default_database(mock_get_session: Callable[[], Session]):
-    session = mock_get_session()
-    session.add(
-        model.Module(
-            module_name=MailModule.MODULE_ID,
-            config=MailModuleConfig(provider=MockMailProvider()).model_dump(),
+    with mock_get_session() as session:
+        session.add(
+            model.Module(
+                module_name=MailModule.MODULE_ID,
+                config=MailModuleConfig(provider=MockMailProvider()).model_dump(),
+            )
         )
-    )
-    session.commit()
+        session.commit()

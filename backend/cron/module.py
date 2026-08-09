@@ -12,14 +12,13 @@ from database import model
 class CronModule:
     def get_all_cron_jobs(self) -> list[CronJob]:
         """Returns all registered cron jobs"""
-        session = database.get_session()
-
-        return list(
-            map(
-                CronJob.model_validate_sqlalchemy,
-                session.execute(select(model.CronJobTable)).scalars().all(),
+        with database.get_session() as session:
+            return list(
+                map(
+                    CronJob.model_validate_sqlalchemy,
+                    session.execute(select(model.CronJobTable)).scalars().all(),
+                )
             )
-        )
 
     def get_queued_cron_jobs(self) -> list[CronJob]:
         """Returns the cron jobs currently queued for the next execution cycle"""
@@ -32,13 +31,13 @@ class CronModule:
         )
 
     def patch_cron_job(self, job: CronJob):
-        session = database.get_session()
-        session.execute(
-            update(model.CronJobTable)
-            .where(model.CronJobTable.id == job.id)
-            .values(**job.model_dump())
-        )
-        session.commit()
+        with database.get_session() as session:
+            session.execute(
+                update(model.CronJobTable)
+                .where(model.CronJobTable.id == job.id)
+                .values(**job.model_dump())
+            )
+            session.commit()
 
 
 class CronJob(BaseModel):
