@@ -11,8 +11,8 @@ from settings import SETTINGS
 
 ph = PasswordHasher()
 
-class AuthModule:
 
+class AuthModule:
     def _get_fernet(self) -> Fernet:
         """Returns a Fernet instance using the key from settings"""
         return Fernet(SETTINGS.fernet_key.encode())
@@ -20,22 +20,22 @@ class AuthModule:
     def register(self, email: str, password: str, display_name: str) -> str:
         """
         Registers a new user account.
-        
+
         1. Checks email is not already taken
         2. Hashes password with Argon2id
         3. Generates unique TOTP secret
         4. Encrypts TOTP secret with Fernet
         5. Saves user to database
         6. Returns QR code URI for authenticator app
-        
+
         Raises ValueError if email already exists.
         """
         session = database.get_session()
 
         # Check if email already exists
-        existing = session.query(model.AuthUser).filter(
-            model.AuthUser.email == email
-        ).first()
+        existing = (
+            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
+        )
 
         if existing:
             raise ValueError("Email already registered")
@@ -64,12 +64,10 @@ class AuthModule:
 
         # Generate QR code URI for authenticator app
         totp = pyotp.TOTP(totp_secret)
-        qr_uri = totp.provisioning_uri(
-            name=email,
-            issuer_name="CKH ASC"
-        )
+        qr_uri = totp.provisioning_uri(name=email, issuer_name="CKH ASC")
 
         return qr_uri
+
     def get_totp_setup(self, email: str) -> str:
         """
         Returns the QR code URI for a user to set up TOTP.
@@ -77,9 +75,9 @@ class AuthModule:
         """
         session = database.get_session()
 
-        user = session.query(model.AuthUser).filter(
-            model.AuthUser.email == email
-        ).first()
+        user = (
+            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
+        )
 
         if not user:
             raise ValueError("User not found")
@@ -90,10 +88,7 @@ class AuthModule:
 
         # Generate QR code URI
         totp = pyotp.TOTP(decrypted_secret)
-        qr_uri = totp.provisioning_uri(
-            name=email,
-            issuer_name="CKH ASC"
-        )
+        qr_uri = totp.provisioning_uri(name=email, issuer_name="CKH ASC")
 
         return qr_uri
 
@@ -101,14 +96,14 @@ class AuthModule:
         """
         Confirms the user has scanned the QR code correctly.
         Verifies the 6-digit code and sets totp_enabled to True.
-        
+
         Raises ValueError if user not found or code is invalid.
         """
         session = database.get_session()
 
-        user = session.query(model.AuthUser).filter(
-            model.AuthUser.email == email
-        ).first()
+        user = (
+            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
+        )
 
         if not user:
             raise ValueError("User not found")
@@ -131,20 +126,20 @@ class AuthModule:
     def login(self, email: str, password: str) -> str:
         """
         First step of login - verifies email and password.
-        
+
         1. Finds user by email
         2. Checks account lock status
         3. Verifies password with Argon2id
         4. Handles failed attempt counting and lockout
         5. Returns a challenge token on success
-        
+
         Raises ValueError with appropriate message on failure.
         """
         session = database.get_session()
 
-        user = session.query(model.AuthUser).filter(
-            model.AuthUser.email == email
-        ).first()
+        user = (
+            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
+        )
 
         # Return generic message to prevent user enumeration
         if not user:
@@ -188,20 +183,20 @@ class AuthModule:
     def verify_otp(self, email: str, code: str) -> dict:
         """
         Second step of login - verifies TOTP code and issues JWT.
-        
+
         1. Finds user by email
         2. Decrypts stored TOTP secret
         3. Verifies the 6-digit code
         4. Updates last_login timestamp
         5. Returns user info (JWT will be added later)
-        
+
         Raises ValueError if user not found or code invalid.
         """
         session = database.get_session()
 
-        user = session.query(model.AuthUser).filter(
-            model.AuthUser.email == email
-        ).first()
+        user = (
+            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
+        )
 
         if not user:
             raise ValueError("User not found")
@@ -222,5 +217,5 @@ class AuthModule:
         return {
             "user_id": str(user.user_id),
             "email": user.email,
-            "message": "Login successful"
+            "message": "Login successful",
         }

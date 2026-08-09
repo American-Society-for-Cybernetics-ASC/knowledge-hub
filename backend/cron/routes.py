@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from auth_module import PermissionTier, authorized
 from settings import SETTINGS
 from .module import CronModule, CronJob
 
@@ -34,7 +35,7 @@ def run_cron_jobs(
 @cron_router.get("/queued_jobs")
 def get_queued_jobs(
     module: Annotated[CronModule, Depends(CronModule)],
-    # TODO permissions
+    _=Depends(authorized(["cron"], PermissionTier.manager)),
 ) -> list[CronJob]:
     return module.get_queued_cron_jobs()
 
@@ -42,6 +43,6 @@ def get_queued_jobs(
 @cron_router.get("/jobs")
 def get_all_jobs(
     module: Annotated[CronModule, Depends(CronModule)],
-    # TODO permissions
+    _=Depends(authorized(["cron"], PermissionTier.manager)),
 ) -> list[CronJob]:
     return module.get_all_cron_jobs()

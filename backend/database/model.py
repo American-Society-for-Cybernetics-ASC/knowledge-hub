@@ -7,11 +7,11 @@ from .base import Base
 class Member(Base):
     __tablename__ = "members"
 
-    member_id = Column(Integer, primary_key=True, index=True)
-    status = Column(String, nullable=False)
+    member_id = mapped_column(Integer, primary_key=True, index=True)
+    status = mapped_column(String, nullable=False)
 
     # Add Group table relationsip
-    group_id = Column(Integer, ForeignKey("groups.group_id"))
+    group_id = mapped_column(Integer, ForeignKey("groups.group_id"))
     group = relationship("Group", back_populates="members")
     profile = relationship("Profile", back_populates="member", uselist=False)
     submissions = relationship("Submission", back_populates="member")
@@ -28,18 +28,20 @@ class Member(Base):
     )
 
     memberships = relationship("Membership", back_populates="member")
-    auth_user_id = Column(Integer, ForeignKey("auth_users.user_id"))
+    auth_user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"))
     auth_user = relationship("AuthUser", back_populates="members")
     mailing_lists = relationship("MailingListMember", back_populates="member")
+    applications = relationship("MembershipApplication", back_populates="member")
+
 
 
 class Group(Base):
     __tablename__ = "groups"
 
-    group_id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    description = Column(String)
-    email = Column(String)
+    group_id = mapped_column(Integer, primary_key=True, index=True)
+    name = mapped_column(String, nullable=False)
+    description = mapped_column(String)
+    email = mapped_column(String)
 
     # relationship to all tables
     members = relationship("Member", back_populates="group")
@@ -51,10 +53,10 @@ class Profile(Base):
     __tablename__ = "profiles"
 
     # Profile is a weak entity
-    member_id = Column(Integer, ForeignKey("members.member_id"), primary_key=True)
+    member_id = mapped_column(Integer, ForeignKey("members.member_id"), primary_key=True)
 
-    tags = Column(JSON)
-    content = Column(JSON)
+    tags = mapped_column(JSON)
+    content = mapped_column(JSON)
 
     member = relationship("Member", back_populates="profile")
 
@@ -62,27 +64,27 @@ class Profile(Base):
 class Submission(Base):
     __tablename__ = "submissions"
 
-    submission_id = Column(Integer, primary_key=True, index=True)
-    provider = Column(String)
-    content = Column(JSON)
-    tags = Column(JSON)
-    status = Column(String)
-    title = Column(String)
+    submission_id = mapped_column(Integer, primary_key=True, index=True)
+    provider = mapped_column(String)
+    content = mapped_column(JSON)
+    tags = mapped_column(JSON)
+    status = mapped_column(String, nullable=False)
+    title = mapped_column(String, nullable=False)
 
     # FK to Member table
-    member_id = Column(Integer, ForeignKey("members.member_id"))
+    member_id = mapped_column(Integer, ForeignKey("members.member_id"))
     member = relationship("Member", back_populates="submissions")
 
     # FK to Repository table
-    repository_id = Column(Integer, ForeignKey("repositories.repository_id"))
+    repository_id = mapped_column(Integer, ForeignKey("repositories.repository_id"))
     repository = relationship("Repository", back_populates="submissions")
 
 
 class Repository(Base):
     __tablename__ = "repositories"
 
-    repository_id = Column(Integer, primary_key=True, index=True)
-    schema = Column(JSON)
+    repository_id = mapped_column(Integer, primary_key=True, index=True)
+    schema = mapped_column(JSON)
 
     # Relationships
     submissions = relationship("Submission", back_populates="repository")
@@ -92,10 +94,10 @@ class Repository(Base):
 class Event(Base):
     __tablename__ = "events"
 
-    event_id = Column(Integer, primary_key=True, index=True)
-    title = Column(String)
-    content = Column(String)
-    start_time = Column(DateTime)
+    event_id = mapped_column(Integer, primary_key=True, index=True)
+    title = mapped_column(String, nullable=False)
+    content = mapped_column(String)
+    start_time = mapped_column(DateTime)
 
     # FK and relationship to the Repository table
     repository_id = Column(Integer, ForeignKey("repositories.repository_id"))
@@ -105,11 +107,11 @@ class Event(Base):
 class Payment(Base):
     __tablename__ = "payments"
 
-    payment_id = Column(Integer, primary_key=True, index=True)
-    date = Column(DateTime)
-    status = Column(String)
-    kind = Column(String)
-    provider = Column(String)
+    payment_id = mapped_column(Integer, primary_key=True, index=True)
+    date = mapped_column(DateTime)
+    status = mapped_column(String, nullable=False)
+    kind = mapped_column(String, nullable=False)
+    provider = mapped_column(String, nullable=False)
 
     # Relationship to MemberMatching
     memberships = relationship("Membership", back_populates="payment")
@@ -118,11 +120,11 @@ class Payment(Base):
 class MemberMatching(Base):
     __tablename__ = "member_matching"
 
-    memMatching_id = Column(Integer, primary_key=True, index=True)
+    memMatching_id = mapped_column(Integer, primary_key=True, index=True)
 
     # Two foreign keys to Member
-    active_member_id = Column(Integer, ForeignKey("members.member_id"))
-    suggested_member_id = Column(Integer, ForeignKey("members.member_id"))
+    active_member_id = mapped_column(Integer, ForeignKey("members.member_id"))
+    suggested_member_id = mapped_column(Integer, ForeignKey("members.member_id"))
 
     # Two relationship  with Member table
     active_member = relationship(
@@ -137,15 +139,15 @@ class MemberMatching(Base):
 class Membership(Base):
     __tablename__ = "memberships"
 
-    membership_id = Column(Integer, primary_key=True, index=True)
-    start_date = Column(DateTime)
-    tier = Column(String)
-    status = Column(String)
+    membership_id = mapped_column(Integer, primary_key=True, index=True)
+    start_date = mapped_column(DateTime)
+    tier = mapped_column(String, nullable=False)
+    status = mapped_column(String, nullable=False)
 
     # FKs
-    member_id = Column(Integer, ForeignKey("members.member_id"))
-    group_id = Column(Integer, ForeignKey("groups.group_id"))
-    payment_id = Column(Integer, ForeignKey("payments.payment_id"))
+    member_id = mapped_column(Integer, ForeignKey("members.member_id"))
+    group_id = mapped_column(Integer, ForeignKey("groups.group_id"))
+    payment_id = mapped_column(Integer, ForeignKey("payments.payment_id"))
 
     # Relationships
     member = relationship("Member", back_populates="memberships")
@@ -156,24 +158,24 @@ class Membership(Base):
 class AuthUser(Base):
     __tablename__ = "auth_users"
 
-    user_id = Column(Integer, primary_key=True, index=True)
+    user_id = mapped_column(Integer, primary_key=True, index=True)
 
-    name = Column(String)
-    email = Column(String, unique=True, index=True)
-    role = Column(String)
+    name = mapped_column(String)
+    email = mapped_column(String, unique=True, index=True, nullable=False)
+    role = mapped_column(String)
 
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)
+    created_at = mapped_column(DateTime)
+    updated_at = mapped_column(DateTime)
 
-    totp_secret = Column(String)
-    totp_enabled = Column(Boolean, default=False)
+    totp_secret = mapped_column(String)
+    totp_enabled = mapped_column(Boolean, default=False, nullable=False)
 
-    failed_attempt = Column(Integer, default=0)
-    locked_until = Column(DateTime)
-    admin_locked = Column(Boolean, default=False)
+    failed_attempt = mapped_column(Integer, default=0)
+    locked_until = mapped_column(DateTime)
+    admin_locked = mapped_column(Boolean, default=False)
 
-    last_login = Column(DateTime)
-    hash_password = Column(String)
+    last_login = mapped_column(DateTime)
+    hash_password = mapped_column(String)
 
     # Relationships
     auth_logs = relationship("AuthLog", back_populates="user")
@@ -183,19 +185,19 @@ class AuthUser(Base):
 class AuthLog(Base):
     __tablename__ = "auth_logs"
 
-    auth_log_id = Column(Integer, primary_key=True, index=True)
-    log = Column(String)
-    time = Column(DateTime)
+    auth_log_id = mapped_column(Integer, primary_key=True, index=True)
+    log = mapped_column(String, nullable=False)
+    time = mapped_column(DateTime)
 
     # Relationship with AuthUser table
-    user_id = Column(Integer, ForeignKey("auth_users.user_id"))
+    user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"))
     user = relationship("AuthUser", back_populates="auth_logs")
 
 
 class Module(Base):
     __tablename__ = "modules"
 
-    module_name = mapped_column(String, primary_key=True, index=True)
+    module_id = mapped_column(Integer, primary_key=True, index=True)
     config = mapped_column(JSON)
 
 class MailingListMember(Base):
@@ -234,4 +236,31 @@ class FailedEmailTable(Base):
     retries = mapped_column(Integer, default=0)
     email = mapped_column(JSON)
     error = mapped_column(String, nullable=True)
+
+    
+class MembershipApplication(Base):
+    __tablename__ = "membership_applications"
+ 
+    application_id = mapped_column(Integer, primary_key=True, index=True)
+    status = mapped_column(String, nullable=False)  # pending, approved, denied, revision_requested
+    submitted_at = mapped_column(DateTime)
+    content = mapped_column(JSON)  # the application form's fields
+ 
+    member_id = mapped_column(Integer, ForeignKey("members.member_id"))
+    member = relationship("Member", back_populates="applications")
+ 
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    notification_id = mapped_column(Integer, primary_key=True, index=True)
+    user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"))
+    subject = mapped_column(String, nullable=False)
+    message = mapped_column(String, nullable=False)
+    read = mapped_column(Boolean, default="False")
+    created_at = mapped_column(DateTime, server_default=func.now())
+
+    # Relationship
+    user = relationship("AuthUser")
 
