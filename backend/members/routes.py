@@ -2,20 +2,31 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from members.model import MemberProfile, ProfileUpdate
 from members.module import MemberNotFoundError, MembersModule
+import database
+from auth_module import user_id as get_authenticated_user_id
+from database import model
 
 members_router = APIRouter(prefix="/members", tags=["members"])
 
-def get_current_member_id() -> int:
-    """
-    Resolve the authenticated user to their member ID.
+def get_current_member_id(
+    auth_user_id: Annotated[int, Depends(get_authenticated_user_id)],
+) -> int:
+    """Resolve the authenticated user to their member ID."""
 
-    Will replace this with the authentication dependency once session login
-    has been implemented. 
-    """
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Authentication not implemented",
-    )
+    with database.get_session() as session:
+        member = (
+            session.query(model.Member)
+            .filter(model.Member.auth_user_id == auth_user_id)
+            .first()
+        )
+
+        if member is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Member account not found",
+            )
+
+        return member.member_id
 
 # GET /members/me
 @members_router.get("/me", response_model=MemberProfile)

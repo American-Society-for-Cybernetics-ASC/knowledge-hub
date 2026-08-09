@@ -141,13 +141,6 @@ Metadata = Annotated[
     Field(discriminator="type"),
 ]    
 
-class ProfileSettings(BaseModel):
-    """Profile preferences retained for future member-matching work."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    matching_opt_out: bool = False
-
 class ProfileContent(BaseModel):
     """ 
     Main profile content.
@@ -167,7 +160,6 @@ class ProfileContent(BaseModel):
     research_interests: list[str] = Field(default_factory=list, max_length=30)
     expertise: list[str] = Field(default_factory=list, max_length=30)
 
-    settings: ProfileSettings = Field(default_factory=ProfileSettings)
     metadata: dict[str, Metadata] = Field(default_factory=dict)
 
     # Normalize matching fields.
@@ -190,7 +182,6 @@ class ProfileUpdate(BaseModel):
     personal_statement: str | None = Field(default=None, max_length=5000)
     research_interests: list[str] | None = Field(default=None, max_length=30)
     expertise: list[str] | None = Field(default=None, max_length=30)
-    settings: ProfileSettings | None = None
     metadata: dict[str, Metadata] | None = None
     tags: list[Tag] | None = Field(default=None, max_length=50)
 

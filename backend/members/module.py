@@ -107,12 +107,6 @@ class MembersModule:
                 identity_data.update(identity_update)
                 content_data["identity"] = identity_data
 
-            if "settings" in update_data:
-                settings_update = update_data.pop("settings") or {}
-                settings_data = dict(content_data["settings"])
-                settings_data.update(settings_update)
-                content_data["settings"] = settings_data
-
             if "metadata" in update_data:
                 metadata_update = update_data.pop("metadata") or {}
                 metadata_data = dict(content_data["metadata"])
