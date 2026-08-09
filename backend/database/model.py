@@ -30,7 +30,7 @@ class Member(Base):
     memberships = relationship("Membership", back_populates="member")
     auth_user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"))
     auth_user = relationship("AuthUser", back_populates="members")
-    mailing_lists = relationship("MailingListMember", back_populates="member")
+    mailing_list_memberships = relationship("MailingListMember", back_populates="member")
     applications = relationship("MembershipApplication", back_populates="member")
 
 
@@ -203,19 +203,18 @@ class Module(Base):
 class MailingListMember(Base):
     __tablename__ = "mailing_list_members"
 
-    mailing_list_member_id = Column(Integer, primary_key=True, index=True)
+    mailing_list_member_id = mapped_column(Integer, primary_key=True, index=True)
 
-    email = Column(String, nullable=False)
+    email = mapped_column(String, nullable=False)
 
-    group_id = Column(Integer, ForeignKey("groups.group_id"), nullable=False)
+    group_id = mapped_column(Integer, ForeignKey("groups.group_id"), nullable=False)
 
-    #nullable because external emails aren't members
-    member_id = Column(Integer, ForeignKey("members.member_id"), nullable=True)
-    is_member = Column(Boolean, default=False)
+    #nullable for external emails
+    member_id = mapped_column(Integer, ForeignKey("members.member_id"), nullable=True)
 
     #relationships
     group = relationship("Group", back_populates="mailing_list_members")
-    member = relationship("Member", back_populates="mailing_lists")
+    member = relationship("Member", back_populates="mailing_list_memberships")
 
 
 class CronJobTable(Base):
