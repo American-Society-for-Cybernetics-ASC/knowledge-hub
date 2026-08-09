@@ -6,6 +6,7 @@ from membership.module import MembershipModule
 from membership.schema import MembershipCreate, MembershipListParams
 
 
+@pytest.fixture
 def approved_member():
     """Creates a Member with an approved MembershipApplication"""
     with database.get_session() as db:
@@ -33,7 +34,6 @@ def test_start_membership_succeeds_for_approved_member(approved_member):
     assert membership.member_id == approved_member
     assert membership.tier == "Standard"
     assert membership.status == "Current"
-    assert membership.payment_id is not None
 
 
 def test_start_membership_rejects_unapproved_member():

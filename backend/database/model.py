@@ -106,13 +106,10 @@ class Payment(Base):
     __tablename__ = "payments"
 
     payment_id = mapped_column(Integer, primary_key=True, index=True)
-    date = mapped_column(DateTime)
+    date = mapped_column(DateTime, nullable=False)
     status = mapped_column(String, nullable=False)
     kind = mapped_column(String, nullable=False)
     provider = mapped_column(String, nullable=False)
-
-    # Relationship to MemberMatching
-    memberships = relationship("Membership", back_populates="payment")
 
 
 class MemberMatching(Base):
@@ -138,17 +135,16 @@ class Membership(Base):
     __tablename__ = "memberships"
 
     membership_id = mapped_column(Integer, primary_key=True, index=True)
-    start_date = mapped_column(DateTime)
+    start_date = mapped_column(DateTime, nullable=False)
+    membership_expires = mapped_column(DateTime, nullable=False)
     tier = mapped_column(String, nullable=False)
     status = mapped_column(String, nullable=False)
 
     # FKs
     member_id = mapped_column(Integer, ForeignKey("members.member_id"))
-    payment_id = mapped_column(Integer, ForeignKey("payments.payment_id"))
 
     # Relationships
     member = relationship("Member", back_populates="memberships")
-    payment = relationship("Payment", back_populates="memberships")
 
 
 class AuthUser(Base):

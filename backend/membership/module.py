@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 import database
 from database.model import Membership, MembershipApplication, Payment
@@ -64,14 +64,14 @@ class MembershipModule:
                 )
 
             payment = Payment(
-                date=datetime.utcnow(),
+                date=datetime.now(timezone.utc),
                 status=PaymentStatus.PAID.value,
                 kind="Single",
                 provider="Stripe",
             )
             db.add(payment)
 
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             membership = Membership(
                 member_id=data.member_id,
                 tier=data.tier,

@@ -17,10 +17,6 @@ class PaymentProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def create_recurring(self) -> dict[str, Any]:
-        raise NotImplementedError
-
-    @abstractmethod
     def check(self, info: dict[str, Any]) -> PaymentStatus:
         raise NotImplementedError
 
