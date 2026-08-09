@@ -99,6 +99,7 @@ def test_execute_cron(test_server, mock_get_session: Callable[[], Session]):
     assert len(CronModule().get_queued_cron_jobs()) == 0
 
     r = test_server.get("cron/jobs")
+    assert r.status_code == 200
     job = r.json()[0]
     assert job == {
         "id": 1,
