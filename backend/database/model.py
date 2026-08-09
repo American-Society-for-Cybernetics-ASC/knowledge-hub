@@ -11,8 +11,6 @@ class Member(Base):
     status = mapped_column(String, nullable=False)
 
     # Add Group table relationsip
-    group_id = mapped_column(Integer, ForeignKey("groups.group_id"))
-    group = relationship("Group", back_populates="members")
     profile = relationship("Profile", back_populates="member", uselist=False)
     submissions = relationship("Submission", back_populates="member")
 
@@ -30,20 +28,20 @@ class Member(Base):
     memberships = relationship("Membership", back_populates="member")
     auth_user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"))
     auth_user = relationship("AuthUser", back_populates="members")
+    mailing_list_memberships = relationship("MailingListMember", back_populates="member")
     applications = relationship("MembershipApplication", back_populates="member")
 
 
-class Group(Base):
-    __tablename__ = "groups"
 
-    group_id = mapped_column(Integer, primary_key=True, index=True)
+class MailingList(Base):
+    __tablename__ = "mailing_lists"
+
+    mailing_list_id = mapped_column(Integer, primary_key=True, index=True)
     name = mapped_column(String, nullable=False)
     description = mapped_column(String)
     email = mapped_column(String)
 
-    # relationship to all tables
-    members = relationship("Member", back_populates="group")
-    memberships = relationship("Membership", back_populates="group")
+    members = relationship("MailingListMember", back_populates="mailing_list")
 
 
 class Profile(Base):
@@ -143,12 +141,10 @@ class Membership(Base):
 
     # FKs
     member_id = mapped_column(Integer, ForeignKey("members.member_id"))
-    group_id = mapped_column(Integer, ForeignKey("groups.group_id"))
     payment_id = mapped_column(Integer, ForeignKey("payments.payment_id"))
 
     # Relationships
     member = relationship("Member", back_populates="memberships")
-    group = relationship("Group", back_populates="memberships")
     payment = relationship("Payment", back_populates="memberships")
 
 
@@ -197,6 +193,21 @@ class Module(Base):
     module_id = mapped_column(Integer, primary_key=True, index=True)
     config = mapped_column(JSON)
 
+class MailingListMember(Base):
+    __tablename__ = "mailing_list_members"
+
+    mailing_list_member_id = mapped_column(Integer, primary_key=True, index=True)
+
+    mailing_list_id = mapped_column(Integer, ForeignKey("mailing_lists.mailing_list_id"), nullable=False)
+
+    email = mapped_column(String, nullable=False)
+    #nullable for external emails
+    member_id = mapped_column(Integer, ForeignKey("members.member_id"), nullable=True)
+
+    #relationships
+    mailing_list = relationship("MailingList", back_populates="members")
+    member = relationship("Member", back_populates="mailing_list_memberships")
+
 
 class CronJobTable(Base):
     __tablename__ = "cron_jobs"
@@ -216,6 +227,7 @@ class FailedEmailTable(Base):
     retries = mapped_column(Integer, default=0)
     email = mapped_column(JSON)
     error = mapped_column(String, nullable=True)
+
     
 class MembershipApplication(Base):
     __tablename__ = "membership_applications"
@@ -242,3 +254,4 @@ class Notification(Base):
 
     # Relationship
     user = relationship("AuthUser")
+
