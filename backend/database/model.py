@@ -11,8 +11,6 @@ class Member(Base):
     status = mapped_column(String, nullable=False)
 
     # Add Group table relationsip
-    group_id = mapped_column(Integer, ForeignKey("groups.group_id"))
-    group = relationship("Group", back_populates="members")
     profile = relationship("Profile", back_populates="member", uselist=False)
     submissions = relationship("Submission", back_populates="member")
 
@@ -35,18 +33,15 @@ class Member(Base):
 
 
 
-class Group(Base):
-    __tablename__ = "groups"
+class MailingList(Base):
+    __tablename__ = "mailing_lists"
 
-    group_id = mapped_column(Integer, primary_key=True, index=True)
+    mailing_list_id = mapped_column(Integer, primary_key=True, index=True)
     name = mapped_column(String, nullable=False)
     description = mapped_column(String)
     email = mapped_column(String)
 
-    # relationship to all tables
-    members = relationship("Member", back_populates="group")
-    memberships = relationship("Membership", back_populates="group")
-    mailing_list_members = relationship("MailingListMember", back_populates="group")
+    members = relationship("MailingListMember", back_populates="mailing_list")
 
 
 class Profile(Base):
@@ -146,12 +141,10 @@ class Membership(Base):
 
     # FKs
     member_id = mapped_column(Integer, ForeignKey("members.member_id"))
-    group_id = mapped_column(Integer, ForeignKey("groups.group_id"))
     payment_id = mapped_column(Integer, ForeignKey("payments.payment_id"))
 
     # Relationships
     member = relationship("Member", back_populates="memberships")
-    group = relationship("Group", back_populates="memberships")
     payment = relationship("Payment", back_populates="memberships")
 
 
@@ -205,15 +198,14 @@ class MailingListMember(Base):
 
     mailing_list_member_id = mapped_column(Integer, primary_key=True, index=True)
 
+    mailing_list_id = mapped_column(Integer, ForeignKey("mailing_lists.mailing_list_id"), nullable=False)
+
     email = mapped_column(String, nullable=False)
-
-    group_id = mapped_column(Integer, ForeignKey("groups.group_id"), nullable=False)
-
     #nullable for external emails
     member_id = mapped_column(Integer, ForeignKey("members.member_id"), nullable=True)
 
     #relationships
-    group = relationship("Group", back_populates="mailing_list_members")
+    mailing_list = relationship("MailingList", back_populates="members")
     member = relationship("Member", back_populates="mailing_list_memberships")
 
 
