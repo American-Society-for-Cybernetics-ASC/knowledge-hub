@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, Union
+from typing import Annotated, Union
 
 from pydantic import Field
 from utils import BaseModel, ModuleConfig
@@ -38,8 +38,14 @@ class Payment(BaseModel):
     transaction: TransactionTypes
 
 
+class PaymentOption(BaseModel):
+    name: str = Field(min_length=1, max_length=16)
+    description: str = Field(min_length=1, max_length=100)
+    provider: PaymentProviderTypes
+
+
 class PaymentModuleConfig(ModuleConfig):
-    provider: PaymentProviderTypes | Literal["disabled"]
+    payment_options: list[PaymentOption]
 
     @staticmethod
     def module_id() -> str:
@@ -47,4 +53,4 @@ class PaymentModuleConfig(ModuleConfig):
 
     @staticmethod
     def default() -> PaymentModuleConfig:
-        return PaymentModuleConfig(provider="disabled")
+        return PaymentModuleConfig(payment_options=[])
