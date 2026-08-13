@@ -4,5 +4,5 @@
 // POST /groups/{group_id}/leave - leave a group
 
 export default function GroupsPage() {
-    return <div>Groups</div>;
+  return <div>Groups</div>;
 }

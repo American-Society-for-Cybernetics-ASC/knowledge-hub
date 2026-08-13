@@ -1,3 +1,3 @@
 export default function TOTPVerify() {
-    return <div>TOTP Verify</div>;
+  return <div>TOTP Verify</div>;
 }
