@@ -1,7 +1,6 @@
 "use client";
 
-import { PublicEnv } from "@/app/public-env-provider";
-import { useContext } from "react";
+import { backendFetch } from "@/lib/api/client";
 import useSWR from "swr";
 
 interface FailedEmail {
@@ -14,28 +13,26 @@ interface FailedEmail {
 }
 
 export default function Page() {
-  const publicEnv = useContext(PublicEnv);
-  const { data, error, isLoading } = useSWR<FailedEmail[]>(
-    publicEnv.backendUrl + "/mail/failed",
-    (url: string) => {
-      console.log(url);
-      return fetch(url).then((r) => r.json());
-    },
-  );
-  if (!data) {
-    return <p>Loading</p>;
-  }
-  return (
-    <>
-      <h2>Mail</h2>
-      {data.map((email, i) => (
-        <ul key={email.id}>
-          <h3>Email #{i}</h3>
-          <li>Sender: {email.email.sender}</li>
-          <li>Recipients: {email.email.recipients}</li>
-          <li>Subject: {email.email.subject}</li>
-        </ul>
-      ))}
+    const { data, error, isLoading } = useSWR<FailedEmail[]>("/mail/failed", backendFetch);
+
+    if (isLoading) {
+        return <p>Loading</p>
+    }
+    if (error) {
+        return <p>Error: {error}</p>
+    }
+    if (!data) {
+        return <p>???</p>
+    }
+
+    return <>
+        <h2>Mail</h2>
+        {data.map((email, i) => <ul key={email.id}>
+                <h3>Email #{i}</h3>
+                <li>Sender: {email.email.sender}</li>
+                <li>Recipients: {email.email.recipients}</li>
+                <li>Subject: {email.email.subject}</li>
+            </ul>
+        )}
     </>
-  );
 }
