@@ -23,16 +23,21 @@ export default function Page() {
     backendFetch,
   );
 
+  let body;
   if (isLoading) {
-    return <p>Loading</p>;
+    body = <p>Loading</p>;
+  } else if (error) {
+    body = <p>Error: {error.toString()}</p>;
+  } else if (!data) {
+    body = <p>Error: No Data</p>;
+  } else {
+    body = <ConfigForm config={data} />;
   }
-  if (error) {
-    return <p>Error: {error.toString()}</p>;
-  }
-  if (!data) {
-    return <p>Error: no data</p>;
-  }
-  return <ConfigForm config={data} />;
+
+  return <>
+      <Typography variant={"h5"}>Payments</Typography>
+      {body}
+  </>
 }
 
 function ConfigForm(props: { config: PaymentsConfig }) {
@@ -49,7 +54,6 @@ function ConfigForm(props: { config: PaymentsConfig }) {
   const currentConfig = { ...config, ...dirtyConfig };
   return (
     <>
-      <Typography variant={"h5"}>Payments</Typography>
       {providerModalIndex !== undefined && (
         <PaymentOptionDialog
           option={currentConfig.payment_options[providerModalIndex]}
