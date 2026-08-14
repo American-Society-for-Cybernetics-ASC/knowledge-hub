@@ -1,8 +1,8 @@
 export type StripePaymentProvider = {
   provider_type: "stripe";
-  stripe_api_key: string;
-  stripe_publishable_key: string;
-  stripe_webhook_secret: string;
+  api_key: string;
+  publishable_key: string;
+  webhook_secret: string;
 };
 
 export type PaymentProvider = StripePaymentProvider;

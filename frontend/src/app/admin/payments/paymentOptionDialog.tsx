@@ -109,9 +109,16 @@ export default function PaymentOptionDialog({
         </form>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button disabled={!readyToSubmit} type={"submit"} form="provider-form">
-          Submit
+        <Button variant="contained" color="error" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          disabled={!readyToSubmit}
+          type={"submit"}
+          form="provider-form"
+        >
+          Save
         </Button>
       </DialogActions>
     </Dialog>
@@ -129,32 +136,32 @@ function StripeForm({
     provider && provider.provider_type === "stripe" ? provider : {}
   ) as Partial<StripePaymentProvider>;
 
-  const [stripe_api_key, setApiKey] = useState(
-    asStripeProvider.stripe_api_key || "",
+  const [api_key, setApiKey] = useState(
+    asStripeProvider.api_key || "",
   );
-  const [stripe_publishable_key, setPublishableKey] = useState(
-    asStripeProvider.stripe_publishable_key || "",
+  const [publishable_key, setPublishableKey] = useState(
+    asStripeProvider.publishable_key || "",
   );
-  const [stripe_webhook_secret, setWebhookSecret] = useState(
-    asStripeProvider.stripe_webhook_secret || "",
+  const [webhook_secret, setWebhookSecret] = useState(
+    asStripeProvider.webhook_secret || "",
   );
 
   useEffect(() => {
     const provider: PaymentProvider | undefined =
-      (stripe_api_key &&
-        stripe_publishable_key &&
-        stripe_webhook_secret && {
+      (api_key &&
+        publishable_key &&
+        webhook_secret && {
           provider_type: "stripe",
-          stripe_api_key,
-          stripe_publishable_key,
-          stripe_webhook_secret,
+          api_key,
+          publishable_key,
+          webhook_secret,
         }) ||
       undefined;
     setProvider(provider);
   }, [
-    stripe_api_key,
-    stripe_publishable_key,
-    stripe_webhook_secret,
+    api_key,
+    publishable_key,
+    webhook_secret,
     setProvider,
   ]);
 
@@ -162,8 +169,8 @@ function StripeForm({
     <>
       <TextField
         required
-        name="stripe_api_key"
-        value={stripe_api_key}
+        name="api_key"
+        value={api_key}
         onChange={(e) => {
           setApiKey(e.target.value);
         }}
@@ -172,8 +179,8 @@ function StripeForm({
       />
       <TextField
         required
-        name="stripe_publishable_key"
-        value={stripe_publishable_key}
+        name="publishable_key"
+        value={publishable_key}
         onChange={(e) => {
           setPublishableKey(e.target.value);
         }}
@@ -182,8 +189,8 @@ function StripeForm({
       />
       <TextField
         required
-        name="stripe_webhook_secret"
-        value={stripe_webhook_secret}
+        name="webhook_secret"
+        value={webhook_secret}
         onChange={(e) => {
           setWebhookSecret(e.target.value);
         }}

@@ -8,7 +8,9 @@ from utils import BaseModel
 
 class StripePaymentProvider(BaseModel):
     provider_type: Literal["stripe"] = Field(default="stripe")
-    stripe_api_key: str
+    api_key: str
+    publishable_key: str
+    webhook_secret: str
 
     def create_one_off(self, amount: int, currency: str = "usd") -> StripeTransaction:
         return StripeTransaction.create_one_off(amount, currency)

@@ -3,8 +3,8 @@
 import { backendFetch } from "@/lib/api/client";
 import { PaymentsConfig } from "@/types/payments";
 import {
-  Box,
   Button,
+  Grid,
   Table,
   TableBody,
   TableCell,
@@ -35,7 +35,8 @@ export default function Page() {
   return <ConfigForm config={data} />;
 }
 
-function ConfigForm({ config }: { config: PaymentsConfig }) {
+function ConfigForm(props: { config: PaymentsConfig }) {
+  const [config, setConfig] = useState(props.config);
   const [dirtyConfig, setDirtyConfig] = useState<Partial<PaymentsConfig>>({});
   const [providerModalIndex, setProviderModalIndex] = useState<
     number | undefined
@@ -48,7 +49,7 @@ function ConfigForm({ config }: { config: PaymentsConfig }) {
   const currentConfig = { ...config, ...dirtyConfig };
   return (
     <>
-      <Typography variant={"h4"}>Payments</Typography>
+      <Typography variant={"h5"}>Payments</Typography>
       {providerModalIndex !== undefined && (
         <PaymentOptionDialog
           option={currentConfig.payment_options[providerModalIndex]}
@@ -68,42 +69,82 @@ function ConfigForm({ config }: { config: PaymentsConfig }) {
           onClose={() => setProviderModalIndex(undefined)}
         />
       )}
-      <Button
-        onClick={() =>
-          setProviderModalIndex(currentConfig.payment_options.length)
-        }
-      >
-        <Add />
-      </Button>
+      <Typography variant={"h5"}>Config</Typography>
       <form onSubmit={submitEvent}>
-        <Box sx={{ width: "50%" }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Provider</TableCell>
-                <TableCell>Edit</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {currentConfig.payment_options.map((option, i) => (
-                <TableRow key={`payment-option-${i}`}>
-                  <TableCell>{option.name}</TableCell>
-                  <TableCell>{option.description}</TableCell>
-                  <TableCell>{option.provider.provider_type}</TableCell>
-                  <TableCell>
-                    <Button onClick={() => setProviderModalIndex(i)}>
-                      <Settings />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <Grid container sx={{ width: "50%" }}>
+          <Grid container direction={"row"} size={12} spacing={5}>
+            <Typography variant={"h6"}>Payment Options</Typography>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() =>
+                setProviderModalIndex(currentConfig.payment_options.length)
+              }
+            >
+              <Add />
+            </Button>
+          </Grid>
 
-          <Button>Submit</Button>
-        </Box>
+          <Grid size={12}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell>Provider</TableCell>
+                  <TableCell>Edit</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {currentConfig.payment_options.map((option, i) => (
+                  <TableRow key={`payment-option-${i}`}>
+                    <TableCell>{option.name}</TableCell>
+                    <TableCell>{option.description}</TableCell>
+                    <TableCell>{option.provider.provider_type}</TableCell>
+                    <TableCell>
+                      <Button onClick={() => setProviderModalIndex(i)}>
+                        <Settings />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Grid>
+
+          <Grid
+            container
+            direction="row"
+            offset={6}
+            size={6}
+            sx={{ justifyContent: "flex-end" }}
+            spacing={5}
+          >
+            <Button
+              color="error"
+              variant="contained"
+              disabled={Object.keys(dirtyConfig).length === 0}
+              onClick={() => setDirtyConfig({})}
+            >
+              Reset
+            </Button>
+            <Button
+              variant="contained"
+              disabled={Object.keys(dirtyConfig).length === 0}
+              onClick={() =>
+                backendFetch<PaymentsConfig>("/payments/config", {
+                  method: "PATCH",
+                  body: JSON.stringify(currentConfig),
+                }).then((response) => {
+                  setConfig(response);
+                  setDirtyConfig({});
+                })
+              }
+            >
+              Submit
+            </Button>
+          </Grid>
+        </Grid>
       </form>
     </>
   );

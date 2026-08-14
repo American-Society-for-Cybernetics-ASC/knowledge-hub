@@ -16,19 +16,24 @@ class PatchPaymentModuleConfig(BaseModel):
 class ReadPaymentModuleConfig(BaseModel):
     payment_options: list[PaymentOption]
 
+    @staticmethod
+    def from_model(config: PaymentModuleConfig) -> ReadPaymentModuleConfig:
+        return ReadPaymentModuleConfig(payment_options=config.payment_options)
+
 
 @payments_router.patch("/config")
 def update_config(
     patch: PatchPaymentModuleConfig,
-):
+) -> ReadPaymentModuleConfig:
     config = get_module_config(PaymentModuleConfig)
     if patch.payment_options is not None:
         config.payment_options = patch.payment_options
     set_module_config(config)
+    return ReadPaymentModuleConfig.from_model(config)
 
 
 @payments_router.get("/config")
 def get_config() -> ReadPaymentModuleConfig:
     config = get_module_config(PaymentModuleConfig)
 
-    return ReadPaymentModuleConfig(payment_options=config.payment_options)
+    return ReadPaymentModuleConfig.from_model(config)

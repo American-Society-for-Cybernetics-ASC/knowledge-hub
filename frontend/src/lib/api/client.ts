@@ -4,10 +4,13 @@ export async function backendFetch<T>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<T> {
+  const headers: Record<string, string> = options.body
+    ? { "Content-Type": "application/json" }
+    : {};
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...headers,
       ...options.headers,
     },
     credentials: "include",
