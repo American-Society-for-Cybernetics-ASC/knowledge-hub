@@ -47,8 +47,14 @@ function ConfigForm(props: { config: PaymentsConfig }) {
     number | undefined
   >(undefined);
 
-  const submitEvent = (event: React.SubmitEvent) => {
-    event.preventDefault();
+  const submitEvent = () => {
+    backendFetch<PaymentsConfig>("/payments/config", {
+      method: "PATCH",
+      body: JSON.stringify(currentConfig),
+    }).then((response) => {
+      setConfig(response);
+      setDirtyConfig({});
+    })
   };
 
   const currentConfig = { ...config, ...dirtyConfig };
@@ -74,7 +80,7 @@ function ConfigForm(props: { config: PaymentsConfig }) {
         />
       )}
       <Typography variant={"h5"}>Config</Typography>
-      <form onSubmit={submitEvent}>
+      <form action={submitEvent}>
         <Grid container sx={{ width: "50%" }}>
           <Grid container direction={"row"} size={12} spacing={5}>
             <Typography variant={"h6"}>Payment Options</Typography>
@@ -135,15 +141,7 @@ function ConfigForm(props: { config: PaymentsConfig }) {
             <Button
               variant="contained"
               disabled={Object.keys(dirtyConfig).length === 0}
-              onClick={() =>
-                backendFetch<PaymentsConfig>("/payments/config", {
-                  method: "PATCH",
-                  body: JSON.stringify(currentConfig),
-                }).then((response) => {
-                  setConfig(response);
-                  setDirtyConfig({});
-                })
-              }
+              type="submit"
             >
               Submit
             </Button>
