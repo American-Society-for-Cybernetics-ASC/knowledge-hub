@@ -67,20 +67,22 @@ export default function PaymentOptionDialog({
       <DialogTitle>Configure Payment Option</DialogTitle>
       <DialogContent dividers={true}>
         <form id="provider-form" action={handleSubmit}>
-          <FormControl fullWidth required>
-            <InputLabel>Provider</InputLabel>
-            <Select
-              value={providerType}
-              onChange={(e) =>
-                setProviderType(
-                  e.target.value as PaymentProvider["provider_type"],
-                )
-              }
-            >
-              <MenuItem value={"stripe"}>Stripe</MenuItem>
-            </Select>
-          </FormControl>
-          <Stack>
+          <Stack spacing={1}>
+            <FormControl fullWidth required>
+              <InputLabel id="provider-type-label">Provider</InputLabel>
+              <Select
+                labelId="provider-type-label"
+                label="Provider"
+                value={providerType}
+                onChange={(e) =>
+                  setProviderType(
+                    e.target.value as PaymentProvider["provider_type"],
+                  )
+                }
+              >
+                <MenuItem value={"stripe"}>Stripe</MenuItem>
+              </Select>
+            </FormControl>
             <TextField
               required
               name="name"
@@ -136,9 +138,7 @@ function StripeForm({
     provider && provider.provider_type === "stripe" ? provider : {}
   ) as Partial<StripePaymentProvider>;
 
-  const [api_key, setApiKey] = useState(
-    asStripeProvider.api_key || "",
-  );
+  const [api_key, setApiKey] = useState(asStripeProvider.api_key || "");
   const [publishable_key, setPublishableKey] = useState(
     asStripeProvider.publishable_key || "",
   );
@@ -158,12 +158,7 @@ function StripeForm({
         }) ||
       undefined;
     setProvider(provider);
-  }, [
-    api_key,
-    publishable_key,
-    webhook_secret,
-    setProvider,
-  ]);
+  }, [api_key, publishable_key, webhook_secret, setProvider]);
 
   return (
     <>
