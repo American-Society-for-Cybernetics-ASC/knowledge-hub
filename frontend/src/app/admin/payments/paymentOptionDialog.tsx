@@ -22,12 +22,12 @@ export default function PaymentOptionDialog({
   isOpen,
   onClose,
   option,
-  submit,
+  onSubmit,
 }: {
   isOpen: boolean;
   onClose: () => void;
   option: PaymentOption | undefined;
-  submit: (value: PaymentOption) => void;
+  onSubmit: (value: PaymentOption) => void;
 }) {
   const [providerType, setProviderType] = useState<
     PaymentProvider["provider_type"]
@@ -44,7 +44,7 @@ export default function PaymentOptionDialog({
 
   const handleSubmit = () => {
     if (readyToSubmit) {
-      submit({
+      onSubmit({
         name,
         description,
         provider,

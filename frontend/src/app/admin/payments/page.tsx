@@ -63,7 +63,7 @@ function ConfigForm(props: { config: PaymentsConfig }) {
       {providerModalIndex !== undefined && (
         <PaymentOptionDialog
           option={currentConfig.payment_options[providerModalIndex]}
-          submit={(provider) => {
+          onSubmit={(provider) => {
             const newPaymentOptions = currentConfig.payment_options.toSpliced(
               providerModalIndex,
               1,
