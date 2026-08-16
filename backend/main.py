@@ -11,6 +11,7 @@ from mailing_list.routes import mailing_list_router
 from members.routes import members_router
 from membership.routes import membership_router
 from notifications.routes import notifications_router
+from member_matching.routes import member_matching_router
 
 if SETTINGS.local_deployment and not SETTINGS.testing:
     with database.get_session() as session:
@@ -38,3 +39,4 @@ app.include_router(auth_router)
 app.include_router(mailing_list_router)
 app.include_router(membership_router)
 app.include_router(notifications_router)
+app.include_router(member_matching_router)
