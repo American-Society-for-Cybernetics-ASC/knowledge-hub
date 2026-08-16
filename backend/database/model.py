@@ -150,7 +150,7 @@ class MemberMatching(Base):
     active_member = relationship(
         "Member",
         foreign_keys=[active_member_id],
-        back_populates="outgoing matches",
+        back_populates="outgoing_matches",
     )
     suggested_member = relationship(
         "Member",
@@ -219,6 +219,7 @@ class Module(Base):
     __tablename__ = "modules"
 
     module_id = mapped_column(Integer, primary_key=True, index=True)
+    module_name = mapped_column(String, unique=True, nullable=False, index=True)
     config = mapped_column(JSON)
 
 class MailingListMember(Base):
