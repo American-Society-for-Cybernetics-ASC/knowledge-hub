@@ -55,16 +55,18 @@ def create_member(
 @pytest.fixture
 def authenticate_member():
     """
-    Test matching behaviour rather than JWT decoding.
+    Test matching behaviour rather than JWT authentication.
 
     Override the dependency to get the current member ID.
     """
 
     def set_authenticated_member(member_id: int) -> None:
+        # Override the dependency to get the current member ID
         app.dependency_overrides[get_current_member_id] = lambda: member_id
 
     yield set_authenticated_member
 
+    # Clean up the override
     app.dependency_overrides.pop(get_current_member_id, None)
 
 
@@ -143,6 +145,7 @@ def test_dismissal_hides_suggestion_until_cooldown_expires(
     suggested_member_id = create_member(mock_get_session, tags=["cybernetics"])
 
     now = datetime(2026, 8, 16, 12, 0, tzinfo=timezone.utc)
+    # Replace _now() with the test time
     monkeypatch.setattr(
         MemberMatchingModule,
         "_now",
@@ -162,10 +165,14 @@ def test_dismissal_hides_suggestion_until_cooldown_expires(
         session.commit()
 
     module = MemberMatchingModule()
+
+    # Active member dismisses the suggestion
     module.dismiss_suggestion(active_member_id, suggested_member_id)
 
+    # No suggestions should be returned
     assert module.get_suggestions(active_member_id).suggestions == []
 
+    # Set the time to the next day + 1 sec
     monkeypatch.setattr(
         MemberMatchingModule,
         "_now",
@@ -192,6 +199,7 @@ def test_dismissing_unknown_member_returns_not_found(mock_get_session):
     """Dismissal rejects a member that does not exist."""
     active_member_id = create_member(mock_get_session, tags=["cybernetics"])
 
+    # Dismissing an unknown member should raise a 404
     with pytest.raises(HTTPException) as error:
         MemberMatchingModule().dismiss_suggestion(
             active_member_id,

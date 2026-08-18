@@ -69,7 +69,6 @@ class MemberMatchingModule:
                 
             return MemberMatchingConfig.model_validate(config_record.config)
 
-
     @staticmethod
     def _display_name(profile: model.Profile) -> str | None:
         """Return the public display name, without exposing full profile content."""
@@ -105,12 +104,14 @@ class MemberMatchingModule:
         with database.get_session() as session:
             active_member = session.get(model.Member, member_id)
 
+            # If member does not exist
             if active_member is None:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Member not found",
                 )
 
+            # If member does not have a profile
             active_profile = active_member.profile
             if active_profile is None:
                 return MemberMatchSuggestionsResult(
@@ -118,12 +119,14 @@ class MemberMatchingModule:
                     suggestions=[],
                 )   
 
+            # If member has disabled matching
             if active_profile.matching_opt_out:
                 return MemberMatchSuggestionsResult(
                     opted_out=True,
                     suggestions=[],
                 )     
 
+            # Get their tags and normalize
             active_tags = self._normalize_tags(active_profile.tags)
             if not active_tags:
                 return MemberMatchSuggestionsResult(
@@ -131,16 +134,19 @@ class MemberMatchingModule:
                     suggestions=[],
                 )
 
+            # Calc the dismissal cooldown
             cooldown_cutoff = self._now() - timedelta(
                 days=config.dismissal_days
             )
 
+            # Get all dismissals for the member
             dismissals = session.scalars(
                 select(model.MemberMatching).where(
                     model.MemberMatching.active_member_id == member_id
                 )
             ).all()
 
+            # Create a set of dismissed member IDs
             suppressed_member_ids = {
                 dismissal.suggested_member_id
                 for dismissal in dismissals
@@ -150,6 +156,7 @@ class MemberMatchingModule:
                 )
             }
 
+            # Get all eligible candidates
             candidates = session.scalars(
                 select(model.Member)
                 .join(model.Profile)
@@ -161,32 +168,39 @@ class MemberMatchingModule:
                 )
             ).all()
 
+            # Create a list of suggestions
             suggestions: list[MemberMatchingSuggestion] = []
             processed_member_ids: set[int] = set()
 
             for candidate in candidates:
-                # A member can have historic memberships, score them once.
+                # Prevent duplicate candidates
                 if candidate.member_id in processed_member_ids:
                     continue
                 processed_member_ids.add(candidate.member_id)
 
+                # Prevent dismissed candidates
                 if candidate.member_id in suppressed_member_ids:
                     continue
 
                 if candidate.profile is None:
                     continue
 
+                # Normalize candidate tags
                 candidate_tags = self._normalize_tags(candidate.profile.tags)
+                # Get shared tags
                 shared_tag_keys = active_tags.keys() & candidate_tags.keys()
 
+                # Skip if they don't share tags
                 if not shared_tag_keys:
                     continue
 
+                # Clean the shared tags
                 shared_tags = sorted(
                     (active_tags[tag_key] for tag_key in shared_tag_keys),
                     key=str.casefold,
                 )
 
+                # Create the suggestion 
                 suggestions.append(
                     MemberMatchingSuggestion(
                         member_id=candidate.member_id,
@@ -196,10 +210,12 @@ class MemberMatchingModule:
                     )
                 )
 
+            # Sort descending by score, member ID as tie breaker
             suggestions.sort(
                 key=lambda suggestion: (-suggestion.score, suggestion.member_id)
             )
 
+            # Return the suggestions, depends on max config
             return MemberMatchSuggestionsResult(
                 opted_out=False,
                 suggestions=suggestions[:config.maximum_suggestions]
@@ -245,6 +261,7 @@ class MemberMatchingModule:
                 detail="Cannot dismiss self",
             )
             
+        # Find both members
         with database.get_session() as session:
             active_member = session.get(model.Member, member_id)
             suggested_member = session.get(model.Member, suggested_member_id)
@@ -255,6 +272,7 @@ class MemberMatchingModule:
                     detail="Member not found",
                 )
 
+            # Check if dismissal already exists
             dismissal = session.scalar(
                 select(model.MemberMatching).where(
                     model.MemberMatching.active_member_id == member_id,
@@ -262,6 +280,7 @@ class MemberMatchingModule:
                 )
             )
 
+            # If dismissal does not exist, create it
             if dismissal is None:
                 dismissal = model.MemberMatching(
                     active_member_id=member_id,
