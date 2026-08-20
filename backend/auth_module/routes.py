@@ -41,7 +41,9 @@ class RegisterResponse(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    challenge_token: str
+    requires_totp: bool
+    challenge_token: str | None
+    token: str | None
     message: str
 
 
@@ -105,6 +107,7 @@ def get_totp_setup(
 @auth_router.post("/login")
 def login(
     req: LoginRequest,
+    response: Response,
     module: Annotated[AuthModule, Depends(AuthModule)],
 ) -> LoginResponse:
     """
@@ -112,13 +115,23 @@ def login(
     Returns a challenge token to be used in the verify-otp step.
     """
     try:
-        challenge_token = module.login(
+        result = module.login(
             email=req.email,
             password=req.password,
         )
+        if not result["requires_totp"]:
+            response.set_cookie(
+                key="access_token",
+                value=result["token"],
+                httponly=True,
+                secure=True,
+                samesite="strict",
+            )
         return LoginResponse(
-            challenge_token=challenge_token,
-            message="Password verified. Please enter the One-Time Passcode.",
+            requires_totp=result["requires_totp"],
+            challenge_token=result["challenge_token"],
+            token=None,
+            message="Login successful." if not result["requires_totp"] else "Password verified. Please enter your authenticator code.",
         )
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))

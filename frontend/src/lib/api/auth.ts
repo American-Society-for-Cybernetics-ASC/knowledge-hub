@@ -17,7 +17,9 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-    challenge_token: string;
+    requires_totp: boolean;
+    challenge_token: string | null;
+    token :string | null;
     message: string;
 }
 

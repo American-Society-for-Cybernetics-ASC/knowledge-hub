@@ -142,7 +142,7 @@ class AuthModule:
 
         return True
 
-    def login(self, email: str, password: str) -> str:
+    def login(self, email: str, password: str) -> dict:
         """
         First step of login - verifies email and password.
 
@@ -196,8 +196,26 @@ class AuthModule:
         user.locked_until = None
         session.commit()
 
-        # Return challenge token (TODO: Proper chellenge token)
-        return f"challenge:{user.user_id}"
+        # JWT issual if user has not enabled TOTP
+        if not user.totp_enabled:
+            payload = {
+                "sub": str(user.user_id),
+                "email": user.email,
+                "iss": SETTINGS.jwt_issuer,
+                "exp": datetime.now(timezone.utc) + timedelta(minutes=SETTINGS.jwt_expiry_minutes),        
+            }
+            token = jwt.encode(payload, self._get_private_key(), algorithm="RS256")
+            return {
+                "requires_totp": False,
+                "challenge_token": None,
+                "token": token
+            }
+        # Return challenge token 
+        return { 
+            "requires_totp": True,
+            "challenge_token": f"challenge:{user.user_id}",
+            "token": None
+        }  
 
     def verify_otp(self, email: str, code: str) -> str:
         """
