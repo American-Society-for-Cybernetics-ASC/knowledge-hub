@@ -206,13 +206,11 @@ class AuthModule:
             }
             token = jwt.encode(payload, self._get_private_key(), algorithm="RS256")
             return {
-                "requires_totp": False,
                 "challenge_token": None,
                 "token": token
             }
         # Return challenge token 
         return { 
-            "requires_totp": True,
             "challenge_token": f"challenge:{user.user_id}",
             "token": None
         }  

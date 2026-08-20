@@ -41,9 +41,7 @@ class RegisterResponse(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    requires_totp: bool
     challenge_token: str | None
-    token: str | None
     message: str
 
 
@@ -119,7 +117,7 @@ def login(
             email=req.email,
             password=req.password,
         )
-        if not result["requires_totp"]:
+        if not result["challenge_token"]:
             response.set_cookie(
                 key="access_token",
                 value=result["token"],
@@ -128,10 +126,8 @@ def login(
                 samesite="strict",
             )
         return LoginResponse(
-            requires_totp=result["requires_totp"],
             challenge_token=result["challenge_token"],
-            token=None,
-            message="Login successful." if not result["requires_totp"] else "Password verified. Please enter your authenticator code.",
+            message="Login successful." if not result["challenge_token"] else "Password verified. Please enter your authenticator code.",
         )
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
