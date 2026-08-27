@@ -2,7 +2,7 @@ from typing import Annotated
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Response
 
-from . import AuthModule
+from . import AuthModule, user_id
 
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
@@ -168,3 +168,30 @@ def get_public_key(
     Returns the RSA public key for JWT verification
     """
     return {"public_key": module._get_public_key_pem()}
+
+
+@auth_router.get("/me")
+def get_current_user(
+    current_user_id: Annotated[int | none, Depends(user_id)],
+) -> dict:
+    """
+    Returns the current authenticated user's details.
+    Reads user_id from JWT cookie automatically.
+    """
+    if current_user_id is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    import database
+    from database import model
+
+    session = database.get_session()
+    user = session.get(model.AuthUser, current_user_id)
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {
+        "user_id": user.user_id,
+        "email": user.email,
+        "name": user.name,
+    }
