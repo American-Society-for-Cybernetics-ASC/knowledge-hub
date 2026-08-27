@@ -16,6 +16,10 @@ export default function AdminNav({
                         href:"/admin"
                     },
                     {
+                        label: "Payments",
+                        href: "/admin/payments"
+                    },
+                    {
                         label: "Mail",
                         href:"/admin/mail"
 
