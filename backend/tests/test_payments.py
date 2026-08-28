@@ -1,6 +1,8 @@
 from payments.enums import PaymentStatus
 from payments.transactions.mock_transaction import MockTransaction
 from payments.transactions.stripe_transaction import StripeTransaction
+from payments.providers.mock_provider import MockPaymentProvider
+from payments.providers.stripe_provider import StripePaymentProvider
 
 # Test Resources
 
@@ -128,3 +130,25 @@ def test_stripe_check_always_calls_stripe(monkeypatch):
     transaction.check()
 
     assert call_count == 2
+
+
+# Mock Payment Provider Tests
+
+
+def test_mock_provider_create_payment_returns_succeeded_transaction():
+    provider = MockPaymentProvider()
+
+    transaction = provider.create_one_off(100)
+
+    assert isinstance(transaction, MockTransaction)
+    assert transaction.amount() == 100
+    assert transaction.check() == PaymentStatus.SUCCEEDED
+
+def test_mock_provider_default_status_applies_to_all_payments():
+    provider = MockPaymentProvider(default_status = PaymentStatus.FAILED)
+
+    payment_a = provider.create_one_off(100)
+    payment_b = provider.create_one_off(200)
+
+    assert payment_a.check() == PaymentStatus.FAILED
+    assert payment_b.check() == PaymentStatus.FAILED
