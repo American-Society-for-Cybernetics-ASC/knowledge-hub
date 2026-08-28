@@ -14,7 +14,7 @@ export interface ProfileContent {
     identity: ProfileIdentity;
     personal_statement: string | null;
     research_interests: string[];
-    expertise: string[] | null;
+    expertise: string[];
 
     // Not edited by initial page
     metadata: Record<string, unknown>; 
@@ -35,6 +35,6 @@ export interface ProfileUpdate {
     identity?: Partial<ProfileIdentity>;
     personal_statement?: string | null;
     research_interests?: string[] | null;
-    expertise?: string[];
+    expertise?: string[] | null;
     tags?: string[] | null;
 }
