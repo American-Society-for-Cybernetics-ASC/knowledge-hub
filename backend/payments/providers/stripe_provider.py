@@ -3,16 +3,15 @@ from uuid import uuid4
 
 from stripe import PaymentIntent
 
-from providers import PaymentProviderInterface
-from transactions.stripe_transaction import StripeTransaction
-from transactions import PaymentStatus
+from payments.providers import PaymentProviderInterface
+from payments.transactions.stripe_transaction import StripeTransaction
+from payments.transactions import PaymentStatus
 
 class StripePaymentProvider(PaymentProviderInterface):
     """
     The Payment Provider Class for Stripe. Contains the configuration for Stripe payments and handles the creation of a StripeTransaction.
     """
-    def __init__(self, currency: str = "usd") -> None:
-        self.currency = currency
+    currency: str = "usd"
 
     def create_one_off(self, amount: int) -> "StripeTransaction":
         intent = PaymentIntent.create(

@@ -152,3 +152,56 @@ def test_mock_provider_default_status_applies_to_all_payments():
 
     assert payment_a.check() == PaymentStatus.FAILED
     assert payment_b.check() == PaymentStatus.FAILED
+
+
+# Stripe Payment Provider Tests
+
+
+def test_stripe_provider_defaults_currency_to_usd():
+    provider = StripePaymentProvider()
+
+    assert provider.currency == "usd"
+
+def test_stripe_provider_allows_configured_currency():
+    provider = StripePaymentProvider(currency = "aud")
+
+    assert provider.currency == "aud"
+
+def test_stripe_provider_create_one_off_returns_stripe_transaction(monkeypatch):
+    monkeypatch.setattr("payments.providers.stripe_provider.PaymentIntent.create", mock_create)
+
+    provider = StripePaymentProvider()
+
+    transaction = provider.create_one_off(100)
+
+    assert isinstance(transaction, StripeTransaction)
+    assert transaction.payment_id == "pi_test_id"
+    assert transaction.amount() == 100
+
+def test_stripe_provider_passes_amount_and_currency_to_stripe(monkeypatch):
+    calls = {}
+
+    def mock_create_and_record(**kwargs):
+        calls.update(kwargs)
+        return MockPaymentIntent(id = "pi_test_id")
+
+    monkeypatch.setattr("payments.providers.stripe_provider.PaymentIntent.create", mock_create_and_record)
+
+    provider = StripePaymentProvider(currency = "aud")
+
+    provider.create_one_off(100)
+
+    assert calls == {
+        "amount": 100,
+        "currency": "aud",
+        "automatic_payment_methods": {"enabled": True}
+    }
+
+def test_stripe_providers_transaction_uses_configured_currency(monkeypatch):
+    monkeypatch.setattr("payments.providers.stripe_provider.PaymentIntent.create", mock_create)
+
+    provider = StripePaymentProvider(currency = "aud")
+
+    transaction = provider.create_one_off(100)
+
+    assert transaction.currency == "aud"
