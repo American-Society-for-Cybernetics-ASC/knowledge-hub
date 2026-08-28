@@ -13,8 +13,8 @@ export interface ProfileIdentity {
 export interface ProfileContent {
     identity: ProfileIdentity;
     personal_statement: string | null;
-    research_interests: string | null;
-    expertise: string[];
+    research_interests: string[];
+    expertise: string[] | null;
 
     // Not edited by initial page
     metadata: Record<string, unknown>; 
