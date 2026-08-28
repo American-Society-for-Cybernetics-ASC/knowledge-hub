@@ -10,6 +10,7 @@ import pyotp
 import database
 from database import model
 from settings import SETTINGS
+from members.model import ProfileContent, ProfileIdentity
 
 ph = PasswordHasher()
 
@@ -71,6 +72,7 @@ class AuthModule:
 
         # Create new user
         new_user = model.AuthUser(
+            name=display_name,
             email=email,
             hash_password=hashed_password,
             totp_secret=encrypted_secret,
@@ -78,6 +80,25 @@ class AuthModule:
         )
 
         session.add(new_user)
+        session.flush() # Assign user_id
+
+        member = model.Member(
+            status="active",
+            auth_user_id=new_user.user_id,
+        )
+
+        session.add(member)
+        session.flush() # Assign member_id
+
+        profile = model.Profile(
+            member_id=member.member_id,
+            content=ProfileContent(
+                identity=ProfileIdentity(display_name=display_name),
+            ).model_dump(mode="json"),
+            tags=[],
+        )
+
+        session.add(profile)
         session.commit()
         session.refresh(new_user)
 
