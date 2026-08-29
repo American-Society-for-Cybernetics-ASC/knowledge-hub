@@ -6,6 +6,8 @@ from payments.transactions.mock_transaction import MockTransaction
 from payments.transactions import PaymentStatus
 
 class MockPaymentProvider(PaymentProviderInterface):
+    service_name: Literal["mock"] = "mock"
+    
     default_status: PaymentStatus = PaymentStatus.SUCCEEDED
 
     def create_one_off(self, amount: int) -> "MockTransaction":

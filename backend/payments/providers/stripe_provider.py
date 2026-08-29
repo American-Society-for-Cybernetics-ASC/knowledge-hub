@@ -11,6 +11,8 @@ class StripePaymentProvider(PaymentProviderInterface):
     """
     The Payment Provider Class for Stripe. Contains the configuration for Stripe payments and handles the creation of a StripeTransaction.
     """
+    service_name: Literal["stripe"] = "stripe"
+
     currency: str = "usd"
 
     def create_one_off(self, amount: int) -> "StripeTransaction":

@@ -106,10 +106,13 @@ class Payment(Base):
     __tablename__ = "payments"
 
     payment_id = mapped_column(Integer, primary_key=True, index=True)
+    amount = mapped_column(Integer, nullable=False)
+    currency = mapped_column(String(3), nullable=False)
     date = mapped_column(DateTime, nullable=False)
     status = mapped_column(String, nullable=False)
     kind = mapped_column(String, nullable=False)
     provider = mapped_column(String, nullable=False)
+    external_id = mapped_column(String, unique=True, index=True)
 
 
 class MemberMatching(Base):

@@ -12,6 +12,8 @@ class MockTransaction(TransactionInterface):
     payment_id: str
     amount_value: int
     status: PaymentStatus = PaymentStatus.SUCCEEDED
+    currency: str = "usd"
+    provider: str = "mock"
 
     @staticmethod
     def create_one_off(
