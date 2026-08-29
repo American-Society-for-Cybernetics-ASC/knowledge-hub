@@ -12,6 +12,7 @@ from members.routes import members_router
 from membership.routes import membership_router
 from notifications.routes import notifications_router
 from payments.routes import payments_router
+from audit_log.routes import audit_router
 
 if SETTINGS.local_deployment and not SETTINGS.testing:
     with database.get_session() as session:
@@ -41,3 +42,4 @@ app.include_router(mailing_list_router)
 app.include_router(membership_router)
 app.include_router(notifications_router)
 app.include_router(payments_router)
+app.include_router(audit_router)

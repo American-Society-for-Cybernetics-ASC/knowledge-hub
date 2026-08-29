@@ -4,7 +4,6 @@ from typing import Annotated, Callable, Optional
 from fastapi import Depends, HTTPException, Request
 
 from utils import BaseModel
-from settings import SETTINGS
 from .module import AuthModule as AuthModule
 from jose import jwt
 
@@ -48,7 +47,7 @@ class Permissions(BaseModel):
     children: dict[str, Permissions] = {}
 
     def includes(self, heirarchy: list[str], tier: PermissionTier) -> bool:
-        if self.tier and self.tier > tier:
+        if self.tier and self.tier >= tier:
             return True
 
         if len(heirarchy) == 0:
@@ -71,9 +70,6 @@ def user_id(request: Request) -> int | None:
         ...
     ```
     """
-    if SETTINGS.testing:
-        return 0
-
     token = request.cookies.get("access_token")
     if not token:
         return None
@@ -96,9 +92,6 @@ def permissions(user_id: Annotated[int | None, Depends(user_id)]) -> Permissions
         ...
     ```
     """
-    if SETTINGS.testing:
-        return Permissions(tier=PermissionTier.adminstrator, children={})
-
     if user_id is None:
         return Permissions()
 
@@ -108,7 +101,7 @@ def permissions(user_id: Annotated[int | None, Depends(user_id)]) -> Permissions
     if not user or not user.permissions:
         return Permissions()
 
-    return Permissions.model_validate_sqlalchemy(user.permissions)
+    return Permissions.model_validate_json(user.permissions)
 
 
 def authorized(heirarchy: list[str], tier: PermissionTier) -> Callable:
