@@ -2,6 +2,8 @@ services:
   server:
     build: backend
     command: ["uv", "run", "fastapi", "dev", "main.py", "--host", "0.0.0.0", "--port", "80"]
+    env_file:
+      - backend/.env
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-sonnet-4-6}
