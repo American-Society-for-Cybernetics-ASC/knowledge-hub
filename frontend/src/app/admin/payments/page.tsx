@@ -34,10 +34,12 @@ export default function Page() {
     body = <ConfigForm config={data} />;
   }
 
-  return <>
+  return (
+    <>
       <Typography variant={"h5"}>Payments</Typography>
       {body}
-  </>
+    </>
+  );
 }
 
 function ConfigForm(props: { config: PaymentsConfig }) {
@@ -54,7 +56,7 @@ function ConfigForm(props: { config: PaymentsConfig }) {
     }).then((response) => {
       setConfig(response);
       setDirtyConfig({});
-    })
+    });
   };
 
   const currentConfig = { ...config, ...dirtyConfig };

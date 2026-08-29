@@ -17,8 +17,8 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-    challenge_token: string | null;
-    message: string;
+  challenge_token: string | null;
+  message: string;
 }
 
 export interface VerifyOTPRequest {
