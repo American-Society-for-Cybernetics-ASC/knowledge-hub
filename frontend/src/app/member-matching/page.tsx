@@ -4,6 +4,8 @@
 // POST /member-matching/opt-out - opt out of member matching
 // POST /member-matching - submit feedback
 
+import MemberMatchingView from "@/components/features/member-matching/MemberMatchingView";
+
 export default function MemberMatchingPage() {
-    return <div>Member Matching</div>;
+    return <MemberMatchingView />;
 }
