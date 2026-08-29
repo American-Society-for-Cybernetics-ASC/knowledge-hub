@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from audit_log.model import AuditPermissionCategory, AuditLog
-from auth_module import Permissions, PermissionTier
+from auth_module.model import Permissions, PermissionTier
 import database
 import database.model as model
 
@@ -10,6 +10,7 @@ class AuditLogModule:
     def post_audit(self, category: AuditPermissionCategory, log: str):
         with database.get_session() as session:
             session.add(model.AuditLog(permission_category=category, log=log))
+            session.commit()
 
     def get_audit_logs(
         self,

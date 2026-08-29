@@ -7,6 +7,8 @@ from cryptography.hazmat.primitives import serialization
 
 import pyotp
 
+from audit_log.module import AuditLogModule
+from audit_log.enums import AuditPermissionCategory
 import database
 from database import model
 from settings import SETTINGS
@@ -57,19 +59,20 @@ class AuthModule:
                 .first()
             )
 
-            if existing:
-                raise ValueError("Email already registered")
+        if existing:
+            raise ValueError("Email already registered")
 
-            # Hash the password using Argon2id
-            hashed_password = ph.hash(password)
+        # Hash the password using Argon2id
+        hashed_password = ph.hash(password)
 
-            # Generate unique TOTP secret
-            totp_secret = pyotp.random_base32()
+        # Generate unique TOTP secret
+        totp_secret = pyotp.random_base32()
 
-            # Encrypt TOTP secret before storing
-            f = self._get_fernet()
-            encrypted_secret = f.encrypt(totp_secret.encode()).decode()
+        # Encrypt TOTP secret before storing
+        f = self._get_fernet()
+        encrypted_secret = f.encrypt(totp_secret.encode()).decode()
 
+        with database.get_session() as session:
             # Create new user
             new_user = model.AuthUser(
                 email=email,
@@ -81,6 +84,10 @@ class AuthModule:
             session.add(new_user)
             session.commit()
             session.refresh(new_user)
+
+        AuditLogModule().post_audit(
+            AuditPermissionCategory.auth, f"An account was registered for {email}"
+        )
 
         # Generate QR code URI for authenticator app
         totp = pyotp.TOTP(totp_secret)
