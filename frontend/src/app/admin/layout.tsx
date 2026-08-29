@@ -22,6 +22,10 @@ export default function AdminNav({ children }: { children: React.ReactNode }) {
       href: "/admin",
     }),
     LinkTab({
+      label: "Audit Log",
+      href: "/admin/audit",
+    }),
+    LinkTab({
       label: "Mail",
       href: "/admin/mail",
     }),

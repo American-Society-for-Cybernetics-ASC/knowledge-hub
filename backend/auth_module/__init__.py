@@ -95,8 +95,8 @@ def permissions(user_id: Annotated[int | None, Depends(user_id)]) -> Permissions
     if user_id is None:
         return Permissions()
 
-    session = database.get_session()
-    user = session.get(model.AuthUser, user_id)
+    with database.get_session() as session:
+        user = session.get(model.AuthUser, user_id)
 
     if not user or not user.permissions:
         return Permissions()

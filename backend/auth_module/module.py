@@ -49,37 +49,38 @@ class AuthModule:
 
         Raises ValueError if email already exists.
         """
-        session = database.get_session()
+        with database.get_session() as session:
+            # Check if email already exists
+            existing = (
+                session.query(model.AuthUser)
+                .filter(model.AuthUser.email == email)
+                .first()
+            )
 
-        # Check if email already exists
-        existing = (
-            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
-        )
+            if existing:
+                raise ValueError("Email already registered")
 
-        if existing:
-            raise ValueError("Email already registered")
+            # Hash the password using Argon2id
+            hashed_password = ph.hash(password)
 
-        # Hash the password using Argon2id
-        hashed_password = ph.hash(password)
+            # Generate unique TOTP secret
+            totp_secret = pyotp.random_base32()
 
-        # Generate unique TOTP secret
-        totp_secret = pyotp.random_base32()
+            # Encrypt TOTP secret before storing
+            f = self._get_fernet()
+            encrypted_secret = f.encrypt(totp_secret.encode()).decode()
 
-        # Encrypt TOTP secret before storing
-        f = self._get_fernet()
-        encrypted_secret = f.encrypt(totp_secret.encode()).decode()
+            # Create new user
+            new_user = model.AuthUser(
+                email=email,
+                hash_password=hashed_password,
+                totp_secret=encrypted_secret,
+                totp_enabled=False,
+            )
 
-        # Create new user
-        new_user = model.AuthUser(
-            email=email,
-            hash_password=hashed_password,
-            totp_secret=encrypted_secret,
-            totp_enabled=False,
-        )
-
-        session.add(new_user)
-        session.commit()
-        session.refresh(new_user)
+            session.add(new_user)
+            session.commit()
+            session.refresh(new_user)
 
         # Generate QR code URI for authenticator app
         totp = pyotp.TOTP(totp_secret)
@@ -92,11 +93,12 @@ class AuthModule:
         Returns the QR code URI for a user to set up TOTP.
 
         """
-        session = database.get_session()
-
-        user = (
-            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
-        )
+        with database.get_session() as session:
+            user = (
+                session.query(model.AuthUser)
+                .filter(model.AuthUser.email == email)
+                .first()
+            )
 
         if not user:
             raise ValueError("User not found")
@@ -118,11 +120,12 @@ class AuthModule:
 
         Raises ValueError if user not found or code is invalid.
         """
-        session = database.get_session()
-
-        user = (
-            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
-        )
+        with database.get_session() as session:
+            user = (
+                session.query(model.AuthUser)
+                .filter(model.AuthUser.email == email)
+                .first()
+            )
 
         if not user:
             raise ValueError("User not found")
@@ -154,11 +157,12 @@ class AuthModule:
 
         Raises ValueError with appropriate message on failure.
         """
-        session = database.get_session()
-
-        user = (
-            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
-        )
+        with database.get_session() as session:
+            user = (
+                session.query(model.AuthUser)
+                .filter(model.AuthUser.email == email)
+                .first()
+            )
 
         # Return generic message to prevent user enumeration
         if not user:
@@ -222,11 +226,12 @@ class AuthModule:
 
         Raises ValueError if user not found or code invalid.
         """
-        session = database.get_session()
-
-        user = (
-            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
-        )
+        with database.get_session() as session:
+            user = (
+                session.query(model.AuthUser)
+                .filter(model.AuthUser.email == email)
+                .first()
+            )
 
         if not user:
             raise ValueError("User not found")

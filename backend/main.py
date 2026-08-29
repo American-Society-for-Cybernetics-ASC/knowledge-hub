@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from auth_module import PermissionTier, Permissions, AuthModule
 from settings import SETTINGS
 import database
+import database.model as dbmodel
 import database.base
 from example_module.routes import example_router
 from cron.routes import cron_router
@@ -22,6 +24,15 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         conn.commit()
         session.close()
 
+    AuthModule().register("temp@temp.com", "temp", "Temp Root")
+
+    with database.get_session() as session:
+        session.query(dbmodel.AuthUser).where(
+            dbmodel.AuthUser.email == "temp@temp.com"
+        ).one().permissions = Permissions(
+            tier=PermissionTier.adminstrator
+        ).model_dump_json()
+        session.commit()
 
 app = FastAPI()
 
