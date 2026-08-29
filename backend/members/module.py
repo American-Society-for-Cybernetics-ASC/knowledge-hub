@@ -4,8 +4,10 @@ import database
 from database import model as database_model
 from members.model import MemberProfile, ProfileContent, ProfileUpdate
 
+
 class MemberNotFoundError(LookupError):
     """Raised when a requested member is not found."""
+
 
 class MembersModule:
     """Business logic for member profile retrieval and updates."""
@@ -15,7 +17,7 @@ class MembersModule:
         member: database_model.Member,
         profile: database_model.Profile,
     ) -> MemberProfile:
-        """ 
+        """
         Helper method to serialize the profile into the API model.
 
         1. Get the content from the profile.
@@ -99,7 +101,7 @@ class MembersModule:
             profile = self._get_or_create_profile(session, member)
             current_content = ProfileContent.model_validate(profile.content or {})
             content_data = current_content.model_dump(mode="json")
-            update_data = update.model_dump(exclude_unset=True, mode = "json")
+            update_data = update.model_dump(exclude_unset=True, mode="json")
 
             if "identity" in update_data:
                 identity_update = update_data.pop("identity") or {}
@@ -114,7 +116,7 @@ class MembersModule:
                 content_data["metadata"] = metadata_data
 
             if "tags" in update_data:
-                profile.tags = update_data.pop("tags") or []    
+                profile.tags = update_data.pop("tags") or []
 
             # This is to ensure that the collection fields are always a list.
             collection_fields = {
@@ -128,8 +130,8 @@ class MembersModule:
             # Update the profile content with the new data.
             content_data.update(update_data)
             profile.content = ProfileContent.model_validate(content_data).model_dump(
-                mode = "json"
-            )   
+                mode="json"
+            )
 
             session.commit()
             session.refresh(profile)

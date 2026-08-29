@@ -139,6 +139,7 @@ def test_account_lockout_after_failed_attempts(test_server: TestClient):
     assert response.status_code == 401
     assert "locked" in response.json()["detail"].lower()
 
+
 def test_verify_otp_returns_cookie(test_server: TestClient):
     """Test that verify_otp issues a JWT cookie for a successful login"""
     import pyotp

@@ -6,11 +6,13 @@ from auth_module import authorized, user_id, PermissionTier
 
 mailing_list_router = APIRouter(prefix="/mailing-lists", tags=["mailing-lists"])
 
+
 @mailing_list_router.get("/")
 def get_mailing_lists(
     module: Annotated[MailingListModule, Depends(MailingListModule)],
 ) -> list[MailingList]:
     return module.get_mailing_lists()
+
 
 @mailing_list_router.post("/register")
 def register_mailing_list(
@@ -21,11 +23,12 @@ def register_mailing_list(
     """Manager register an existing Google Workspace Group"""
     try:
         return module.register_mailing_list(mailing_list_email)
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=409,
             detail=f"Mailing list {mailing_list_email} already exists",
         )
+
 
 @mailing_list_router.post("/{mailing_list_id}/join")
 def join_mailing_list(
@@ -48,13 +51,14 @@ def get_mailing_list_members(
     mailing_list_id: int,
     module: Annotated[MailingListModule, Depends(MailingListModule)],
 ) -> list[MailingListMember]:
-        """get a list of all members from a mailing list"""
-        return module.get_mailing_list_members(mailing_list_id)
+    """get a list of all members from a mailing list"""
+    return module.get_mailing_list_members(mailing_list_id)
+
 
 @mailing_list_router.post("/{mailing_list_id}/members/add")
 def add_member(
     mailing_list_id: int,
-    email: str, 
+    email: str,
     module: Annotated[MailingListModule, Depends(MailingListModule)],
     _=Depends(authorized(["groups"], PermissionTier.manager)),
 ) -> None:
@@ -66,6 +70,7 @@ def add_member(
             status_code=404,
             detail=str(e),
         )
+
 
 @mailing_list_router.post("/{mailing_list_id}/leave")
 def leave_mailing_list(
@@ -82,6 +87,7 @@ def leave_mailing_list(
             detail=str(e),
         )
 
+
 @mailing_list_router.post("/{mailing_list_id}/members/kick")
 def kick_member(
     mailing_list_id: int,
@@ -93,7 +99,7 @@ def kick_member(
     try:
         module.kick_member(mailing_list_id, email)
     except MemberNotFoundError as e:
-         raise HTTPException(
-              status_code=404,
-              detail=str(e),
-         )
+        raise HTTPException(
+            status_code=404,
+            detail=str(e),
+        )

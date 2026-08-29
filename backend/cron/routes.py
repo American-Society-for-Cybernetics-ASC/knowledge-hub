@@ -8,7 +8,7 @@ from settings import SETTINGS
 from .module import CronModule, CronJob
 
 
-cron_router = APIRouter(prefix="/cron")
+cron_router = APIRouter(prefix="/cron", tags=["cron"])
 
 
 def cron_guard(request: Request):

@@ -1,12 +1,11 @@
-from typing import Annotated, Optional
+from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
-from database import model
 from utils import BaseModel
 from . import NotificationsModule
 
 
-notifications_router = APIRouter(prefix="/notifications")
+notifications_router = APIRouter(prefix="/notifications", tags=["notifications"])
 
 
 class NotificationResponse(BaseModel):
@@ -14,14 +13,14 @@ class NotificationResponse(BaseModel):
     user_id: int
     subject: str
     message: str
-    read:bool
+    read: bool
 
 
 @notifications_router.get("/")
 def get_notifications(
+    module: Annotated[NotificationsModule, Depends(NotificationsModule)],
     user_id: int,
     unread_only: bool = False,
-    module: Annotated[NotificationsModule, Depends(NotificationsModule)] = None,
 ) -> list[NotificationResponse]:
     """
     Returns notifications for a user
@@ -34,7 +33,7 @@ def get_notifications(
 @notifications_router.patch("/{notification_id}/read")
 def mark_as_read(
     notification_id: int,
-    module: Annotated[NotificationsModule, Depends(NotificationsModule)] = None,
+    module: Annotated[NotificationsModule, Depends(NotificationsModule)],
 ) -> dict:
     """
     Marks a notification as read

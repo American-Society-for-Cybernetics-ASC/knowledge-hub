@@ -14,11 +14,13 @@ STATUS_MAP = {
     "processing": PaymentStatus.PENDING,
     "requires_capture": PaymentStatus.PENDING,
     "succeeded": PaymentStatus.SUCCEEDED,
-    "canceled": PaymentStatus.FAILED
+    "canceled": PaymentStatus.FAILED,
 }
+
 
 class StripeTransaction(TransactionInterface):
     """Interface for a Stripe Transaction"""
+
     transaction_type: Literal["stripe"] = Field(default="stripe")
 
     payment_id: str
@@ -33,15 +35,13 @@ class StripeTransaction(TransactionInterface):
             )
 
         intent: PaymentIntent = PaymentIntent.create(
-            amount = amount,
-            currency = currency,
-            automatic_payment_methods = {"enabled": True}
+            amount=amount,
+            currency=currency,
+            automatic_payment_methods={"enabled": True},
         )
 
         return StripeTransaction(
-            payment_id = intent.id,
-            amount_value = amount,
-            currency = currency
+            payment_id=intent.id, amount_value=amount, currency=currency
         )
 
     def check(self) -> PaymentStatus:

@@ -16,6 +16,7 @@ from member_matching.routes import member_matching_router
 if SETTINGS.local_deployment and not SETTINGS.testing:
     with database.get_session() as session:
         conn = session.connection()
+        database.base.Base.metadata.drop_all(conn)
         database.base.Base.metadata.create_all(conn)
         conn.commit()
         session.close()

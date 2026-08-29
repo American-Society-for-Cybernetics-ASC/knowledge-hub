@@ -73,7 +73,7 @@ def user_id(request: Request) -> int | None:
     """
     if SETTINGS.testing:
         return 0
-    
+
     token = request.cookies.get("access_token")
     if not token:
         return None
@@ -105,7 +105,7 @@ def permissions(user_id: Annotated[int | None, Depends(user_id)]) -> Permissions
     session = database.get_session()
     user = session.get(model.AuthUser, user_id)
 
-    if not user or not user.permission:
+    if not user or not user.permissions:
         return Permissions()
 
     return Permissions.model_validate_sqlalchemy(user.permissions)
