@@ -17,20 +17,24 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    try {
-      await login({ email, password });
-      // Store email for use in verify-otp page
-      sessionStorage.setItem("auth_email", email);
-      router.push("/auth/verify-otp");
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Login failed. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
+        try {
+            const result = await login({ email, password });
+            // Store email for use in verify-otp page
+            sessionStorage.setItem("auth_email", email);
+            if (result.challenge_token) {
+                router.push("/auth/verify-otp");
+            } else {
+                router.push("/dashboard");
+            }
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("Login failed. Please try again.");
+            }
+        } finally {
+            setLoading(false);
+        }
   }
 
   return (
