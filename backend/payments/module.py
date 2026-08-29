@@ -12,7 +12,7 @@ from database import model, Session
 from payments.providers.mock_provider import MockPaymentProvider
 from payments.providers.stripe_provider import StripePaymentProvider
 from payments.transactions import TransactionInterface, PaymentStatus
-from payments.exceptions import NoProviderConfiguredError, PaymentProviderError
+from payments.exceptions import NoProviderConfiguredError, PaymentProviderError, PaymentNotFoundError
 
 stripe.api_key = os.environ.get("STRIPE_API_KEY", "")
 
@@ -72,3 +72,15 @@ class PaymentsModule():
             session.commit()
             session.refresh(record)
             return record
+
+    def get_payment(self, payment_id: int) -> model.Payment:
+        with database.get_session() as session:
+            try:
+                return session.get_one(model.Payment, payment_id)
+            except NoResultFound:
+                raise PaymentNotFoundError(f"No payment with id {payment_id}")
+
+    def list_payments(self) -> list[model.Payment]:
+        with database.get_session() as session:
+            query = session.query(model.Payment)
+            return query.all()

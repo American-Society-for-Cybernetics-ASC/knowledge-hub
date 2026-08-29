@@ -6,3 +6,6 @@ class NoProviderConfiguredError(PaymentError):
 
 class PaymentProviderError(PaymentError):
     """Raised when a payment provider fails to fulfil a transaction request."""
+
+class PaymentNotFoundError(PaymentError):
+    """Raised when a payment with the specified details does not exist."""

@@ -1,5 +1,81 @@
+"use client";
+
+import { PublicEnv } from "@/app/public-env-provider";
+import { useContext, useState } from "react";
+import { Box, Button, TextField, Typography } from "@mui/material"
+import useSWR from "swr";
+
+interface PaymentRecord {
+    payment_id: number;
+    date: string;
+    status: string;
+    amount: number;
+}
+
+const fetcher = (url: string) => fetch(url, { credentials: "include" }).then((r) => r.json());
+
 export default function MembershipPage() {
-    // TODO: 
-    // GET /membership
-    return <div>Membership</div>
+    const publicEnv = useContext(PublicEnv);
+    const [amount, setAmount] = useState("");
+    const [memberId, setMemberId] = useState("00000000-0000-4000-8000-000000000000");
+    const [status, setStatus] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const { data: payments, mutate: refetchPayments } = useSWR<PaymentRecord[]>(`${publicEnv?.backendUrl}/payments`, fetcher);
+
+    const handleCreatePaymentIntent = async () => {
+        console.log("publicEnv:", publicEnv)
+        setLoading(true);
+        setStatus("Creating payment intent...");
+        try {
+            const res = await fetch(`${publicEnv?.backendUrl}/payments`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    member_id: memberId,
+                    amount: Number(amount)
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setStatus(`Error (${res.status}): ${JSON.stringify(data)}`)
+            } else {
+                setStatus(JSON.stringify(data, null, 2));
+                refetchPayments();
+            }
+        } catch (err) {
+            setStatus(`Request failed: ${err instanceof Error ? err.message : String(err)}`);
+        } finally {
+            setLoading(false)
+        }
+        
+    }
+
+    return (
+        <Box sx = {{ maxWidth: 500, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Typography variant="h5">Donate</Typography>
+            
+            <TextField
+                label="Amount" 
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                type="number"            
+            />
+
+            <Button variant="contained" onClick={handleCreatePaymentIntent} disabled={loading}>
+                {loading ? "Processing..." : "Donate"}
+            </Button>
+
+            <TextField label="Status" value={status} multiline minRows={4} fullWidth/>
+
+            <Typography variant="h5">Payment History</Typography>
+
+            {payments?.map((p) => (
+                <Typography key={p.payment_id}>
+                    {p.date}  |  {(p.amount / 100).toFixed(2)}  |  {p.status}
+                </Typography>
+            ))}
+        </Box>
+    );
 }

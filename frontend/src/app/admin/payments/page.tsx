@@ -3,7 +3,6 @@
 import { PublicEnv } from "@/app/public-env-provider";
 import { useContext, useState } from "react";
 import { Box, Button, TextField, Typography } from "@mui/material"
-import useSWR from "swr";
 
 export default function Page() {
     const publicEnv = useContext(PublicEnv);
