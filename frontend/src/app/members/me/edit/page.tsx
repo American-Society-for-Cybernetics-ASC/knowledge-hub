@@ -4,10 +4,12 @@ import { useEffect, useState, type FormEvent } from "react";
 import { getMyProfile, updateMyProfile } from "@/lib/api/members";
 import type { MemberProfile, ProfileUpdate } from "@/types/member"; 
 
+// Convert list fields from API into CSV
 function toCSV(values: string[] | null): string {
     return values?.join(", ") ?? "";
 }
 
+// Parse CSV input
 function toStringList(value: string): string[] {
     return [...new Set(
         value
@@ -34,6 +36,7 @@ export default function EditMyProfilePage() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
+    // Load current member profile when the page is loaded
     useEffect(() => {
         async function loadProfile() {
             try {
@@ -65,6 +68,7 @@ export default function EditMyProfilePage() {
         void loadProfile();
     }, []);
 
+    // Handle form submission
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setError("");
@@ -89,8 +93,10 @@ export default function EditMyProfilePage() {
             return;
         }
         
+        // Start saving process 
         setSaving(true);
 
+        // Construct update payload
         const update: ProfileUpdate = {
             identity: {
                 display_name: displayName || null,
@@ -105,6 +111,7 @@ export default function EditMyProfilePage() {
             tags: toStringList(tags),
         };
 
+        // Send the update to backend
         try {
             const updatedProfile = await updateMyProfile(update);
             setProfile(updatedProfile);
