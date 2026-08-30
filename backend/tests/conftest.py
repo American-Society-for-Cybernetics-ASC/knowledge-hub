@@ -3,7 +3,7 @@
 
 from typing import Callable
 
-from mail.module import MailModule, MailModuleConfig
+from mail.module import MailModuleConfig
 from mail.provider.mock_provider import MockMailProvider
 
 import database
@@ -102,7 +102,7 @@ def default_database(mock_get_session: Callable[[], Session]):
     with mock_get_session() as session:
         session.add(
             model.Module(
-                module_name=MailModule.MODULE_ID,
+                module_name=MailModuleConfig.module_id(),
                 config=MailModuleConfig(provider=MockMailProvider()).model_dump(),
             )
         )

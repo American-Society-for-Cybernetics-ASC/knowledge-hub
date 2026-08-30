@@ -1,22 +1,41 @@
-import { Typography } from "@mui/material";
-import { NavTabs } from "./NavTabs";
+"use client";
+import { Link, Tab, Tabs, Typography } from "@mui/material";
+import { usePathname } from "next/navigation";
+import { JSX } from "react";
+
+function LinkTab(props: { label: string; href: string }): JSX.Element {
+  return (
+    <Tab
+      value={props.href}
+      component={Link}
+      label={props.label}
+      href={props.href}
+      aria-current={usePathname() === props.href && "page"}
+    />
+  );
+}
 
 export default function AdminNav({ children }: { children: React.ReactNode }) {
+  const tabs = [
+    LinkTab({
+      label: "Sitewide",
+      href: "/admin",
+    }),
+    LinkTab({
+      label: "Mail",
+      href: "/admin/mail",
+    }),
+    LinkTab({
+      label: "Payments",
+      href: "/admin/payments",
+    }),
+  ];
   return (
     <>
       <Typography variant="h4">Admin</Typography>
-      <NavTabs
-        tabs={[
-          {
-            label: "Sitewide",
-            href: "/admin",
-          },
-          {
-            label: "Mail",
-            href: "/admin/mail",
-          },
-        ]}
-      />
+      <Tabs value={usePathname()} role="navigation">
+        {tabs}
+      </Tabs>
       {children}
     </>
   );
