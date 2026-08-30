@@ -97,26 +97,26 @@ def test_mark_notification_as_read(
         session.add(user)
         session.commit()
         session.refresh(user)
+        user_id = user.user_id
 
-    notification = model.Notification(
-        user_id=user.user_id,
-        subject="Test",
-        message="Test notification",
-        read=False,
-    )
-    session.add(notification)
-    session.commit()
-    session.refresh(notification)
+        notification = model.Notification(
+            user_id=user_id,
+            subject="Test",
+            message="Test notification",
+            read=False,
+        )
+        session.add(notification)
+        session.commit()
+        session.refresh(notification)
+        notification_id = notification.notification_id
 
     # Mark as read
-    response = test_server.patch(f"/notifications/{notification.notification_id}/read")
+    response = test_server.patch(f"/notifications/{notification_id}/read")
     assert response.status_code == 200
     assert response.json()["message"] == "Notification marked as read."
 
     # Verify it is now read
-    response = test_server.get(
-        f"/notifications/?user_id={user.user_id}&unread_only=true"
-    )
+    response = test_server.get(f"/notifications/?user_id={user_id}&unread_only=true")
     assert response.json() == []
 
 

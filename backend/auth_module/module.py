@@ -171,55 +171,55 @@ class AuthModule:
                 .first()
             )
 
-        # Return generic message to prevent user enumeration
-        if not user:
-            raise ValueError("Invalid email or password")
+            # Return generic message to prevent user enumeration
+            if not user:
+                raise ValueError("Invalid email or password")
 
-        # Check permanent admin lock
-        if user.admin_locked:
-            raise ValueError("Account locked. Please contact an administrator.")
+            # Check permanent admin lock
+            if user.admin_locked:
+                raise ValueError("Account locked. Please contact an administrator.")
 
-        # Check temporary lockout
-        if user.locked_until and user.locked_until > datetime.now():
-            raise ValueError("Account temporarily locked. Please try again later.")
+            # Check temporary lockout
+            if user.locked_until and user.locked_until > datetime.now():
+                raise ValueError("Account temporarily locked. Please try again later.")
 
-        # Verify password
-        try:
-            ph.verify(user.hash_password, password)
-        except VerifyMismatchError:
-            # Increment failed attempts
-            user.failed_attempt = (user.failed_attempt or 0) + 1
+            # Verify password
+            try:
+                ph.verify(user.hash_password, password)
+            except VerifyMismatchError:
+                # Increment failed attempts
+                user.failed_attempt = (user.failed_attempt or 0) + 1
 
-            # After 3 failures - temporary lockout
-            if user.failed_attempt >= 3:
-                user.locked_until = datetime.now() + timedelta(minutes=10)
+                # After 3 failures - temporary lockout
+                if user.failed_attempt >= 3:
+                    user.locked_until = datetime.now() + timedelta(minutes=10)
 
-            # After 6 total failures - permanent lock
-            if user.failed_attempt >= 6:
-                user.admin_locked = True
-                user.locked_until = None
+                # After 6 total failures - permanent lock
+                if user.failed_attempt >= 6:
+                    user.admin_locked = True
+                    user.locked_until = None
 
+                session.commit()
+                raise ValueError("Invalid email or password")
+
+            # Password correct - reset failed attempts
+            user.failed_attempt = 0
+            user.locked_until = None
             session.commit()
-            raise ValueError("Invalid email or password")
 
-        # Password correct - reset failed attempts
-        user.failed_attempt = 0
-        user.locked_until = None
-        session.commit()
-
-        # JWT issual if user has not enabled TOTP
-        if not user.totp_enabled:
-            payload = {
-                "sub": str(user.user_id),
-                "email": user.email,
-                "iss": SETTINGS.jwt_issuer,
-                "exp": datetime.now(timezone.utc)
-                + timedelta(minutes=SETTINGS.jwt_expiry_minutes),
-            }
-            token = jwt.encode(payload, self._get_private_key(), algorithm="RS256")
-            return {"challenge_token": None, "token": token}
-        # Return challenge token
-        return {"challenge_token": f"challenge:{user.user_id}", "token": None}
+            # JWT issual if user has not enabled TOTP
+            if not user.totp_enabled:
+                payload = {
+                    "sub": str(user.user_id),
+                    "email": user.email,
+                    "iss": SETTINGS.jwt_issuer,
+                    "exp": datetime.now(timezone.utc)
+                    + timedelta(minutes=SETTINGS.jwt_expiry_minutes),
+                }
+                token = jwt.encode(payload, self._get_private_key(), algorithm="RS256")
+                return {"challenge_token": None, "token": token}
+            # Return challenge token
+            return {"challenge_token": f"challenge:{user.user_id}", "token": None}
 
     def verify_otp(self, email: str, code: str) -> str:
         """
