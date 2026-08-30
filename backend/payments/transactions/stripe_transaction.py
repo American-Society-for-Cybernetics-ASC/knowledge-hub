@@ -26,7 +26,6 @@ class StripeTransaction(TransactionInterface):
     payment_id: str
     amount_value: int
     currency: str = "usd"
-    provider: str = "stripe"
 
     @staticmethod
     def create_one_off(amount: int, currency: str = "usd") -> "StripeTransaction":

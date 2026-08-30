@@ -8,10 +8,10 @@ from datetime import datetime, timezone
 import stripe
 
 import database
-from database import model, Session
+from database import model
 from payments.providers.mock_provider import MockPaymentProvider
 from payments.providers.stripe_provider import StripePaymentProvider
-from payments.transactions import TransactionInterface, PaymentStatus
+from payments.transactions import PaymentStatus
 from payments.exceptions import NoProviderConfiguredError, PaymentProviderError, PaymentNotFoundError
 
 stripe.api_key = os.environ.get("STRIPE_API_KEY", "")
@@ -21,11 +21,11 @@ type PaymentProvider = Annotated[
 ]
 
 class PaymentsModuleConfig(BaseModel):
-    provider: Optional[PaymentProvider]
+    providers: list[PaymentProvider] = []
 
     @staticmethod
     def default() -> "PaymentsModuleConfig":
-        return PaymentsModuleConfig(provider = None)
+        return PaymentsModuleConfig(providers = [])
 
 class PaymentsModule():
     MODULE_ID = "payments"
@@ -50,23 +50,22 @@ class PaymentsModule():
 
         config = self.get_config()
 
-        if not config.provider:
+        if not config.providers:
             raise NoProviderConfiguredError("Attempting to create payment intent without a configured payment provider")
+
+        provider = config.providers[0]
         
         try:
-            transaction = config.provider.create_one_off(amount)
+            transaction = provider.create_one_off(amount)
         except Exception as e:
             raise PaymentProviderError(e) from e
 
         with database.get_session() as session:
             record = model.Payment(
-                amount = transaction.amount_value,
-                currency = transaction.currency,
                 date = datetime.now(timezone.utc),
                 status = PaymentStatus.PENDING.value,
                 kind = "one-off",
-                provider = transaction.provider,
-                external_id = transaction.payment_id
+                transaction = transaction.model_dump(mode="json")
             )
             session.add(record)
             session.commit()

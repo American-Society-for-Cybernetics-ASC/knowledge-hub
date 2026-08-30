@@ -1,13 +1,14 @@
-from typing import Annotated, Optional
-from pydantic import BaseModel
+from typing import Annotated
 from uuid import UUID
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from utils import BaseModel
 
 from payments.module import PaymentsModule
-from payments.model import Payment
 from payments.exceptions import NoProviderConfiguredError, PaymentProviderError, PaymentNotFoundError
+from payments.transactions.mock_transaction import MockTransaction
+from payments.transactions.stripe_transaction import StripeTransaction
 
 payments_router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -17,14 +18,10 @@ class PaymentRequest(BaseModel):
 
 class PaymentResponse(BaseModel):
     payment_id: int
-    amount: int
     date: datetime
     status: str
     kind: str
-    provider: str
-    external_id: str
-
-    model_config = {"from_attributes": True}
+    transaction: MockTransaction | StripeTransaction
 
 
 def get_payments_module() -> PaymentsModule:

@@ -5,11 +5,20 @@ import { useContext, useState } from "react";
 import { Box, Button, TextField, Typography, Chip, CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material"
 import useSWR from "swr";
 
+interface TransactionData {
+    payment_id: string;
+    kind: string;
+    transaction_type: string;
+    amount_value: number;
+    currency: string;
+}
+
 interface PaymentRecord {
     payment_id: number;
     date: string;
     status: string;
-    amount: number;
+    kind: string;
+    transaction: TransactionData;
 }
 
 const fetcher = (url: string) => fetch(url, { credentials: "include" }).then((r) => r.json());
@@ -91,7 +100,11 @@ export default function MembershipPage() {
             </Box>
 
             <Box>
-                <Typography variant="h5">Payment History</Typography>
+                <Typography variant="h5">Payment Log</Typography>
+
+                <Button variant="contained" onClick={() => fetchPayments()}>
+                    Refresh
+                </Button>
 
                 {paymentsError && (
                     <Typography color="error" variant="body2">
@@ -111,6 +124,7 @@ export default function MembershipPage() {
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Date</TableCell>
+                                    <TableCell>Provider</TableCell>
                                     <TableCell align="right">Amount</TableCell>
                                     <TableCell>Status</TableCell>
                                 </TableRow>
@@ -128,7 +142,8 @@ export default function MembershipPage() {
                                 {payments.map((p) => (
                                     <TableRow key={p.payment_id} hover>
                                         <TableCell>{formatDate(p.date)}</TableCell>
-                                        <TableCell align="right">{formatAmount(p.amount)}</TableCell>
+                                        <TableCell sx={{ textTransform: "capitalize" }}>{p.transaction.transaction_type}</TableCell>
+                                        <TableCell align="right">{formatAmount(p.transaction.amount_value)}</TableCell>
                                         <TableCell>
                                             <Chip label={p.status} size="small" color={statusType[p.status] ?? "default"} sx={{ textTransform: "capitalize" }}/>
                                         </TableCell>

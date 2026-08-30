@@ -5,12 +5,20 @@ import { useContext, useEffect } from "react";
 import { Box, Button, Typography, Chip, CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material"
 import useSWR from "swr";
 
+interface TransactionData {
+    payment_id: string;
+    kind: string;
+    transaction_type: string;
+    amount_value: number;
+    currency: string;
+}
+
 interface PaymentRecord {
     payment_id: number;
     date: string;
     status: string;
-    amount: number;
-    provider: string;
+    kind: string;
+    transaction: TransactionData;
 }
 
 const fetcher = (url: string) => fetch(url, { credentials: "include" }).then((r) => r.json());
@@ -88,8 +96,8 @@ export default function Page() {
                                 {payments.map((p) => (
                                     <TableRow key={p.payment_id} hover>
                                         <TableCell>{formatDate(p.date)}</TableCell>
-                                        <TableCell sx={{ textTransform: "capitalize" }}>{p.provider}</TableCell>
-                                        <TableCell align="right">{formatAmount(p.amount)}</TableCell>
+                                        <TableCell sx={{ textTransform: "capitalize" }}>{p.transaction.transaction_type}</TableCell>
+                                        <TableCell align="right">{formatAmount(p.transaction.amount_value)}</TableCell>
                                         <TableCell>
                                             <Chip label={p.status} size="small" color={statusType[p.status] ?? "default"} sx={{ textTransform: "capitalize" }}/>
                                         </TableCell>
