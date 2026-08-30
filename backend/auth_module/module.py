@@ -7,10 +7,11 @@ from cryptography.hazmat.primitives import serialization
 
 import pyotp
 
+from audit_log.module import AuditLogModule
+from audit_log.enums import AuditPermissionCategory
 import database
 from database import model
 from settings import SETTINGS
-from members.model import ProfileContent, ProfileIdentity
 
 ph = PasswordHasher()
 
@@ -50,12 +51,13 @@ class AuthModule:
 
         Raises ValueError if email already exists.
         """
-        session = database.get_session()
-
-        # Check if email already exists
-        existing = (
-            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
-        )
+        with database.get_session() as session:
+            # Check if email already exists
+            existing = (
+                session.query(model.AuthUser)
+                .filter(model.AuthUser.email == email)
+                .first()
+            )
 
         if existing:
             raise ValueError("Email already registered")
@@ -70,37 +72,22 @@ class AuthModule:
         f = self._get_fernet()
         encrypted_secret = f.encrypt(totp_secret.encode()).decode()
 
-        # Create new user
-        new_user = model.AuthUser(
-            name=display_name,
-            email=email,
-            hash_password=hashed_password,
-            totp_secret=encrypted_secret,
-            totp_enabled=False,
+        with database.get_session() as session:
+            # Create new user
+            new_user = model.AuthUser(
+                email=email,
+                hash_password=hashed_password,
+                totp_secret=encrypted_secret,
+                totp_enabled=False,
+            )
+
+            session.add(new_user)
+            session.commit()
+            session.refresh(new_user)
+
+        AuditLogModule().post_audit(
+            AuditPermissionCategory.auth, f"An account was registered for {email}"
         )
-
-        session.add(new_user)
-        session.flush() # Assign user_id
-
-        member = model.Member(
-            status="active",
-            auth_user_id=new_user.user_id,
-        )
-
-        session.add(member)
-        session.flush() # Assign member_id
-
-        profile = model.Profile(
-            member_id=member.member_id,
-            content=ProfileContent(
-                identity=ProfileIdentity(display_name=display_name),
-            ).model_dump(mode="json"),
-            tags=[],
-        )
-
-        session.add(profile)
-        session.commit()
-        session.refresh(new_user)
 
         # Generate QR code URI for authenticator app
         totp = pyotp.TOTP(totp_secret)
@@ -113,11 +100,12 @@ class AuthModule:
         Returns the QR code URI for a user to set up TOTP.
 
         """
-        session = database.get_session()
-
-        user = (
-            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
-        )
+        with database.get_session() as session:
+            user = (
+                session.query(model.AuthUser)
+                .filter(model.AuthUser.email == email)
+                .first()
+            )
 
         if not user:
             raise ValueError("User not found")
@@ -139,11 +127,12 @@ class AuthModule:
 
         Raises ValueError if user not found or code is invalid.
         """
-        session = database.get_session()
-
-        user = (
-            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
-        )
+        with database.get_session() as session:
+            user = (
+                session.query(model.AuthUser)
+                .filter(model.AuthUser.email == email)
+                .first()
+            )
 
         if not user:
             raise ValueError("User not found")
@@ -175,11 +164,12 @@ class AuthModule:
 
         Raises ValueError with appropriate message on failure.
         """
-        session = database.get_session()
-
-        user = (
-            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
-        )
+        with database.get_session() as session:
+            user = (
+                session.query(model.AuthUser)
+                .filter(model.AuthUser.email == email)
+                .first()
+            )
 
         # Return generic message to prevent user enumeration
         if not user:
@@ -223,18 +213,13 @@ class AuthModule:
                 "sub": str(user.user_id),
                 "email": user.email,
                 "iss": SETTINGS.jwt_issuer,
-                "exp": datetime.now(timezone.utc) + timedelta(minutes=SETTINGS.jwt_expiry_minutes),        
+                "exp": datetime.now(timezone.utc)
+                + timedelta(minutes=SETTINGS.jwt_expiry_minutes),
             }
             token = jwt.encode(payload, self._get_private_key(), algorithm="RS256")
-            return {
-                "challenge_token": None,
-                "token": token
-            }
-        # Return challenge token 
-        return { 
-            "challenge_token": f"challenge:{user.user_id}",
-            "token": None
-        }  
+            return {"challenge_token": None, "token": token}
+        # Return challenge token
+        return {"challenge_token": f"challenge:{user.user_id}", "token": None}
 
     def verify_otp(self, email: str, code: str) -> str:
         """
@@ -248,11 +233,12 @@ class AuthModule:
 
         Raises ValueError if user not found or code invalid.
         """
-        session = database.get_session()
-
-        user = (
-            session.query(model.AuthUser).filter(model.AuthUser.email == email).first()
-        )
+        with database.get_session() as session:
+            user = (
+                session.query(model.AuthUser)
+                .filter(model.AuthUser.email == email)
+                .first()
+            )
 
         if not user:
             raise ValueError("User not found")

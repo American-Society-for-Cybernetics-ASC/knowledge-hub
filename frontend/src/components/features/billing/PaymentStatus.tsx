@@ -1,3 +1,3 @@
 export default function PaymentStatus() {
-    return <div>Payment Status</div>;
+  return <div>Payment Status</div>;
 }

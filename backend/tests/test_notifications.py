@@ -10,17 +10,16 @@ def test_create_and_get_notification(
     test_server: TestClient, mock_get_session: Callable[[], Session]
 ):
     """Test creating a notification and retrieving it"""
-    session = mock_get_session()
-
-    # Create a user first
-    user = model.AuthUser(
-        email="test@example.com",
-        hash_password="hashed",
-        totp_enabled=False,
-    )
-    session.add(user)
-    session.commit()
-    session.refresh(user)
+    with mock_get_session() as session:
+        # Create a user first
+        user = model.AuthUser(
+            email="test@example.com",
+            hash_password="hashed",
+            totp_enabled=False,
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
 
     # Create a notification directly via module
     NotificationsModule().create_notification(
@@ -46,16 +45,15 @@ def test_filter_unread_notifications(
     test_server: TestClient, mock_get_session: Callable[[], Session]
 ):
     """Test filtering notifications by unread status"""
-    session = mock_get_session()
-
-    user = model.AuthUser(
-        email="test@example.com",
-        hash_password="hashed",
-        totp_enabled=False,
-    )
-    session.add(user)
-    session.commit()
-    session.refresh(user)
+    with mock_get_session() as session:
+        user = model.AuthUser(
+            email="test@example.com",
+            hash_password="hashed",
+            totp_enabled=False,
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
 
     # Add one unread and one read notification
     session.add(
@@ -90,16 +88,15 @@ def test_mark_notification_as_read(
     test_server: TestClient, mock_get_session: Callable[[], Session]
 ):
     """Test marking a notification as read"""
-    session = mock_get_session()
-
-    user = model.AuthUser(
-        email="test@example.com",
-        hash_password="hashed",
-        totp_enabled=False,
-    )
-    session.add(user)
-    session.commit()
-    session.refresh(user)
+    with mock_get_session() as session:
+        user = model.AuthUser(
+            email="test@example.com",
+            hash_password="hashed",
+            totp_enabled=False,
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
 
     notification = model.Notification(
         user_id=user.user_id,

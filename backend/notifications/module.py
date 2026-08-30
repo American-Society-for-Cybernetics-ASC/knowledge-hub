@@ -23,16 +23,15 @@ class NotificationsModule:
         """
         To create a notification and send an email if the conditions are met
         """
-        session = database.get_session()
-
-        new_notification = model.Notification(
-            user_id=notification.user_id,
-            subject=notification.subject,
-            message=notification.message,
-            read=False,
-        )
-        session.add(new_notification)
-        session.commit()
+        with database.get_session() as session:
+            new_notification = model.Notification(
+                user_id=notification.user_id,
+                subject=notification.subject,
+                message=notification.message,
+                read=False,
+            )
+            session.add(new_notification)
+            session.commit()
 
         if notification.send_email:
             user = session.get(model.AuthUser, notification.user_id)
@@ -53,24 +52,24 @@ class NotificationsModule:
         """
         To return a list of notification to a user.
         """
-        session = database.get_session()
+        with database.get_session() as session:
+            query = select(model.Notification).where(
+                model.Notification.user_id == user_id
+            )
 
-        query = select(model.Notification).where(model.Notification.user_id == user_id)
+            if unread_only:
+                query = query.where(model.Notification.read == false())
 
-        if unread_only:
-            query = query.where(model.Notification.read == false())
+            query = query.order_by(model.Notification.created_at.desc())
 
-        query = query.order_by(model.Notification.created_at.desc())
-
-        return list(session.execute(query).scalars().all())
+            return list(session.execute(query).scalars().all())
 
     def mark_as_read(self, notification_id: int) -> bool:
         """
         Modify the status of the notification for a particular user
         """
-        session = database.get_session()
-
-        notification = session.get(model.Notification, notification_id)
+        with database.get_session() as session:
+            notification = session.get(model.Notification, notification_id)
 
         if not notification:
             return False
