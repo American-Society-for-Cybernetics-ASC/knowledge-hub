@@ -4,5 +4,5 @@
 // POST /events - create an event
 
 export default function EventsPage() {
-    return <div>Events</div>;
+  return <div>Events</div>;
 }
