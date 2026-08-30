@@ -202,18 +202,13 @@ class AuthModule:
                 "sub": str(user.user_id),
                 "email": user.email,
                 "iss": SETTINGS.jwt_issuer,
-                "exp": datetime.now(timezone.utc) + timedelta(minutes=SETTINGS.jwt_expiry_minutes),        
+                "exp": datetime.now(timezone.utc)
+                + timedelta(minutes=SETTINGS.jwt_expiry_minutes),
             }
             token = jwt.encode(payload, self._get_private_key(), algorithm="RS256")
-            return {
-                "challenge_token": None,
-                "token": token
-            }
-        # Return challenge token 
-        return { 
-            "challenge_token": f"challenge:{user.user_id}",
-            "token": None
-        }  
+            return {"challenge_token": None, "token": token}
+        # Return challenge token
+        return {"challenge_token": f"challenge:{user.user_id}", "token": None}
 
     def verify_otp(self, email: str, code: str) -> str:
         """
