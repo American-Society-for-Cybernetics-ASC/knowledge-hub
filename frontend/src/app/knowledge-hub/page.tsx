@@ -3,5 +3,5 @@
 // POST /knowledge-hub - create a new repository
 
 export default function KnowledgeHubPage() {
-    return <div>Knowledge Hub</div>;
+  return <div>Knowledge Hub</div>;
 }

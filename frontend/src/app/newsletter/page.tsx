@@ -3,5 +3,5 @@
 // POST /newsletter - trigger newsletter generation
 
 export default function NewsletterPage() {
-    return <div>Newsletter</div>
+  return <div>Newsletter</div>;
 }
