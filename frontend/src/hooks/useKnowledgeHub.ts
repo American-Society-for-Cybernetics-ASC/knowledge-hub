@@ -1,3 +1,3 @@
 export function useKnowledgeHub() {
-    throw new Error("Not implemented")
+  throw new Error("Not implemented");
 }

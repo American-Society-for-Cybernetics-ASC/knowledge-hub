@@ -65,7 +65,7 @@ def test_queued(test_server, mock_get_session: Callable[[], Session]):
         session.commit()
 
     r = test_server.get("cron/jobs")
-    assert r.status_code == 200
+    assert r.status_code == 200, r.content
     r = r.json()
     assert r == [
         {

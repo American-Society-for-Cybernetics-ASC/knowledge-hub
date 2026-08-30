@@ -7,12 +7,12 @@
 // GET /events/{event_id}/members - get list of members of an event
 
 interface EventPageProps {
-    params: {
-        event_id: string;
-    };
+  params: {
+    event_id: string;
+  };
 }
 
-export default function EventPage({params}: EventPageProps) {
-    // TODO: Fetch event using params.event_id
-    return <div>Event {params.event_id}</div>;
+export default function EventPage({ params }: EventPageProps) {
+  // TODO: Fetch event using params.event_id
+  return <div>Event {params.event_id}</div>;
 }
