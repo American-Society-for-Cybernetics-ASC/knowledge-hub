@@ -1,3 +1,3 @@
 export default function GroupList() {
-    return <div>Group List</div>;
+  return <div>Group List</div>;
 }

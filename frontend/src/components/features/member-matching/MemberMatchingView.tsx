@@ -1,3 +1,3 @@
 export default function MemberMatchingView() {
-    return <div>Member Matching View</div>;
+  return <div>Member Matching View</div>;
 }

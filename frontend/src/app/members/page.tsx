@@ -3,5 +3,5 @@
 // POST /members - submit membership application
 
 export default function MembersPage() {
-    return <div>Members</div>;
+  return <div>Members</div>;
 }
