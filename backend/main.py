@@ -79,4 +79,3 @@ app.include_router(notifications_router)
 app.include_router(member_application_router)
 app.include_router(payments_router)
 app.include_router(audit_router)
-
