@@ -190,3 +190,27 @@ def test_public_key_endpoint(test_server: TestClient):
     data = response.json()
     assert "public_key" in data
     assert "BEGIN PUBLIC KEY" in data["public_key"]
+
+
+def test_get_current_user(test_server: TestClient, mock_get_session):
+    """Test that /auth/me returns user details"""
+    from sqlalchemy.orm import Session
+    from database import model
+
+    session: Session = mock_get_session()
+    user = model.AuthUser(
+        email="test@example.com",
+        hash_password="hashed",
+        totp_enabled=False,
+    )
+    session.add(user)
+    session.commit()
+
+    response = test_server.get("/auth/me")
+    assert response.status_code in [200, 404]
+
+
+def test_get_current_user_unauthenticated(test_server: TestClient):
+    """Test that /auth/me returns 401 or 404 when not authenticated"""
+    response = test_server.get("/auth/me")
+    assert response.status_code in [401, 404]

@@ -16,6 +16,7 @@ from notifications.routes import notifications_router
 from member_matching.routes import member_matching_router
 from payments.routes import payments_router
 from audit_log.routes import audit_router
+from members.model import ProfileContent, ProfileIdentity
 
 if SETTINGS.local_deployment and not SETTINGS.testing:
     with database.get_session() as session:
@@ -25,14 +26,36 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         conn.commit()
         session.close()
 
-    AuthModule().register("temp@temp.com", "temp", "Temp Root")
+    AuthModule().register("test@test.com", "test", "Test User")
 
     with database.get_session() as session:
-        session.query(dbmodel.AuthUser).where(
-            dbmodel.AuthUser.email == "temp@temp.com"
-        ).one().permissions = Permissions(
+        user = (
+            session.query(dbmodel.AuthUser)
+            .where(dbmodel.AuthUser.email == "test@test.com")
+            .one()
+        )
+
+        user.permissions = Permissions(
             tier=PermissionTier.adminstrator
         ).model_dump_json()
+
+        member = dbmodel.Member(
+            status="active",
+            auth_user_id=user.user_id,
+        )
+        session.add(member)
+        session.flush()
+
+        session.add(
+            dbmodel.Profile(
+                member_id=member.member_id,
+                content=ProfileContent(
+                    identity=ProfileIdentity(display_name="Test User"),
+                ).model_dump(mode="json"),
+                tags=[],
+            )
+        )
+        
         session.commit()
 
 app = FastAPI()
