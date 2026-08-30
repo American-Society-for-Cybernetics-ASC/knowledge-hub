@@ -129,9 +129,6 @@ export default function NotificationsPage() {
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-xs text-gray-500 mt-1 truncate">
-                                    {notification.message}
-                                </p>
                             </div>
                         ))}
                     </div>
