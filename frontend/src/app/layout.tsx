@@ -3,8 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import PublicEnvProvider from "./public-env-provider";
-import { ThemeProvider, CssBaseline} from "@mui/material";
+import { ThemeProvider, CssBaseline, Box} from "@mui/material";
 import { theme } from "./theme";
+import SidePanel from "./sidepanel";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,7 +36,11 @@ export default function RootLayout({
         <PublicEnvProvider publicEnv={{backendUrl: process.env.BACKEND_URL || ""}}>
           <AppRouterCacheProvider options={{ enableCssLayer: true }}>
             <ThemeProvider theme={theme}>
-              {children}
+              <CssBaseline />
+              <SidePanel />
+              <Box component="main" sx={{ flexGrow: 1, ml: "240px", p: 3}}>
+                {children}
+              </Box>
             </ThemeProvider>
           </AppRouterCacheProvider>
         </PublicEnvProvider>
