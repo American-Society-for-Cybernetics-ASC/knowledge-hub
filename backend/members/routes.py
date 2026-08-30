@@ -14,6 +14,12 @@ def get_current_member_id(
 ) -> int:
     """Resolve the authenticated user to their member ID."""
 
+    if auth_user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
+
     with database.get_session() as session:
         member = (
             session.query(model.Member)
