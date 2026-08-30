@@ -59,20 +59,19 @@ class AuthModule:
                 .first()
             )
 
-        if existing:
-            raise ValueError("Email already registered")
+            if existing:
+                raise ValueError("Email already registered")
 
-        # Hash the password using Argon2id
-        hashed_password = ph.hash(password)
+            # Hash the password using Argon2id
+            hashed_password = ph.hash(password)
 
-        # Generate unique TOTP secret
-        totp_secret = pyotp.random_base32()
+            # Generate unique TOTP secret
+            totp_secret = pyotp.random_base32()
 
-        # Encrypt TOTP secret before storing
-        f = self._get_fernet()
-        encrypted_secret = f.encrypt(totp_secret.encode()).decode()
+            # Encrypt TOTP secret before storing
+            f = self._get_fernet()
+            encrypted_secret = f.encrypt(totp_secret.encode()).decode()
 
-        with database.get_session() as session:
             # Create new user
             new_user = model.AuthUser(
                 email=email,
@@ -85,15 +84,15 @@ class AuthModule:
             session.commit()
             session.refresh(new_user)
 
-        AuditLogModule().post_audit(
-            AuditPermissionCategory.auth, f"An account was registered for {email}"
-        )
+            AuditLogModule().post_audit(
+                AuditPermissionCategory.auth, f"An account was registered for {email}"
+            )
 
-        # Generate QR code URI for authenticator app
-        totp = pyotp.TOTP(totp_secret)
-        qr_uri = totp.provisioning_uri(name=email, issuer_name="CKH ASC")
+            # Generate QR code URI for authenticator app
+            totp = pyotp.TOTP(totp_secret)
+            qr_uri = totp.provisioning_uri(name=email, issuer_name="CKH ASC")
 
-        return qr_uri
+            return qr_uri
 
     def get_totp_setup(self, email: str) -> str:
         """
@@ -134,23 +133,23 @@ class AuthModule:
                 .first()
             )
 
-        if not user:
-            raise ValueError("User not found")
+            if not user:
+                raise ValueError("User not found")
 
-        # Decrypt TOTP secret
-        f = self._get_fernet()
-        decrypted_secret = f.decrypt(user.totp_secret.encode()).decode()
+            # Decrypt TOTP secret
+            f = self._get_fernet()
+            decrypted_secret = f.decrypt(user.totp_secret.encode()).decode()
 
-        # Verify the code
-        totp = pyotp.TOTP(decrypted_secret)
-        if not totp.verify(code):
-            raise ValueError("Invalid TOTP code")
+            # Verify the code
+            totp = pyotp.TOTP(decrypted_secret)
+            if not totp.verify(code):
+                raise ValueError("Invalid TOTP code")
 
-        # Mark TOTP as enabled
-        user.totp_enabled = True
-        session.commit()
+            # Mark TOTP as enabled
+            user.totp_enabled = True
+            session.commit()
 
-        return True
+            return True
 
     def login(self, email: str, password: str) -> dict:
         """
@@ -240,32 +239,32 @@ class AuthModule:
                 .first()
             )
 
-        if not user:
-            raise ValueError("User not found")
+            if not user:
+                raise ValueError("User not found")
 
-        # Decrypt TOTP secret
-        f = self._get_fernet()
-        decrypted_secret = f.decrypt(user.totp_secret.encode()).decode()
+            # Decrypt TOTP secret
+            f = self._get_fernet()
+            decrypted_secret = f.decrypt(user.totp_secret.encode()).decode()
 
-        # Verify TOTP code
-        totp = pyotp.TOTP(decrypted_secret)
-        if not totp.verify(code):
-            raise ValueError("Invalid TOTP code")
+            # Verify TOTP code
+            totp = pyotp.TOTP(decrypted_secret)
+            if not totp.verify(code):
+                raise ValueError("Invalid TOTP code")
 
-        # Update last login
-        user.last_login = datetime.now(timezone.utc)
-        session.commit()
+            # Update last login
+            user.last_login = datetime.now(timezone.utc)
+            session.commit()
 
-        # JWT payload
-        payload = {
-            "sub": str(user.user_id),
-            "email": user.email,
-            "iss": SETTINGS.jwt_issuer,
-            "exp": datetime.now(timezone.utc)
-            + timedelta(minutes=SETTINGS.jwt_expiry_minutes),
-        }
+            # JWT payload
+            payload = {
+                "sub": str(user.user_id),
+                "email": user.email,
+                "iss": SETTINGS.jwt_issuer,
+                "exp": datetime.now(timezone.utc)
+                + timedelta(minutes=SETTINGS.jwt_expiry_minutes),
+            }
 
-        # Sign the JWT with RSA private key
-        token = jwt.encode(payload, self._get_private_key(), algorithm="RS256")
+            # Sign the JWT with RSA private key
+            token = jwt.encode(payload, self._get_private_key(), algorithm="RS256")
 
-        return token
+            return token
