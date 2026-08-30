@@ -19,26 +19,28 @@ export default function Page() {
     backendFetch,
   );
 
-    let body;
-    if (isLoading) {
-      body = <p>Loading</p>;
-    } else if (error) {
-      body = <p>Error: {error.toString()}</p>;
-    } else if (!data) {
-      body = <p>Error: No Data</p>;
-    } else {
-      body = data.map((email, i) => (
-        <ul key={email.id}>
-          <h3>Email #{i}</h3>
-          <li>Sender: {email.email.sender}</li>
-          <li>Recipients: {email.email.recipients}</li>
-          <li>Subject: {email.email.subject}</li>
-        </ul>
-      ));
-    }
+  let body;
+  if (isLoading) {
+    body = <p>Loading</p>;
+  } else if (error) {
+    body = <p>Error: {error.toString()}</p>;
+  } else if (!data) {
+    body = <p>Error: No Data</p>;
+  } else {
+    body = data.map((email, i) => (
+      <ul key={email.id}>
+        <h3>Email #{i}</h3>
+        <li>Sender: {email.email.sender}</li>
+        <li>Recipients: {email.email.recipients}</li>
+        <li>Subject: {email.email.subject}</li>
+      </ul>
+    ));
+  }
 
-  return <>
+  return (
+    <>
       <Typography variant={"h5"}>Mail</Typography>
       {body}
-  </>
+    </>
+  );
 }

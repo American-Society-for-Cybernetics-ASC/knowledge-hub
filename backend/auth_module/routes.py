@@ -135,7 +135,9 @@ def login(
             )
         return LoginResponse(
             challenge_token=result["challenge_token"],
-            message="Login successful." if not result["challenge_token"] else "Password verified. Please enter your authenticator code.",
+            message="Login successful."
+            if not result["challenge_token"]
+            else "Password verified. Please enter your authenticator code.",
         )
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
