@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from auth_module import PermissionTier, Permissions, AuthModule
 from settings import SETTINGS
 import database
+import database.model as dbmodel
 import database.base
 from example_module.routes import example_router
 from cron.routes import cron_router
@@ -12,6 +14,8 @@ from members.routes import members_router
 from membership.routes import membership_router
 from notifications.routes import notifications_router
 from member_matching.routes import member_matching_router
+from payments.routes import payments_router
+from audit_log.routes import audit_router
 
 if SETTINGS.local_deployment and not SETTINGS.testing:
     with database.get_session() as session:
@@ -21,6 +25,15 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         conn.commit()
         session.close()
 
+    AuthModule().register("temp@temp.com", "temp", "Temp Root")
+
+    with database.get_session() as session:
+        session.query(dbmodel.AuthUser).where(
+            dbmodel.AuthUser.email == "temp@temp.com"
+        ).one().permissions = Permissions(
+            tier=PermissionTier.adminstrator
+        ).model_dump_json()
+        session.commit()
 
 app = FastAPI()
 
@@ -41,3 +54,5 @@ app.include_router(mailing_list_router)
 app.include_router(membership_router)
 app.include_router(notifications_router)
 app.include_router(member_matching_router)
+app.include_router(payments_router)
+app.include_router(audit_router)

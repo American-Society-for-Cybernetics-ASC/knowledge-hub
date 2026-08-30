@@ -3,12 +3,16 @@
 
 from typing import Callable
 
-from mail.module import MailModule, MailModuleConfig
+from fastapi import Request
+
+from mail.module import MailModuleConfig
 from mail.provider.mock_provider import MockMailProvider
 
 import database
 from database import model
 from database.base import Base
+
+import auth_module
 
 from settings import SETTINGS
 
@@ -97,13 +101,34 @@ def mock_get_session(monkeypatch):
 
 
 # Keep the scope in sync with mock_get_session
-@pytest.fixture(scope="function")
+@pytest.fixture(autouse=True, scope="function")
 def default_database(mock_get_session: Callable[[], Session]):
     with mock_get_session() as session:
         session.add(
             model.Module(
-                module_name=MailModule.MODULE_ID,
+                module_name=MailModuleConfig.module_id(),
                 config=MailModuleConfig(provider=MockMailProvider()).model_dump(),
             )
         )
+        session.add(
+            model.AuthUser(
+                user_id=0,
+                email="test@email.com",
+                totp_enabled=False,
+                permissions=auth_module.Permissions(
+                    tier=auth_module.PermissionTier.adminstrator, children={}
+                ).model_dump_json(),
+            )
+        )
         session.commit()
+
+
+@pytest.fixture(autouse=True)
+def override_permissions(request: pytest.FixtureRequest):
+    if "no_override_user_id" not in request.keywords:
+
+        def mock_user_id(request: Request) -> int | None:
+            return 0
+
+        app.dependency_overrides[auth_module.user_id] = mock_user_id
+    yield m

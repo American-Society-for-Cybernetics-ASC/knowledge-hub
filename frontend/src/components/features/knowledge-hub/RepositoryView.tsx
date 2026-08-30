@@ -1,3 +1,3 @@
 export default function RepositoryView() {
-    return <div>Repository View</div>;
+  return <div>Repository View</div>;
 }
