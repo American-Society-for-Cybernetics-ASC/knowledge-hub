@@ -2,6 +2,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from member_application.module import MemberApplicationModule, ApplicationNotFoundError
 from member_application.model import MemberApplication, SubmitApplication, ReviseApplication
+from auth_module import user_id
+from database import model
+import database
 
 member_application_router = APIRouter(prefix="/member-applications", tags=["member-applications"])
 
@@ -26,12 +29,26 @@ def get_application(
 @member_application_router.post("/")
 def submit_application(
     application: SubmitApplication,
+    auth_user_id: Annotated[int, Depends(user_id)],
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)]
 ) -> MemberApplication:
     """submit a new application"""
+
+    with database.get_session() as session:
+        member = (
+            session.query(model.Member)
+            .filter(model.Member.auth_user_id == auth_user_id)
+            .first()
+        )
+
+        if member is None:
+            raise HTTPException(status_code=404, detail="member not found")
+
+        member_id = member.member_id
+
     return module.submit_application(
-        application.member_id,
-        application.content
+        member_id,
+        application.content,
     )
 
 @member_application_router.patch("/{application_id}")

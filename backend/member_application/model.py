@@ -13,11 +13,10 @@ class MemberApplication(BaseModel):
     member_id: int
     status: ApplicationStatus
     submitted_at: datetime | None = None
-    content: dict | None = None
+    content: str | None = None
 
 class SubmitApplication(BaseModel):
-    member_id: int
-    content: dict
+    content: str
 
 class ReviseApplication(BaseModel):
-    content: dict
+    content: str

@@ -28,7 +28,7 @@ class MemberApplicationModule:
                 )
             return MemberApplication.model_validate_sqlalchemy(application)
     
-    def submit_application(self, member_id: int, content: dict) -> MemberApplication:
+    def submit_application(self, member_id: int, content: str) -> MemberApplication:
         """Submit a new member application"""
         with database.get_session() as session:
             application = model.MembershipApplication(
@@ -42,7 +42,7 @@ class MemberApplicationModule:
 
             return MemberApplication.model_validate_sqlalchemy(application)
     
-    def revise_application(self, application_id: int, content: dict) -> MemberApplication:
+    def revise_application(self, application_id: int, content: str) -> MemberApplication:
         """revise an existing member application"""
         with database.get_session() as session:
 
