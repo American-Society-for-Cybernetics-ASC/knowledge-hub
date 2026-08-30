@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@mui/material": "^9.3.1",
+    "@mui/material-nextjs": "^9.4.0",
     "swr": "^2.5.1"
   }
 }
