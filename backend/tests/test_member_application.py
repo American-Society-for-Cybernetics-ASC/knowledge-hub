@@ -38,7 +38,7 @@ def create_application(
         return application.application_id
 
 def test_submit_application(mock_get_session):
-    auth_user_id = create_auth_user(mock_get_session, 0)
+    auth_user_id = 0
 
     application = MemberApplicationModule().submit_application(
         auth_user_id,
@@ -129,7 +129,7 @@ def test_request_revision(mock_get_session):
 
 def test_submit_application_api(test_server: TestClient, mock_get_session):
     """test submitting an application through the api"""
-    auth_user_id = create_auth_user(mock_get_session, 0)
+    auth_user_id = 0
     response = test_server.post(
         "/member-applications/",
         json={"content": "I want to join please"}
@@ -180,7 +180,7 @@ def test_get_application_api(test_server: TestClient, mock_get_session):
 
 def test_revise_application_api(test_server: TestClient, mock_get_session):
     """Test revising an application through the api"""
-    auth_user_id = create_auth_user(mock_get_session, 0)
+    auth_user_id = 0
     application_id = create_application(mock_get_session, auth_user_id, "old application")
     response = test_server.patch(
         f"/member-applications/{application_id}",

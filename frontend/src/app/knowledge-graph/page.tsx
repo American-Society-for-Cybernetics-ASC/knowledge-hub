@@ -3,5 +3,5 @@
 // GET /knowledge-graph - process a knowledge graph query
 
 export default function KnowledgeGraphPage() {
-    return <div>Knowledge Graphs</div>;
+  return <div>Knowledge Graphs</div>;
 }

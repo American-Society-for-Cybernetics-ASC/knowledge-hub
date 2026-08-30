@@ -1,3 +1,3 @@
 export default function RepositoryList() {
-    return <div>Repository List</div>;
+  return <div>Repository List</div>;
 }

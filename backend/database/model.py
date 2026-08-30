@@ -1,6 +1,8 @@
 from sqlalchemy import JSON, Column, Integer, String, Boolean, DateTime, ForeignKey
-from sqlalchemy.orm import mapped_column, relationship
+from sqlalchemy.orm import mapped_column, relationship, Mapped
 from sqlalchemy.sql import func
+
+from audit_log.enums import AuditPermissionCategory
 from .base import Base
 
 
@@ -169,20 +171,18 @@ class AuthUser(Base):
     hash_password = mapped_column(String)
 
     # Relationships
-    auth_logs = relationship("AuthLog", back_populates="user")
     members = relationship("Member", back_populates="auth_user")
 
 
-class AuthLog(Base):
+class AuditLog(Base):
     __tablename__ = "auth_logs"
 
     auth_log_id = mapped_column(Integer, primary_key=True, index=True)
+    permission_category: Mapped[AuditPermissionCategory] = mapped_column(
+        String, nullable=False
+    )
     log = mapped_column(String, nullable=False)
-    time = mapped_column(DateTime)
-
-    # Relationship with AuthUser table
-    user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"))
-    user = relationship("AuthUser", back_populates="auth_logs")
+    time = mapped_column(DateTime, server_default=func.now())
 
 
 class Module(Base):

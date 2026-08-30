@@ -1,3 +1,3 @@
 export function useEvents() {
-    throw new Error("Not implemented")
+  throw new Error("Not implemented");
 }

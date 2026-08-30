@@ -1,3 +1,3 @@
 export default function GroupMembers() {
-    return <div>Group Members</div>;
+  return <div>Group Members</div>;
 }
