@@ -1,6 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
-from member_application.module import MemberApplicationModule, ApplicationNotFoundError
+from member_application.module import MemberApplicationModule, ApplicationNotFoundError, ApplicationNotOwnedError
 from member_application.model import MemberApplication, SubmitApplication, ReviseApplication
 from auth_module import user_id
 from database import model
@@ -34,20 +34,11 @@ def submit_application(
 ) -> MemberApplication:
     """submit a new application"""
 
-    with database.get_session() as session:
-        member = (
-            session.query(model.Member)
-            .filter(model.Member.auth_user_id == auth_user_id)
-            .first()
-        )
-
-        if member is None:
-            raise HTTPException(status_code=404, detail="member not found")
-
-        member_id = member.member_id
+    if auth_user_id is None:
+        raise HTTPException(status_code=401, detail="authentication required")
 
     return module.submit_application(
-        member_id,
+        auth_user_id,
         application.content,
     )
 
@@ -55,13 +46,20 @@ def submit_application(
 def revise_application(
     application_id: int,
     application: ReviseApplication,
+    auth_user_id: Annotated[int, Depends(user_id)],
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)]
 ) -> MemberApplication:
     """revise an existing application"""
+
+    if auth_user_id is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
     try:
-        return module.revise_application(application_id, application.content)
+        return module.revise_application(application_id, auth_user_id, application.content)
     except ApplicationNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except ApplicationNotOwnedError as e:
+        raise HTTPException(status_code=403, detail=str(e))
     
 @member_application_router.post("/{application_id}/approve")
 def approve_application(

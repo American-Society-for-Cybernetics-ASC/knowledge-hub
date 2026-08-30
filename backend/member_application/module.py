@@ -8,6 +8,10 @@ class ApplicationNotFoundError(Exception):
     """Raised when a member application cannot be found"""
     pass
 
+class ApplicationNotOwnedError(Exception):
+    """raised when a user tries to modify another user's application"""
+    pass
+
 class MemberApplicationModule:
 
     def get_applications(self) -> list[MemberApplication]:
@@ -28,11 +32,11 @@ class MemberApplicationModule:
                 )
             return MemberApplication.model_validate_sqlalchemy(application)
     
-    def submit_application(self, member_id: int, content: str) -> MemberApplication:
+    def submit_application(self, auth_user_id: int, content: str) -> MemberApplication:
         """Submit a new member application"""
         with database.get_session() as session:
             application = model.MembershipApplication(
-                member_id=member_id,
+                auth_user_id=auth_user_id,
                 status=ApplicationStatus.PENDING,
                 submitted_at=datetime.now(timezone.utc),
                 content=content,
@@ -42,7 +46,7 @@ class MemberApplicationModule:
 
             return MemberApplication.model_validate_sqlalchemy(application)
     
-    def revise_application(self, application_id: int, content: str) -> MemberApplication:
+    def revise_application(self, application_id: int, auth_user_id: int, content: str) -> MemberApplication:
         """revise an existing member application"""
         with database.get_session() as session:
 
@@ -52,6 +56,12 @@ class MemberApplicationModule:
                 raise ApplicationNotFoundError(
                     f"Application for member {application_id} cannot be found"
                 )
+
+            if application.auth_user_id != auth_user_id:
+                raise ApplicationNotOwnedError(
+                    "You do not own this application"
+                )
+            
             application.content = content
             application.status = ApplicationStatus.PENDING
 

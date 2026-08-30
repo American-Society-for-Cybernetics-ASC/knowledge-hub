@@ -10,7 +10,7 @@ class ApplicationStatus(str, Enum):
 
 class MemberApplication(BaseModel):
     application_id: int
-    member_id: int
+    auth_user_id: int
     status: ApplicationStatus
     submitted_at: datetime | None = None
     content: str | None = None
