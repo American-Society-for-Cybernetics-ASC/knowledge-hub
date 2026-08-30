@@ -7,9 +7,7 @@ import { register, confirmTOTP } from "@/lib/api/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [step, setStep] = useState<"register" | "totp-choice" | "totp">(
-    "register",
-  );
+  const [step, setStep] = useState<"register" | "totp">("register");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -30,7 +28,7 @@ export default function RegisterPage() {
         display_name: displayName,
       });
       setQrUri(response.qr_uri);
-      setStep("totp-choice");
+      setStep("totp");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -137,38 +135,6 @@ export default function RegisterPage() {
               Sign in
             </Link>
           </p>
-        </div>
-      </div>
-    );
-  }
-
-  // step === "totp-choice"
-  if (step === "totp-choice") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow p-8">
-          <h1 className="text-2xl font-bold text-center mb-2">
-            Two-Factor Authentication
-          </h1>
-          <p className="text-sm text-gray-600 text-center mb-6">
-            Would you like to enable two-factor authentication? You can always
-            enable it later from your profile settings.
-          </p>
-
-          <div className="space-y-3">
-            <button
-              onClick={() => setStep("totp")}
-              className="w-full bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700"
-            >
-              Yes, enable 2FA
-            </button>
-            <button
-              onClick={() => router.push("/auth/login")}
-              className="w-full bg-gray-200 text-gray-700 py-2 rounded font-medium hover:bg-gray-300"
-            >
-              No, skip for now
-            </button>
-          </div>
         </div>
       </div>
     );

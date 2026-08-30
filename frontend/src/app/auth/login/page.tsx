@@ -18,14 +18,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const result = await login({ email, password });
+      await login({ email, password });
       // Store email for use in verify-otp page
       sessionStorage.setItem("auth_email", email);
-      if (result.challenge_token) {
-        router.push("/auth/verify-otp");
-      } else {
-        router.push("/dashboard");
-      }
+      router.push("/auth/verify-otp");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);

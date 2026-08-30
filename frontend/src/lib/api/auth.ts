@@ -17,7 +17,7 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  challenge_token: string | null;
+  challenge_token: string;
   message: string;
 }
 
