@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+import pytest
 
 from auth_module import Permissions, PermissionTier
 
@@ -210,6 +211,7 @@ def test_get_current_user(test_server: TestClient, mock_get_session):
     assert response.status_code in [200, 404]
 
 
+@pytest.mark.logged_out
 def test_get_current_user_unauthenticated(test_server: TestClient):
     """Test that /auth/me returns 401 or 404 when not authenticated"""
     response = test_server.get("/auth/me")

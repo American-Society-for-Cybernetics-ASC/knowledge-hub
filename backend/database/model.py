@@ -240,7 +240,9 @@ class MembershipApplication(Base):
     submitted_at = mapped_column(DateTime)
     content = mapped_column(JSON)  # the application form's fields
 
-    auth_user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"), nullable=False)
+    auth_user_id = mapped_column(
+        Integer, ForeignKey("auth_users.user_id"), nullable=False
+    )
     auth_user = relationship("AuthUser")
 
 

@@ -55,7 +55,7 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
                 tags=[],
             )
         )
-        
+
         session.commit()
 
 app = FastAPI()
@@ -79,4 +79,3 @@ app.include_router(notifications_router)
 app.include_router(member_application_router)
 app.include_router(payments_router)
 app.include_router(audit_router)
-

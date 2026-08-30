@@ -32,6 +32,5 @@ explicit_package_bases=true
 
 [tool.pytest]
 markers = [
-    "no_override_user_permissions",
-    "no_override_user_id",
+    "logged_out",
 ]
