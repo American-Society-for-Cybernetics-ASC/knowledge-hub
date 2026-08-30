@@ -54,7 +54,7 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
                 tags=[],
             )
         )
-        
+
         session.commit()
 
 app = FastAPI()
