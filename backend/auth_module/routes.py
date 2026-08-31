@@ -1,8 +1,10 @@
 from typing import Annotated
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Response
+import database
+from database import model
 
-from . import AuthModule
+from . import AuthModule, user_id
 
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
@@ -43,6 +45,12 @@ class RegisterResponse(BaseModel):
 class LoginResponse(BaseModel):
     challenge_token: str | None
     message: str
+
+
+class CurrentUserResponse(BaseModel):
+    user_id: int
+    email: str
+    name: str | None
 
 
 # Endpoints
@@ -127,7 +135,9 @@ def login(
             )
         return LoginResponse(
             challenge_token=result["challenge_token"],
-            message="Login successful." if not result["challenge_token"] else "Password verified. Please enter your authenticator code.",
+            message="Login successful."
+            if not result["challenge_token"]
+            else "Password verified. Please enter your authenticator code.",
         )
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
@@ -168,3 +178,27 @@ def get_public_key(
     Returns the RSA public key for JWT verification
     """
     return {"public_key": module._get_public_key_pem()}
+
+
+@auth_router.get("/me")
+def get_current_user(
+    current_user_id: Annotated[int | None, Depends(user_id)],
+) -> CurrentUserResponse:
+    """
+    Returns the current authenticated user's details.
+    Reads user_id from JWT cookie automatically.
+    """
+    if current_user_id is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    session = database.get_session()
+    user = session.get(model.AuthUser, current_user_id)
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return CurrentUserResponse(
+        user_id=user.user_id,
+        email=user.email,
+        name=user.name,
+    )

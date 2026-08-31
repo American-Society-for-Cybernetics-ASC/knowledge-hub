@@ -24,12 +24,6 @@ interface PaymentRecord {
 
 const fetcher = (url: string) => fetch(url, { credentials: "include" }).then((r) => r.json());
 
-const statusType: Record<string, "success" | "warning" | "error" | "default"> = {
-    success: "success",
-    pending: "warning",
-    failed: "error"
-}
-
 export default function MembershipPage() {
     const publicEnv = useContext(PublicEnv);
     const [amount, setAmount] = useState("");
@@ -67,19 +61,6 @@ export default function MembershipPage() {
         }
         
     }
-
-    const formatAmount = (cents: number) =>
-        new Intl.NumberFormat("en-US", { style: "currency", currency: "usd" }).format(cents / 100);
-
-    const formatDate = (iso: string) =>
-        new Date(iso).toLocaleString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false
-        });
 
     return (
         <Box sx = {{ maxWidth: 700, display: "flex", flexDirection: "column", gap: 4 }}>

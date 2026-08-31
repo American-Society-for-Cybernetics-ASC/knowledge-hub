@@ -3,12 +3,12 @@
 // PATCH /knowledge-hub/{repository_id} - update repository
 
 interface RepositoryPageProps {
-    params: {
-        repository_id: string;
-    };
+  params: {
+    repository_id: string;
+  };
 }
 
-export default function RepositoryPage({params}: RepositoryPageProps) {
-    // TODO: Fetch repository using params.repository_id
-    return <div>Repository {params.repository_id}</div>;
+export default function RepositoryPage({ params }: RepositoryPageProps) {
+  // TODO: Fetch repository using params.repository_id
+  return <div>Repository {params.repository_id}</div>;
 }

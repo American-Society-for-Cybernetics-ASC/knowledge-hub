@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 import database
-from database.model import Membership, MembershipApplication, Payment
+from database.model import AuthUser, Membership, MembershipApplication, Payment, Member
 from .payment_provider import PaymentStatus, StubPaymentProvider
 from .schema import MembershipCreate, MembershipListParams, MembershipStatus
 
@@ -42,7 +42,9 @@ class MembershipModule:
             approved_application = (
                 db.query(MembershipApplication)
                 .filter(
-                    MembershipApplication.member_id == data.member_id,
+                    MembershipApplication.auth_user.has(
+                        AuthUser.members.any(Member.member_id == data.member_id)
+                    ),
                     MembershipApplication.status == "approved",
                 )
                 .first()

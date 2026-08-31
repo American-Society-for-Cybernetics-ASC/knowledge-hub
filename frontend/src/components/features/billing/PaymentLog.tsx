@@ -1,8 +1,8 @@
 "use client";
 
 import { PublicEnv } from "@/app/public-env-provider";
-import { useContext, useState } from "react";
-import { Box, Button, TextField, Typography, Chip, CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material"
+import { useContext } from "react";
+import { Box, Button, Typography, Chip, CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material"
 import useSWR from "swr";
 
 interface TransactionData {
@@ -44,10 +44,6 @@ const formatDate = (iso: string) =>
 
 export default function PaymentHistory() {
     const publicEnv = useContext(PublicEnv);
-    const [amount, setAmount] = useState("");
-    const [memberId, setMemberId] = useState("00000000-0000-4000-8000-000000000000");
-    const [status, setStatus] = useState("");
-    const [loading, setLoading] = useState(false);
 
     const { data: payments, error: paymentsError, isLoading: paymentsLoading, mutate: fetchPayments } = useSWR<PaymentRecord[]>(`${publicEnv?.backendUrl}/payments`, fetcher);        
 
