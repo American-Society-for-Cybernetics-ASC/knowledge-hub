@@ -1,15 +1,52 @@
-from typing import Annotated, Optional
-from pydantic import BaseModel
+from typing import Annotated
 from uuid import UUID
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 
+from utils import BaseModel, get_module_config, set_module_config
+from payments.model import PaymentModuleConfig, PaymentOption
 from payments.module import PaymentsModule
-from payments.model import Payment
 from payments.exceptions import NoProviderConfiguredError, PaymentProviderError, PaymentNotFoundError
+from payments.transactions.mock_transaction import MockTransaction
+from payments.transactions.stripe_transaction import StripeTransaction
 
-payments_router = APIRouter(prefix="/payments", tags=["payments"])
+
+payments_router = APIRouter(prefix="/payments", tags=["payments", "admin"])
+
+# --- Admin ---
+
+
+class PatchPaymentModuleConfig(BaseModel):
+    payment_options: list[PaymentOption] | None = None
+
+
+class ReadPaymentModuleConfig(BaseModel):
+    payment_options: list[PaymentOption]
+
+    @staticmethod
+    def from_model(config: PaymentModuleConfig) -> ReadPaymentModuleConfig:
+        return ReadPaymentModuleConfig(payment_options=config.payment_options)
+
+
+@payments_router.patch("/config")
+def update_config(
+    patch: PatchPaymentModuleConfig,
+) -> ReadPaymentModuleConfig:
+    config = get_module_config(PaymentModuleConfig)
+    if patch.payment_options is not None:
+        config.payment_options = patch.payment_options
+    set_module_config(config)
+    return ReadPaymentModuleConfig.from_model(config)
+
+
+@payments_router.get("/config")
+def get_config() -> ReadPaymentModuleConfig:
+    config = get_module_config(PaymentModuleConfig)
+
+    return ReadPaymentModuleConfig.from_model(config)
+
+# --- Payments Module ---
 
 class PaymentRequest(BaseModel):
     member_id: UUID
@@ -17,15 +54,10 @@ class PaymentRequest(BaseModel):
 
 class PaymentResponse(BaseModel):
     payment_id: int
-    amount: int
     date: datetime
     status: str
     kind: str
-    provider: str
-    external_id: str
-
-    model_config = {"from_attributes": True}
-
+    transaction: MockTransaction | StripeTransaction
 
 def get_payments_module() -> PaymentsModule:
     return PaymentsModule()

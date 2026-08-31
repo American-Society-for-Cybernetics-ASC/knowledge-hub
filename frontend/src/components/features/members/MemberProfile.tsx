@@ -1,3 +1,3 @@
 export default function MemberProfile() {
-    return <div>Member Profile</div>;
+  return <div>Member Profile</div>;
 }

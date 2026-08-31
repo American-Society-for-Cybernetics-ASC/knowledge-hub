@@ -1,35 +1,18 @@
 from sqlalchemy import select
 
+from utils import ModuleConfig, get_module_config
 from mail.model import Email, FailedEmail
 import database
 from database import model
 
 from typing import Annotated, Optional, Union
-from pydantic import BaseModel, Field
-from sqlalchemy.exc import NoResultFound
+from pydantic import Field
 
 from .provider.gmail_provider import GmailProvider
 from .provider.mock_provider import MockMailProvider
 
 
 class MailModule:
-    MODULE_ID = "mail"
-
-    def get_config(self) -> MailModuleConfig:
-        """Fetch the module's config from the database"""
-        with database.get_session() as session:
-            try:
-                config_record = session.get_one(model.Module, MailModule.MODULE_ID)
-                return MailModuleConfig.model_validate(config_record.config)
-            except NoResultFound:
-                config_record = model.Module(
-                    module_name=MailModule.MODULE_ID,
-                    config=MailModuleConfig.default().model_dump(),
-                )
-                session.add(config_record)
-                session.commit()
-                return self.get_config()
-
     def get_failed_emails(self) -> list[FailedEmail[Email]]:
         """Get all emails that have failed to send"""
         with database.get_session() as session:
@@ -42,7 +25,7 @@ class MailModule:
 
     def send_mail(self, mail: Email):
         """Attempt to send an email. Adds it to :class:`~database.model.FailedEmailTable` on failure"""
-        config = self.get_config()
+        config = get_module_config(MailModuleConfig)
         if config.provider:
             try:
                 config.provider.send_mail(mail)
@@ -69,9 +52,13 @@ where discriminant is a unique string literal (see MockMailProvider ).
 """
 
 
-class MailModuleConfig(BaseModel):
+class MailModuleConfig(ModuleConfig):
     provider: Optional[MailProvider]
 
     @staticmethod
-    def default() -> MailModuleConfig:
+    def module_id():
+        return "mail"
+
+    @classmethod
+    def default(cls) -> MailModuleConfig:
         return MailModuleConfig(provider=None)

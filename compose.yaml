@@ -31,6 +31,8 @@ services:
       - isolated
   frontend:
     build: frontend
+    environment:
+      BACKEND_URL: "http://server:80"
     ports:
       - 3000:3000
     networks:

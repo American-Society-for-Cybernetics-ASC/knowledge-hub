@@ -23,10 +23,6 @@ def mock_retrieve(payment_id):
 
 def mock_stripe_transaction(monkeypatch, amount=100):
     monkeypatch.setattr(
-        "payments.transactions.stripe_transaction.SETTINGS.stripe_api_key",
-        "sk_test_key",
-    )
-    monkeypatch.setattr(
         "payments.transactions.stripe_transaction.PaymentIntent.create", mock_create
     )
     return StripeTransaction.create_one_off(amount)
@@ -80,10 +76,6 @@ def test_stripe_create_one_off_calls_stripe_with_parameters(monkeypatch):
         calls.update(kwargs)
         return MockPaymentIntent(id="pi_test_id")
 
-    monkeypatch.setattr(
-        "payments.transactions.stripe_transaction.SETTINGS.stripe_api_key",
-        "sk_test_key",
-    )
     monkeypatch.setattr(
         "payments.transactions.stripe_transaction.PaymentIntent.create",
         mock_create_and_record,

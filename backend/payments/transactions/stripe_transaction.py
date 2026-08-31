@@ -5,7 +5,6 @@ from stripe import PaymentIntent
 
 from payments.transactions import TransactionInterface
 from payments.enums import PaymentStatus
-from settings import SETTINGS
 
 STATUS_MAP = {
     "requires_payment_method": PaymentStatus.PENDING,
@@ -26,15 +25,9 @@ class StripeTransaction(TransactionInterface):
     payment_id: str
     amount_value: int
     currency: str = "usd"
-    provider: str = "stripe"
 
     @staticmethod
-    def create_one_off(amount: int, currency: str = "usd") -> "StripeTransaction":
-        if not SETTINGS.stripe_api_key:
-            raise PermissionError(
-                "Creating a StripeTransaction without a configured Stripe API key"
-            )
-
+    def create_one_off(amount: int, currency: str = "usd") -> StripeTransaction:
         intent: PaymentIntent = PaymentIntent.create(
             amount=amount,
             currency=currency,

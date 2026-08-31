@@ -1,27 +1,46 @@
+from typing import Callable
+
 import pytest
 import database
+from sqlalchemy.orm import Session
 
-from database.model import Member, MembershipApplication
+from database.model import Member, MembershipApplication, AuthUser
 from membership.module import MembershipModule
 from membership.schema import MembershipCreate, MembershipListParams
 
 
 @pytest.fixture
-def approved_member():
+def auth_user(mock_get_session: Callable[[], Session]) -> int:
+    with mock_get_session() as session:
+        auth_user = AuthUser(
+            name="User",
+            email="member@gmail.com",
+            permissions={"role": "member"},
+        )
+
+        session.add(auth_user)
+        session.commit()
+        session.refresh(auth_user)
+
+        return auth_user.user_id
+
+
+@pytest.fixture
+def approved_member(mock_get_session: Callable[[], Session], auth_user):
     """Creates a Member with an approved MembershipApplication"""
-    with database.get_session() as db:
-        member = Member(status="Applied")
+    with mock_get_session() as db:
+        member = Member(status="Applied", auth_user_id=auth_user)
         db.add(member)
         db.flush()
 
         application = MembershipApplication(
-            member_id=member.member_id,
+            auth_user_id=member.auth_user_id,
             status="approved",
         )
         db.add(application)
         db.commit()
 
-        return member.member_id
+        return auth_user
 
 
 def test_start_membership_succeeds_for_approved_member(approved_member):

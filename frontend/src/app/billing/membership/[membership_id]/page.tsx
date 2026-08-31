@@ -4,12 +4,12 @@
 // /membership/{membership_id}/uncancel
 
 interface MembershipPageProps {
-    params: {
-        membership_id: string;
-    };
+  params: {
+    membership_id: string;
+  };
 }
 
-export default function MembershipPage({params}: MembershipPageProps) {
-    // TODO: Fetch membership using params.membership_id
-    return <div>Membership {params.membership_id}</div>;
+export default function MembershipPage({ params }: MembershipPageProps) {
+  // TODO: Fetch membership using params.membership_id
+  return <div>Membership {params.membership_id}</div>;
 }

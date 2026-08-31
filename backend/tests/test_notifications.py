@@ -10,17 +10,16 @@ def test_create_and_get_notification(
     test_server: TestClient, mock_get_session: Callable[[], Session]
 ):
     """Test creating a notification and retrieving it"""
-    session = mock_get_session()
-
-    # Create a user first
-    user = model.AuthUser(
-        email="test@example.com",
-        hash_password="hashed",
-        totp_enabled=False,
-    )
-    session.add(user)
-    session.commit()
-    session.refresh(user)
+    with mock_get_session() as session:
+        # Create a user first
+        user = model.AuthUser(
+            email="test@example.com",
+            hash_password="hashed",
+            totp_enabled=False,
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
 
     # Create a notification directly via module
     NotificationsModule().create_notification(
@@ -46,16 +45,15 @@ def test_filter_unread_notifications(
     test_server: TestClient, mock_get_session: Callable[[], Session]
 ):
     """Test filtering notifications by unread status"""
-    session = mock_get_session()
-
-    user = model.AuthUser(
-        email="test@example.com",
-        hash_password="hashed",
-        totp_enabled=False,
-    )
-    session.add(user)
-    session.commit()
-    session.refresh(user)
+    with mock_get_session() as session:
+        user = model.AuthUser(
+            email="test@example.com",
+            hash_password="hashed",
+            totp_enabled=False,
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
 
     # Add one unread and one read notification
     session.add(
@@ -90,36 +88,35 @@ def test_mark_notification_as_read(
     test_server: TestClient, mock_get_session: Callable[[], Session]
 ):
     """Test marking a notification as read"""
-    session = mock_get_session()
+    with mock_get_session() as session:
+        user = model.AuthUser(
+            email="test@example.com",
+            hash_password="hashed",
+            totp_enabled=False,
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        user_id = user.user_id
 
-    user = model.AuthUser(
-        email="test@example.com",
-        hash_password="hashed",
-        totp_enabled=False,
-    )
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-
-    notification = model.Notification(
-        user_id=user.user_id,
-        subject="Test",
-        message="Test notification",
-        read=False,
-    )
-    session.add(notification)
-    session.commit()
-    session.refresh(notification)
+        notification = model.Notification(
+            user_id=user_id,
+            subject="Test",
+            message="Test notification",
+            read=False,
+        )
+        session.add(notification)
+        session.commit()
+        session.refresh(notification)
+        notification_id = notification.notification_id
 
     # Mark as read
-    response = test_server.patch(f"/notifications/{notification.notification_id}/read")
+    response = test_server.patch(f"/notifications/{notification_id}/read")
     assert response.status_code == 200
     assert response.json()["message"] == "Notification marked as read."
 
     # Verify it is now read
-    response = test_server.get(
-        f"/notifications/?user_id={user.user_id}&unread_only=true"
-    )
+    response = test_server.get(f"/notifications/?user_id={user_id}&unread_only=true")
     assert response.json() == []
 
 

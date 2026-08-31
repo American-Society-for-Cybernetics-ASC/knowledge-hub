@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from pydantic import BaseModel
+from utils import BaseModel
 
 from payments.enums import PaymentStatus
 
