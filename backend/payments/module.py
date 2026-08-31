@@ -1,8 +1,7 @@
 import os
-from typing import Annotated, Optional, Union
+from typing import Annotated, Union
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import NoResultFound
-from uuid import UUID
 from datetime import datetime, timezone
 
 import stripe
@@ -50,7 +49,7 @@ class PaymentsModule():
 
         config = self.get_config()
 
-        if not config.providers:
+        if not len(config.providers) > 0:
             raise NoProviderConfiguredError("Attempting to create payment intent without a configured payment provider")
 
         provider = config.providers[0]

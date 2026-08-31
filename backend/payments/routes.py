@@ -2,7 +2,7 @@ from typing import Annotated
 from uuid import UUID
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from utils import BaseModel
 
 from payments.module import PaymentsModule

@@ -1,5 +1,4 @@
 from typing import Literal
-from uuid import uuid4
 
 from stripe import PaymentIntent
 
