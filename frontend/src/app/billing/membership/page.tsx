@@ -2,8 +2,9 @@
 
 import { PublicEnv } from "@/app/public-env-provider";
 import { useContext, useState } from "react";
-import { Box, Button, TextField, Typography, Chip, CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material"
+import { Box, Button, TextField, Typography } from "@mui/material"
 import useSWR from "swr";
+import PaymentLog from "@/components/features/billing/PaymentLog";
 
 interface TransactionData {
     payment_id: string;
@@ -99,61 +100,7 @@ export default function MembershipPage() {
                 <TextField label="Status" value={status} multiline minRows={4} fullWidth/>
             </Box>
 
-            <Box>
-                <Typography variant="h5">Payment Log</Typography>
-
-                <Button variant="contained" onClick={() => fetchPayments()}>
-                    Refresh
-                </Button>
-
-                {paymentsError && (
-                    <Typography color="error" variant="body2">
-                        Failed to load payment history: {paymentsError.message}
-                    </Typography>
-                )}
-
-                {paymentsLoading && (
-                    <Box sx={{ display: "flex", justifyContent: "center", py: 3}}>
-                        <CircularProgress size={24} />
-                    </Box>
-                )}
-
-                {payments && (
-                    <TableContainer component={Paper} variant="outlined">
-                        <Table size="small">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Date</TableCell>
-                                    <TableCell>Provider</TableCell>
-                                    <TableCell align="right">Amount</TableCell>
-                                    <TableCell>Status</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {payments.length === 0 && (
-                                    <TableRow>
-                                        <TableCell colSpan={4} align="center">
-                                            <Typography variant="body2" color="text.secondary" sx={{ py: 2 }} >
-                                                No existing payments.
-                                            </Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                                {payments.map((p) => (
-                                    <TableRow key={p.payment_id} hover>
-                                        <TableCell>{formatDate(p.date)}</TableCell>
-                                        <TableCell sx={{ textTransform: "capitalize" }}>{p.transaction.transaction_type}</TableCell>
-                                        <TableCell align="right">{formatAmount(p.transaction.amount_value)}</TableCell>
-                                        <TableCell>
-                                            <Chip label={p.status} size="small" color={statusType[p.status] ?? "default"} sx={{ textTransform: "capitalize" }}/>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                )}
-            </Box>
+            <PaymentLog/>
         </Box>
     );
 }
