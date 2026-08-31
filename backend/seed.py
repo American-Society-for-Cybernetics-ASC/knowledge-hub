@@ -1,14 +1,27 @@
-import database
-from database import model
-from payments.module import PaymentsModule, PaymentsModuleConfig
+from payments.model import PaymentModuleConfig, PaymentOption
 from payments.providers.mock_provider import MockPaymentProvider
 from payments.providers.stripe_provider import StripePaymentProvider
+from utils import get_module_config, set_module_config
+from settings import SETTINGS
 
-payments = PaymentsModule()
-payments.get_config()
+get_module_config(PaymentModuleConfig)
 
-with database.get_session() as session:
-    config = PaymentsModuleConfig(providers=[StripePaymentProvider(), MockPaymentProvider()])
-    config_record = session.get_one(model.Module, "payments")
-    config_record.config = config.model_dump(mode = "json")
-    session.commit()
+config = PaymentModuleConfig(
+    payment_options = [
+        PaymentOption(
+            name = "Stripe",
+            description = "Stripe payment provider",
+            provider = StripePaymentProvider(
+                api_key = SETTINGS.stripe_api_key or "",
+                publishable_key = SETTINGS.stripe_publishable_key or "",
+                webhook_secret = SETTINGS.stripe_webhook_secret or "",
+            ),
+        ),
+        PaymentOption(
+            name = "Mock",
+            description = "Test payment provider",
+            provider = MockPaymentProvider(),
+        ),
+    ]
+)
+set_module_config(config)

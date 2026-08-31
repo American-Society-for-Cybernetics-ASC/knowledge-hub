@@ -5,7 +5,8 @@ from utils import BaseModel, ModuleConfig
 from uuid import UUID
 from datetime import datetime
 
-from payments.payment_providers.stripe_provider import StripePaymentProvider
+from payments.providers.mock_provider import MockPaymentProvider
+from payments.providers.stripe_provider import StripePaymentProvider
 from payments.transactions.mock_transaction import MockTransaction
 from payments.transactions.stripe_transaction import StripeTransaction
 from payments.enums import PaymentStatus
@@ -21,7 +22,7 @@ where discriminant is a unique string literal (see :class:`~payments.transaction
 """
 
 type PaymentProviderTypes = Annotated[
-    Union[StripePaymentProvider], Field(discriminator="provider_type")
+    Union[MockPaymentProvider, StripePaymentProvider], Field(discriminator="service_name")
 ]
 """
 Update this union to add new payment provider types. Make sure all members implement :class:`~payments.payment_providers.PaymentProviderInterface`

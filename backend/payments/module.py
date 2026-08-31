@@ -8,6 +8,8 @@ import stripe
 
 import database
 from database import model
+from utils import get_module_config
+from payments.model import PaymentModuleConfig
 from payments.providers.mock_provider import MockPaymentProvider
 from payments.providers.stripe_provider import StripePaymentProvider
 from payments.transactions import PaymentStatus
@@ -19,40 +21,18 @@ type PaymentProvider = Annotated[
     Union[MockPaymentProvider, StripePaymentProvider], Field(discriminator="service_name")
 ]
 
-class PaymentsModuleConfig(BaseModel):
-    providers: list[PaymentProvider] = []
-
-    @staticmethod
-    def default() -> "PaymentsModuleConfig":
-        return PaymentsModuleConfig(providers = [])
-
 class PaymentsModule():
     MODULE_ID = "payments"
-
-    def get_config(self) -> PaymentsModuleConfig:
-        """Fetch the module's config from the database"""
-        with database.get_session() as session:
-            try:
-                config_record = session.get_one(model.Module, PaymentsModule.MODULE_ID)
-                return PaymentsModuleConfig.model_validate(config_record.config)
-            except NoResultFound:
-                config_record = model.Module(
-                    module_name = PaymentsModule.MODULE_ID,
-                    config= PaymentsModuleConfig.default().model_dump(mode="json"),
-                )
-                session.add(config_record)
-                session.commit()
-                return self.get_config()
 
     def create_one_off(self, amount: int) -> model.Payment:
         """Attempt to create a one-off payment."""
 
-        config = self.get_config()
+        config = get_module_config(PaymentModuleConfig)
 
-        if not len(config.providers) > 0:
+        if not config.payment_options:
             raise NoProviderConfiguredError("Attempting to create payment intent without a configured payment provider")
 
-        provider = config.providers[0]
+        provider = config.payment_options[0].provider # TODO: Allow for payment options to be selected
         
         try:
             transaction = provider.create_one_off(amount)
