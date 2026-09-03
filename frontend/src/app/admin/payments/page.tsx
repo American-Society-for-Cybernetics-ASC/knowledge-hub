@@ -11,11 +11,13 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Box
 } from "@mui/material";
-import React, { useState } from "react";
+import { useContext, useState } from "react";
 import useSWR from "swr";
 import PaymentOptionDialog from "./paymentOptionDialog";
 import { Add, Settings } from "@mui/icons-material";
+import PaymentLog from "@/components/features/billing/PaymentLog";
 
 export default function Page() {
   const { data, error, isLoading } = useSWR<PaymentsConfig>(
@@ -36,10 +38,29 @@ export default function Page() {
 
   return (
     <>
-      <Typography variant={"h5"}>Payments</Typography>
-      {body}
+    <Typography variant={"h5"}>Payments</Typography>
+    {body}
+    <Box sx = {{ maxWidth: 700, display: "flex", flexDirection: "column", gap: 4 }}>
+        <PaymentLog/>
+    </Box>
     </>
   );
+}
+
+interface TransactionData {
+    payment_id: string;
+    kind: string;
+    transaction_type: string;
+    amount_value: number;
+    currency: string;
+}
+
+interface PaymentRecord {
+    payment_id: number;
+    date: string;
+    status: string;
+    kind: string;
+    transaction: TransactionData;
 }
 
 function ConfigForm(props: { config: PaymentsConfig }) {
@@ -59,7 +80,8 @@ function ConfigForm(props: { config: PaymentsConfig }) {
     });
   };
 
-  const currentConfig = { ...config, ...dirtyConfig };
+const currentConfig = { ...config, ...dirtyConfig };
+
   return (
     <>
       {providerModalIndex !== undefined && (

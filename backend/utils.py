@@ -65,7 +65,7 @@ def get_module_config[T: ModuleConfig](cls: type[T]) -> T:
         except NoResultFound:
             config_record = model.Module(
                 module_name=cls.module_id(),
-                config=cls.default().model_dump(),
+                config=cls.default().model_dump(mode="json"),
             )
             session.add(config_record)
             session.commit()
@@ -76,5 +76,5 @@ def set_module_config[T: ModuleConfig](value: T):
     """Fetch the module's config from the database"""
     with database.get_session() as session:
         current = session.get_one(model.Module, value.module_id())
-        current.config = value.model_dump()
+        current.config = value.model_dump(mode="json")
         session.commit()
