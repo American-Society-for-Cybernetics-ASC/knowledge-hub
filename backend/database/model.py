@@ -1,8 +1,17 @@
-from sqlalchemy import JSON, Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import (
+    JSON,
+    UUID,
+    Column,
+    Integer,
+    Numeric,
+    String,
+    Boolean,
+    DateTime,
+    ForeignKey,
+)
 from sqlalchemy.orm import mapped_column, relationship, Mapped
 from sqlalchemy.sql import func
 
-from audit_log.enums import AuditPermissionCategory
 from .base import Base
 
 
@@ -106,11 +115,25 @@ class Event(Base):
 class Payment(Base):
     __tablename__ = "payments"
 
-    payment_id = mapped_column(Integer, primary_key=True, index=True)
-    date = mapped_column(DateTime, nullable=False)
+    id = mapped_column(UUID, primary_key=True, index=True)
+    user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"), nullable=False)
+    time = mapped_column(DateTime, nullable=False, server_default=func.now())
+    amount = mapped_column(Numeric(10, 2), nullable=False)
+    currency = mapped_column(String, nullable=False)
     status = mapped_column(String, nullable=False)
-    kind = mapped_column(String, nullable=False)
-    transaction = mapped_column(JSON, nullable=False)
+    product: Mapped[dict] = mapped_column(JSON, nullable=False)
+
+    transactions = relationship("Transaction", back_populates="payment")
+
+
+class Transaction(Base):
+    __tablename__ = "transactions"
+
+    id = mapped_column(UUID, primary_key=True, index=True)
+    payment_id = mapped_column(UUID, ForeignKey(Payment.id), nullable=False)
+    data = mapped_column(JSON, nullable=False)
+
+    payment = relationship("Payment", back_populates="transactions")
 
 
 class MemberMatching(Base):
@@ -178,9 +201,7 @@ class AuditLog(Base):
     __tablename__ = "auth_logs"
 
     auth_log_id = mapped_column(Integer, primary_key=True, index=True)
-    permission_category: Mapped[AuditPermissionCategory] = mapped_column(
-        String, nullable=False
-    )
+    permission_category = mapped_column(String, nullable=False)
     log = mapped_column(String, nullable=False)
     time = mapped_column(DateTime, server_default=func.now())
 

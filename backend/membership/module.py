@@ -98,28 +98,12 @@ class MembershipModule:
                     detail="Membership not found.",
                 )
 
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             if membership.membership_expires - now > RENEWAL_WINDOW:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Too early to renew — more than 6 months remain.",
                 )
-
-            provider = self._get_payment_provider()
-            result = provider.create_one_off()
-            if provider.check(result) != PaymentStatus.PAID:
-                raise HTTPException(
-                    status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                    detail="Payment could not be confirmed.",
-                )
-
-            payment = Payment(
-                date=now,
-                status=PaymentStatus.PAID.value,
-                kind="Single",
-                provider="Stripe",
-            )
-            db.add(payment)
 
             membership.membership_expires += MEMBERSHIP_DURATION
             db.commit()

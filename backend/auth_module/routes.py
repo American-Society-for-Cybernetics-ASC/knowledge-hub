@@ -1,9 +1,9 @@
 from typing import Annotated
-from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Response
 import database
 from database import model
 
+from utils import BaseModel
 from . import AuthModule, user_id
 
 
