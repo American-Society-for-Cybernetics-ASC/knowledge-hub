@@ -11,14 +11,17 @@ export default function VerifyOTPPage() {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [challengeToken, setChallengeToken] = useState("");
 
   useEffect(() => {
     const storedEmail = sessionStorage.getItem("auth_email");
-    if (!storedEmail) {
+    const storedToken = sessionStorage.getItem("challenge_token");
+    if (!storedEmail || !storedToken) {
       router.push("/auth/login");
       return;
     }
     setEmail(storedEmail);
+    setChallengeToken(storedToken);
   }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -27,8 +30,9 @@ export default function VerifyOTPPage() {
     setLoading(true);
 
     try {
-      await verifyOTP({ email, code });
+      await verifyOTP({ email, code, challenge_token: challengeToken });
       sessionStorage.removeItem("auth_email");
+      sessionStorage.removeItem("challenge_token");
       router.push("/dashboard");
     } catch (err: unknown) {
       if (err instanceof Error) {
