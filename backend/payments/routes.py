@@ -59,22 +59,19 @@ class PaymentResponse(BaseModel):
     kind: str
     transaction: MockTransaction | StripeTransaction
 
-def get_payments_module() -> PaymentsModule:
-    return PaymentsModule()
-
 @payments_router.get("/{payment_id}", response_model = PaymentResponse)
-def get_payment(payment_id: int, payments: Annotated[PaymentsModule, Depends(get_payments_module)]):
+def get_payment(payment_id: int, payments: Annotated[PaymentsModule, Depends(PaymentsModule)]):
     try:
         return payments.get_payment(payment_id)
     except PaymentNotFoundError as e:
         raise HTTPException(status_code = 404, detail = str(e))
 
 @payments_router.get("", response_model = list[PaymentResponse])
-def list_payments(payments: Annotated[PaymentsModule, Depends(get_payments_module)]):
+def list_payments(payments: Annotated[PaymentsModule, Depends(PaymentsModule)]):
     return payments.list_payments()
 
 @payments_router.post("", response_model = PaymentResponse)
-def create_payment(body: PaymentRequest, payments: Annotated[PaymentsModule, Depends(get_payments_module)]):
+def create_payment(body: PaymentRequest, payments: Annotated[PaymentsModule, Depends(PaymentsModule)]):
     try:
         return payments.create_one_off(body.amount)
     except NoProviderConfiguredError as e:

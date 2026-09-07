@@ -12,7 +12,7 @@ from utils import get_module_config
 from payments.model import PaymentModuleConfig
 from payments.providers.mock_provider import MockPaymentProvider
 from payments.providers.stripe_provider import StripePaymentProvider
-from payments.transactions import PaymentStatus
+from payments.enums import PaymentStatus
 from payments.exceptions import NoProviderConfiguredError, PaymentProviderError, PaymentNotFoundError
 
 stripe.api_key = os.environ.get("STRIPE_API_KEY", "")

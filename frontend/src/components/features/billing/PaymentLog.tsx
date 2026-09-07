@@ -1,27 +1,9 @@
 "use client";
 
-import { PublicEnv } from "@/app/public-env-provider";
-import { useContext } from "react";
 import { Box, Button, Typography, Chip, CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material"
 import useSWR from "swr";
-
-interface TransactionData {
-    payment_id: string;
-    kind: string;
-    transaction_type: string;
-    amount_value: number;
-    currency: string;
-}
-
-interface PaymentRecord {
-    payment_id: number;
-    date: string;
-    status: string;
-    kind: string;
-    transaction: TransactionData;
-}
-
-const fetcher = (url: string) => fetch(url, { credentials: "include" }).then((r) => r.json());
+import { backendFetch } from "@/lib/api/client";
+import { PaymentRecord } from "@/types/billing"
 
 const statusType: Record<string, "success" | "warning" | "error" | "default"> = {
     success: "success",
@@ -42,10 +24,8 @@ const formatDate = (iso: string) =>
         hour12: false
     });
 
-export default function PaymentHistory() {
-    const publicEnv = useContext(PublicEnv);
-
-    const { data: payments, error: paymentsError, isLoading: paymentsLoading, mutate: fetchPayments } = useSWR<PaymentRecord[]>(`${publicEnv?.backendUrl}/payments`, fetcher);        
+export default function PaymentLog() {
+    const { data: payments, error: paymentsError, isLoading: paymentsLoading, mutate: fetchPayments } = useSWR<PaymentRecord[]>("/payments", (url: string) => backendFetch<PaymentRecord[]>(url));        
 
     return (
         <Box sx = {{ maxWidth: 700, display: "flex", flexDirection: "column", gap: 4 }}>

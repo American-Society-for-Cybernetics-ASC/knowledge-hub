@@ -9,6 +9,11 @@ get_module_config(PaymentModuleConfig)
 config = PaymentModuleConfig(
     payment_options = [
         PaymentOption(
+            name = "Mock",
+            description = "Test payment provider",
+            provider = MockPaymentProvider(),
+        ),
+        PaymentOption(
             name = "Stripe",
             description = "Stripe payment provider",
             provider = StripePaymentProvider(
@@ -16,11 +21,6 @@ config = PaymentModuleConfig(
                 publishable_key = SETTINGS.stripe_publishable_key or "",
                 webhook_secret = SETTINGS.stripe_webhook_secret or "",
             ),
-        ),
-        PaymentOption(
-            name = "Mock",
-            description = "Test payment provider",
-            provider = MockPaymentProvider(),
         ),
     ]
 )
