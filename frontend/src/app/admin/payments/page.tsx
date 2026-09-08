@@ -13,7 +13,7 @@ import {
   Typography,
   Box
 } from "@mui/material";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import useSWR from "swr";
 import PaymentOptionDialog from "./paymentOptionDialog";
 import { Add, Settings } from "@mui/icons-material";
@@ -45,22 +45,6 @@ export default function Page() {
     </Box>
     </>
   );
-}
-
-interface TransactionData {
-    payment_id: string;
-    kind: string;
-    transaction_type: string;
-    amount_value: number;
-    currency: string;
-}
-
-interface PaymentRecord {
-    payment_id: number;
-    date: string;
-    status: string;
-    kind: string;
-    transaction: TransactionData;
 }
 
 function ConfigForm(props: { config: PaymentsConfig }) {
