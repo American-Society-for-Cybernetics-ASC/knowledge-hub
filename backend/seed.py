@@ -1,9 +1,10 @@
 import sys
+import uuid
 
 from payments.config import PaymentModuleConfig, PaymentOption
 from payments.providers.mock_provider import MockPaymentProvider
 from payments.providers.stripe_provider import StripePaymentProvider
-from utils.module_config import get_module_config, set_module_config
+from utils.module_config import set_module_config
 from settings import SETTINGS
 
 
@@ -41,9 +42,7 @@ def main():
         print("Usage: seed.py <provider> [<provider> ...]")
         sys.exit(1)
 
-    payment_options = [PROVIDER_BUILDERS[name]() for name in names]
-
-    get_module_config(PaymentModuleConfig)
+    payment_options = {uuid.uuid4(): PROVIDER_BUILDERS[name]() for name in names}
 
     config = PaymentModuleConfig(payment_options=payment_options)
 

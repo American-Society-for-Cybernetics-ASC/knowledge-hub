@@ -1,4 +1,3 @@
-from decimal import Decimal
 import os
 from uuid import UUID
 from sqlalchemy.exc import NoResultFound
@@ -13,9 +12,11 @@ from .transactions import Transaction, TransactionStatus
 from .config import PaymentModuleConfig
 from .products import ProductTypes
 from .exceptions import (
-    NoProviderConfiguredError,
+    PaymentNotYoursError,
+    PaymentProviderNotFoundError,
     PaymentNotFoundError,
     PaymentAlreadyComplete,
+    TransactionNotFoundError,
     TransactionNotSuccessful,
 )
 
@@ -24,8 +25,11 @@ stripe.api_key = os.environ.get("STRIPE_API_KEY", "")
 
 class PaymentsModule:
     def create_payment(
-        self, user_id: int, amount: Decimal, currency: str, product: ProductTypes
+        self, user_id: int, amount: int, currency: str, product: ProductTypes
     ) -> Payment:
+        """
+        :parameter amount: in the smallest unit of the currency (e.g. cents for usd)
+        """
         with database.get_session() as session:
             record = model.Payment(
                 user_id=user_id,
@@ -39,26 +43,35 @@ class PaymentsModule:
             session.refresh(record)
             return Payment.from_db_model(record)
 
-    def create_transaction(self, payment_id: UUID) -> Transaction:
+    def create_transaction(
+        self, user_id: int, payment_id: UUID, provider_id: UUID
+    ) -> Transaction:
+        """
+        :raises BadPaymentProviderError: if provider_id is invalid
+        :raises PaymentNotFoundError: if payment_id is not found
+        :raises PaymentNotYoursError: if user_id doesn't match payment_id
+        """
         config = get_module_config(PaymentModuleConfig)
-        if not config.payment_options:
-            raise NoProviderConfiguredError(
-                "Attempting to create payment intent without a configured payment provider"
+
+        payment_option = config.payment_options.get(provider_id)
+        if not payment_option:
+            raise PaymentProviderNotFoundError(
+                "The requested payment provider doesn't currently exist"
             )
-        provider = config.payment_options[
-            0
-        ].provider  # TODO: Allow for payment options to be selected
+
+        payment = self.get_payment(payment_id)
+
+        if payment.user_id != user_id:
+            raise PaymentNotYoursError()
 
         with database.get_session() as session:
-            payment = Payment.from_db_model(session.get_one(model.Payment, payment_id))
-
             if payment.status != PaymentStatus.PENDING:
                 raise PaymentAlreadyComplete()
 
-            content = provider.create(payment)
+            data = payment_option.provider.create(payment)
 
             record = model.Transaction(
-                payment_id=payment_id, content=content.model_dump_json()
+                payment_id=payment_id, data=data.model_dump_json()
             )
             session.add(record)
             session.commit()
@@ -66,19 +79,31 @@ class PaymentsModule:
             return Transaction.from_db_model(record)
 
     def confirm_transaction(self, transaction_id: UUID):
+        """
+        :raises TransactionNotFoundError:
+        :raises TransactionNotSuccessful:
+        """
         product: ProductTypes | None = None
         with database.get_session() as session:
-            transaction = Transaction.from_db_model(
-                session.get_one(model.Transaction, transaction_id)
+            try:
+                transaction_record = session.get_one(model.Transaction, transaction_id)
+            except NoResultFound:
+                raise TransactionNotFoundError()
+
+            # Foreign key constraint
+            payment_record = session.get_one(
+                model.Payment, transaction_record.payment_id
             )
-            payment = Payment.from_db_model(
-                session.get_one(model.Payment, transaction.payment_id)
-            )
-            if payment.status != PaymentStatus.PENDING:
+
+            if payment_record.status != PaymentStatus.PENDING:
                 raise PaymentAlreadyComplete()
-            if transaction.data.check_status() == TransactionStatus.SUCCEEDED:
-                payment.status = PaymentStatus.SUCCEEDED
-                product = payment.product
+
+            if (
+                Transaction.from_db_model(transaction_record).data.check_status()
+                == TransactionStatus.SUCCEEDED
+            ):
+                payment_record.status = PaymentStatus.SUCCEEDED
+                product = Payment.from_db_model(payment_record).product
             else:
                 raise TransactionNotSuccessful()
 
@@ -87,14 +112,15 @@ class PaymentsModule:
         if product:
             product.handle_successful_payment()
 
-    def get_payment(self, payment_id: UUID) -> model.Payment:
+    def get_payment(self, payment_id: UUID) -> Payment:
+        """:raises PaymentNotFoundError:"""
         with database.get_session() as session:
             try:
-                return session.get_one(model.Payment, payment_id)
+                return Payment.from_db_model(session.get_one(model.Payment, payment_id))
             except NoResultFound:
                 raise PaymentNotFoundError(f"No payment with id {payment_id}")
 
-    def list_payments(self) -> list[model.Payment]:
+    def list_payments(self) -> list[Payment]:
         with database.get_session() as session:
             query = session.query(model.Payment)
-            return query.all()
+            return [Payment.from_db_model(model) for model in query]

@@ -2,8 +2,12 @@ class PaymentError(Exception):
     """Raised when an error occurs within the Payment Module."""
 
 
-class NoProviderConfiguredError(PaymentError):
-    """Raised when a call is attempted from the Payment Module with no configured provider."""
+class PaymentProviderNotFoundError(PaymentError):
+    """Raised when a call is attempted from the Payment Module for a nonexistant payment provider."""
+
+
+class PaymentNotYoursError(PaymentError):
+    """Raised when a call is attempted from the Payment Module for a payment that the caller doesn't own."""
 
 
 class PaymentProviderError(PaymentError):
@@ -11,6 +15,10 @@ class PaymentProviderError(PaymentError):
 
 
 class PaymentNotFoundError(PaymentError):
+    """Raised when a payment with the specified details does not exist."""
+
+
+class TransactionNotFoundError(PaymentError):
     """Raised when a payment with the specified details does not exist."""
 
 

@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from pydantic import TypeAdapter
 
 from utils import BaseModel
@@ -13,9 +11,9 @@ import database.model as dbmodel
 
 class Payment(BaseModel):
     id: UUID
-    user_id: UUID
+    user_id: int
     time: datetime
-    amount: Decimal
+    amount: int
     currency: str
     status: PaymentStatus
     product: ProductTypes
@@ -29,13 +27,13 @@ class Payment(BaseModel):
             amount=model.amount,
             currency=model.currency,
             status=model.status,
-            product=TypeAdapter[ProductTypes](ProductTypes).validate_python(
+            product=TypeAdapter[ProductTypes](ProductTypes).validate_json(
                 model.product
             ),
         )
 
 
-class PaymentStatus(Enum):
+class PaymentStatus(str, Enum):
     PENDING = "pending"
     SUCCEEDED = "succeeded"
     FAILED = "failed"

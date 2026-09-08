@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import Field
 
 from utils import BaseModel
@@ -12,7 +14,7 @@ class PaymentOption(BaseModel):
 
 
 class PaymentModuleConfig(ModuleConfig):
-    payment_options: list[PaymentOption]
+    payment_options: dict[UUID, PaymentOption]
 
     @staticmethod
     def module_id() -> str:
@@ -20,4 +22,4 @@ class PaymentModuleConfig(ModuleConfig):
 
     @staticmethod
     def default() -> PaymentModuleConfig:
-        return PaymentModuleConfig(payment_options=[])
+        return PaymentModuleConfig(payment_options={})

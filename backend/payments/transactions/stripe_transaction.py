@@ -1,4 +1,3 @@
-from decimal import ROUND_HALF_UP, Decimal
 from typing import Literal
 from pydantic import Field
 
@@ -28,7 +27,7 @@ class StripeTransaction(TransactionInterface):
     @staticmethod
     def create_one_off(payment: Payment) -> StripeTransaction:
         intent: PaymentIntent = PaymentIntent.create(
-            amount=int(payment.amount.quantize(Decimal("0.01"), ROUND_HALF_UP)),
+            amount=payment.amount,
             currency=payment.currency,
             automatic_payment_methods={"enabled": True},
         )

@@ -1,4 +1,4 @@
-from typing import Annotated, Union
+from typing import Annotated, Literal, Union
 
 from pydantic import Field
 
@@ -6,6 +6,7 @@ from ._interface import PaymentProviderInterface as PaymentProviderInterface
 from .mock_provider import MockPaymentProvider
 from .stripe_provider import StripePaymentProvider
 
+type ServiceName = Literal["mock"] | Literal["stripe"]
 type PaymentProviderTypes = Annotated[
     Union[MockPaymentProvider, StripePaymentProvider],
     Field(discriminator="service_name"),

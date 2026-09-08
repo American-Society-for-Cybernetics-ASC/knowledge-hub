@@ -4,29 +4,35 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from auth_module import user_id
 from utils.module_config import BaseModel, get_module_config, set_module_config
 from .config import PaymentOption, PaymentModuleConfig
-from payments.module import PaymentsModule
-from payments.exceptions import (
-    NoProviderConfiguredError,
+from .providers import ServiceName
+from .payment import Payment, PaymentStatus
+from .products.donation_product import DonationProduct
+from .products import ProductTypes
+from .transactions import Transaction, TransactionTypes
+from .module import PaymentsModule
+from .exceptions import (
+    PaymentNotYoursError,
     PaymentProviderError,
     PaymentNotFoundError,
+    TransactionNotFoundError,
+    TransactionNotSuccessful,
 )
-from payments.transactions.mock_transaction import MockTransaction
-from payments.transactions.stripe_transaction import StripeTransaction
 
 
 payments_router = APIRouter(prefix="/payments", tags=["payments", "admin"])
 
-# --- Admin ---
+# --- /config ---
 
 
 class PatchPaymentModuleConfig(BaseModel):
-    payment_options: list[PaymentOption] | None = None
+    payment_options: dict[UUID, PaymentOption] | None = None
 
 
 class ReadPaymentModuleConfig(BaseModel):
-    payment_options: list[PaymentOption]
+    payment_options: dict[UUID, PaymentOption]
 
     @staticmethod
     def from_model(config: PaymentModuleConfig) -> ReadPaymentModuleConfig:
@@ -51,44 +57,158 @@ def get_config() -> ReadPaymentModuleConfig:
     return ReadPaymentModuleConfig.from_model(config)
 
 
-# --- Payments Module ---
+# --- /payments ---
 
 
-class PaymentRequest(BaseModel):
-    member_id: UUID
+class CreateDonation(BaseModel):
     amount: int
 
 
-class PaymentResponse(BaseModel):
-    payment_id: int
-    date: datetime
-    status: str
-    kind: str
-    transaction: MockTransaction | StripeTransaction
+class ReadPayment(BaseModel):
+    id: UUID
+    user_id: int
+    time: datetime
+    amount: int
+    currency: str
+    status: PaymentStatus
+    product: ProductTypes
+
+    @staticmethod
+    def from_payment(payment: Payment) -> ReadPayment:
+        return ReadPayment(
+            id=payment.id,
+            user_id=payment.user_id,
+            time=payment.time,
+            amount=payment.amount,
+            currency=payment.currency,
+            status=payment.status,
+            product=payment.product,
+        )
 
 
-@payments_router.get("/{payment_id}", response_model=PaymentResponse)
+@payments_router.get("/payments", response_model=list[ReadPayment])
+def list_payments(
+    payments: Annotated[PaymentsModule, Depends(PaymentsModule)],
+) -> list[ReadPayment]:
+    # TODO: permissions
+    return [ReadPayment.from_payment(payment) for payment in payments.list_payments()]
+
+
+@payments_router.get("/payments/{payment_id}")
 def get_payment(
-    payment_id: int, payments: Annotated[PaymentsModule, Depends(PaymentsModule)]
-):
+    payment_id: UUID, payments: Annotated[PaymentsModule, Depends(PaymentsModule)]
+) -> ReadPayment:
     try:
-        return payments.get_payment(payment_id)
+        return ReadPayment.from_payment(payments.get_payment(payment_id))
     except PaymentNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@payments_router.get("", response_model=list[PaymentResponse])
-def list_payments(payments: Annotated[PaymentsModule, Depends(PaymentsModule)]):
-    return payments.list_payments()
+@payments_router.post("/payments/donate")
+def create_donation(
+    body: CreateDonation,
+    payments: Annotated[PaymentsModule, Depends(PaymentsModule)],
+    user_id: Annotated[int | None, Depends(user_id)],
+) -> ReadPayment:
+    if user_id is None:
+        raise HTTPException(401, "Unauthorized")
+
+    return ReadPayment.from_payment(
+        payments.create_payment(
+            user_id=user_id,
+            amount=body.amount,
+            currency="usd",
+            product=DonationProduct(),
+        )
+    )
 
 
-@payments_router.post("", response_model=PaymentResponse)
-def create_payment(
-    body: PaymentRequest, payments: Annotated[PaymentsModule, Depends(PaymentsModule)]
-):
+# --- /payments/{payment_id}/transactions ---
+
+
+class CreateTransaction(BaseModel):
+    provider_id: UUID
+    payment_id: UUID
+
+
+class ReadTransaction(BaseModel):
+    id: UUID
+    payment_id: UUID
+    data: TransactionTypes
+
+    @staticmethod
+    def from_transaction(transaction: Transaction) -> ReadTransaction:
+        return ReadTransaction(
+            id=transaction.id, payment_id=transaction.payment_id, data=transaction.data
+        )
+
+
+@payments_router.post("/transactions")
+def create_transaction(
+    body: CreateTransaction,
+    payments: Annotated[PaymentsModule, Depends(PaymentsModule)],
+    user_id: Annotated[int | None, Depends(user_id)],
+) -> ReadTransaction:
+    if user_id is None:
+        raise HTTPException(401, "Unauthorized")
+
     try:
-        return payments.create_one_off(body.amount)
-    except NoProviderConfiguredError as e:
-        raise HTTPException(status_code=409, detail=str(e))
-    except PaymentProviderError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        return ReadTransaction.from_transaction(
+            payments.create_transaction(user_id, body.payment_id, body.provider_id)
+        )
+    except PaymentProviderError:
+        raise HTTPException(400, "No such payment provider")
+    except PaymentNotFoundError:
+        raise HTTPException(404, "No such payment")
+    except PaymentNotYoursError:
+        raise HTTPException(400, "Not your payment")
+
+
+@payments_router.post("/transactions/{transaction_id}/confirm")
+def confirm_transaction(
+    transaction_id: UUID,
+    payments: Annotated[PaymentsModule, Depends(PaymentsModule)],
+    user_id: Annotated[int | None, Depends(user_id)],
+):
+    if user_id is None:
+        raise HTTPException(401, "Unauthorized")
+
+    try:
+        payments.confirm_transaction(transaction_id)
+    except TransactionNotFoundError:
+        raise HTTPException(404, "Transaction not found")
+    except TransactionNotSuccessful:
+        raise HTTPException(400, "Transaction incomplete")
+
+
+# --- /providers ---
+
+
+class ReadPaymentOption(BaseModel):
+    name: str
+    description: str
+    service_name: ServiceName
+
+    @staticmethod
+    def from_payment_option(option: PaymentOption) -> ReadPaymentOption:
+        return ReadPaymentOption(
+            name=option.name,
+            description=option.description,
+            service_name=option.provider.service_name,
+        )
+
+
+class PaymentOptionResponse(BaseModel):
+    payment_options: dict[UUID, ReadPaymentOption]
+
+
+@payments_router.get("/providers")
+def get_providers() -> PaymentOptionResponse:
+    config = get_module_config(PaymentModuleConfig)
+
+    return PaymentOptionResponse(
+        payment_options={
+            uuid: ReadPaymentOption.from_payment_option(option)
+            for uuid, option in config.payment_options.items()
+        }
+    )

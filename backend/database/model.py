@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import (
     JSON,
     UUID,
@@ -9,7 +11,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
 )
-from sqlalchemy.orm import mapped_column, relationship, Mapped
+from sqlalchemy.orm import mapped_column, relationship
 from sqlalchemy.sql import func
 
 from .base import Base
@@ -115,13 +117,13 @@ class Event(Base):
 class Payment(Base):
     __tablename__ = "payments"
 
-    id = mapped_column(UUID, primary_key=True, index=True)
+    id = mapped_column(UUID, primary_key=True, index=True, default=uuid.uuid4)
     user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"), nullable=False)
     time = mapped_column(DateTime, nullable=False, server_default=func.now())
     amount = mapped_column(Numeric(10, 2), nullable=False)
     currency = mapped_column(String, nullable=False)
     status = mapped_column(String, nullable=False)
-    product: Mapped[dict] = mapped_column(JSON, nullable=False)
+    product = mapped_column(JSON, nullable=False)
 
     transactions = relationship("Transaction", back_populates="payment")
 
@@ -129,7 +131,7 @@ class Payment(Base):
 class Transaction(Base):
     __tablename__ = "transactions"
 
-    id = mapped_column(UUID, primary_key=True, index=True)
+    id = mapped_column(UUID, primary_key=True, index=True, default=uuid.uuid4)
     payment_id = mapped_column(UUID, ForeignKey(Payment.id), nullable=False)
     data = mapped_column(JSON, nullable=False)
 
