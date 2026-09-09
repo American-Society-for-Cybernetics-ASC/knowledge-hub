@@ -1,8 +1,10 @@
+import datetime
 from typing import Callable
 
 import pytest
 from sqlalchemy.orm import Session
 
+from database.types import MemberStatus
 from database import model
 from members.model import ProfileUpdate
 from members.module import MemberNotFoundError, MembersModule
@@ -12,7 +14,18 @@ def create_member(get_session: Callable[[], Session]) -> int:
     """Create a basic member and return its database ID."""
 
     with get_session() as session:
-        member = model.Member(status="active")
+        auth_user = model.AuthUser(email="Example")
+        session.add(auth_user)
+        session.commit()
+        session.refresh(auth_user)
+
+        member = model.Member(
+            auth_user=auth_user,
+            membership_expires=datetime.datetime.now(datetime.timezone.utc)
+            + datetime.timedelta(days=100),
+            status=MemberStatus.CURRENT,
+            cancelled=False,
+        )
         session.add(member)
         session.commit()
         session.refresh(member)
@@ -28,7 +41,7 @@ def test_get_profile_creates_empty_profile(mock_get_session):
     profile = MembersModule().get_profile(member_id)
 
     assert profile.member_id == member_id
-    assert profile.status == "active"
+    assert profile.status == MemberStatus.CURRENT
     assert profile.content.personal_statement is None
     assert profile.content.research_interests == []
     assert profile.content.expertise == []
