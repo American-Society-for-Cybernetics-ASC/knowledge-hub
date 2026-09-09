@@ -40,12 +40,15 @@ def create_member(
         )
 
         if has_current_membership:
+            now = datetime.now(timezone.utc)
+            
             session.add(
                 model.Membership(
                     member_id=member.member_id,
                     tier="Standard",
                     status="Current",
-                    start_date=datetime.now(timezone.utc),
+                    start_date=now,
+                    membership_expires=now + timedelta(days=365),
                 )
             )
 

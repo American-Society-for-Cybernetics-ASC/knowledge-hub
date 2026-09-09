@@ -71,10 +71,10 @@ class NotificationsModule:
         with database.get_session() as session:
             notification = session.get(model.Notification, notification_id)
 
-        if not notification:
-            return False
+            if not notification:
+                return False
 
-        notification.read = True
-        session.commit()
+            notification.read = True
+            session.commit()
 
         return True

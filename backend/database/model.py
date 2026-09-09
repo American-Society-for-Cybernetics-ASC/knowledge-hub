@@ -33,7 +33,6 @@ class Member(Base):
     mailing_list_memberships = relationship(
         "MailingListMember", back_populates="member"
     )
-    applications = relationship("MembershipApplication", back_populates="member")
 
 
 class MailingList(Base):
@@ -269,8 +268,10 @@ class MembershipApplication(Base):
     submitted_at = mapped_column(DateTime)
     content = mapped_column(JSON)  # the application form's fields
 
-    member_id = mapped_column(Integer, ForeignKey("members.member_id"))
-    member = relationship("Member", back_populates="applications")
+    auth_user_id = mapped_column(
+        Integer, ForeignKey("auth_users.user_id"), nullable=False
+    )
+    auth_user = relationship("AuthUser")
 
 
 class Notification(Base):

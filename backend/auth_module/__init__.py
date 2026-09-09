@@ -17,7 +17,7 @@ def user_id(request: Request) -> int | None:
 
     ```python
     @app.get("")
-    def my_route(user_id: Annotated[int, Depends(user_id)]):
+    def my_route(user_id: Annotated[int | None, Depends(user_id)]):
         ...
     ```
     """

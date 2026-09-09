@@ -124,11 +124,14 @@ def default_database(mock_get_session: Callable[[], Session]):
 
 
 @pytest.fixture(autouse=True)
-def override_permissions(request: pytest.FixtureRequest):
-    if "no_override_user_id" not in request.keywords:
+def override_permissions(request: pytest.FixtureRequest, monkeypatch):
+    with monkeypatch.context() as m:
+        if "logged_out" not in request.keywords:
 
-        def mock_user_id(request: Request) -> int | None:
-            return 0
+            def mock_user_id(request: Request) -> int | None:
+                return 0
 
-        app.dependency_overrides[auth_module.user_id] = mock_user_id
-    yield m
+            monkeypatch.setitem(
+                app.dependency_overrides, auth_module.user_id, mock_user_id
+            )
+        yield m

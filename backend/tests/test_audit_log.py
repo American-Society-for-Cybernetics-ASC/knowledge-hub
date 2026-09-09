@@ -1,7 +1,5 @@
 from datetime import datetime
 
-import pytest
-
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from typing import Callable
@@ -11,7 +9,6 @@ from auth_module import PermissionTier, Permissions
 import database.model as model
 
 
-@pytest.mark.no_override_user_permissions
 def test_permissions(test_server: TestClient, mock_get_session: Callable[[], Session]):
     with mock_get_session() as session:
         session.add(
