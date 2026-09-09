@@ -3,12 +3,11 @@ import uuid
 from fastapi.testclient import TestClient
 import pytest
 
+from .conftest import TEST_USER_ID
 from payments.providers.stripe_provider import StripePaymentProvider
 from payments.payment import PaymentStatus, Payment
 from payments.products import DonationProduct
 from payments.module import PaymentsModule
-from payments.config import PaymentModuleConfig, PaymentOption
-from utils.module_config import set_module_config
 from payments.providers.mock_provider import MockPaymentProvider
 from payments.transactions.stripe_transaction import StripeTransaction
 
@@ -39,25 +38,10 @@ def mock_stripe_transaction(monkeypatch, mock_payment):
 
 
 @pytest.fixture()
-def mock_provider(mock_get_session) -> uuid.UUID:
-    id = uuid.uuid4()
-    set_module_config(
-        PaymentModuleConfig(
-            payment_options={
-                id: PaymentOption(
-                    name="Example",
-                    description="Example Provider",
-                    provider=MockPaymentProvider(),
-                )
-            }
-        )
-    )
-    return id
-
-
-@pytest.fixture()
 def mock_payment(mock_get_session) -> Payment:
-    return PaymentsModule().create_payment(0, 10010, "usd", DonationProduct())
+    return PaymentsModule().create_payment(
+        TEST_USER_ID, 10010, "usd", DonationProduct()
+    )
 
 
 def test_config(test_server: TestClient):
@@ -111,6 +95,37 @@ def test_transaction(test_server, mock_provider: uuid.UUID, mock_payment: Paymen
     )
     assert response.status_code == 200
     assert response.json()["status"] == PaymentStatus.SUCCEEDED
+
+
+def test_repeat_transactions_fail(
+    test_server, mock_provider: uuid.UUID, mock_payment: Payment
+):
+    response = test_server.post(
+        "/payments/transactions",
+        json={"provider_id": str(mock_provider), "payment_id": str(mock_payment.id)},
+    )
+    assert response.status_code == 200
+    assert "id" in response.json()
+    id = response.json()["id"]
+
+    # Currently in progress
+    response = test_server.post(
+        "/payments/transactions",
+        json={"provider_id": str(mock_provider), "payment_id": str(mock_payment.id)},
+    )
+    assert response.status_code == 400
+
+    response = test_server.post(
+        f"/payments/transactions/{id}/confirm",
+    )
+    assert response.status_code == 200
+
+    # Already succeeded
+    response = test_server.post(
+        "/payments/transactions",
+        json={"provider_id": str(mock_provider), "payment_id": str(mock_payment.id)},
+    )
+    assert response.status_code == 400
 
 
 # Stripe Transaction Tests

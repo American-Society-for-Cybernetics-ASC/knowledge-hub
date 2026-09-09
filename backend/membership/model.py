@@ -9,7 +9,7 @@ from database.types import MemberStatus
 class Member(BaseModel):
     auth_user_id: int
     membership_expires: datetime
-    member_type_id: UUID
+    member_type_id: UUID | None
     status: MemberStatus
     cancelled: bool
 
@@ -27,7 +27,7 @@ class Member(BaseModel):
 class ReadMember(BaseModel):
     auth_user_id: int
     membership_expires: datetime
-    member_type_id: UUID
+    member_type_id: UUID | None
     status: MemberStatus
     cancelled: bool
 
@@ -46,7 +46,6 @@ class MembershipType(BaseModel):
     id: UUID
     name: str
     price: int
-    allow_renewals: bool
 
     @staticmethod
     def from_db_model(model: dbmodel.MemberType) -> MembershipType:
@@ -54,5 +53,4 @@ class MembershipType(BaseModel):
             id=model.id,
             name=model.name,
             price=model.price,
-            allow_renewals=model.allow_renewals,
         )

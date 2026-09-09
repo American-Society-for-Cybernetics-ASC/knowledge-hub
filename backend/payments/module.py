@@ -1,15 +1,17 @@
 import os
 from uuid import UUID
-from sqlalchemy.exc import NoResultFound
 
 import stripe
+from sqlalchemy.exc import NoResultFound
+
 
 from .products.handle_product import handle_successful_payment
 import database
+from database.types import PaymentStatus, TransactionStatus
 from database import model
 from utils.module_config import get_module_config
-from .payment import Payment, PaymentStatus
-from .transactions import Transaction, TransactionStatus
+from .payment import Payment
+from .transactions import Transaction
 from .config import PaymentModuleConfig
 from .products import ProductTypes
 from .exceptions import (
@@ -17,6 +19,7 @@ from .exceptions import (
     PaymentProviderNotFoundError,
     PaymentNotFoundError,
     PaymentAlreadyComplete,
+    TransactionInProgressError,
     TransactionNotFoundError,
     TransactionNotSuccessful,
 )
@@ -51,6 +54,8 @@ class PaymentsModule:
         :raises BadPaymentProviderError: if provider_id is invalid
         :raises PaymentNotFoundError: if payment_id is not found
         :raises PaymentNotYoursError: if user_id doesn't match payment_id
+        :raises PaymentAlreadyComplete:
+        :raises TransactionInProgressError:
         """
         config = get_module_config(PaymentModuleConfig)
 
@@ -65,9 +70,20 @@ class PaymentsModule:
         if payment.user_id != user_id:
             raise PaymentNotYoursError()
 
+        if payment.status != PaymentStatus.PENDING:
+            raise PaymentAlreadyComplete()
+
         with database.get_session() as session:
-            if payment.status != PaymentStatus.PENDING:
-                raise PaymentAlreadyComplete()
+            for transaction in (
+                session.query(model.Transaction)
+                .where(model.Transaction.payment_id == payment.id)
+                .where(model.Transaction.last_known_status == TransactionStatus.PENDING)
+            ):
+                transaction.last_known_status = Transaction.from_db_model(
+                    transaction
+                ).data.check_status()
+                if transaction.last_known_status != TransactionStatus.FAILED:
+                    raise TransactionInProgressError()
 
             data = payment_option.provider.create(payment)
 
@@ -83,6 +99,7 @@ class PaymentsModule:
         """
         :raises TransactionNotFoundError:
         :raises TransactionNotSuccessful:
+        :raises PaymentAlreadyComplete:
         """
         product: ProductTypes | None = None
         with database.get_session() as session:
@@ -99,10 +116,10 @@ class PaymentsModule:
             if payment_record.status != PaymentStatus.PENDING:
                 raise PaymentAlreadyComplete()
 
-            if (
-                Transaction.from_db_model(transaction_record).data.check_status()
-                == TransactionStatus.SUCCEEDED
-            ):
+            transaction_record.last_known_status = Transaction.from_db_model(
+                transaction_record
+            ).data.check_status()
+            if transaction_record.last_known_status == TransactionStatus.SUCCEEDED:
                 payment_record.status = PaymentStatus.SUCCEEDED
                 product = Payment.from_db_model(payment_record).product
             else:

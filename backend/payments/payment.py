@@ -1,12 +1,12 @@
 from pydantic import TypeAdapter
 
-from utils import BaseModel
-from enum import Enum
 from uuid import UUID
 from datetime import datetime
 
 from .products import ProductTypes
 import database.model as dbmodel
+from database.types import PaymentStatus
+from utils import BaseModel
 
 
 class Payment(BaseModel):
@@ -53,9 +53,3 @@ class ReadPayment(BaseModel):
             status=payment.status,
             product=payment.product,
         )
-
-
-class PaymentStatus(str, Enum):
-    PENDING = "pending"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"

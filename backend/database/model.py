@@ -1,3 +1,4 @@
+from datetime import datetime
 import uuid
 
 from sqlalchemy import (
@@ -12,7 +13,12 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, Relationship, mapped_column, relationship
 from sqlalchemy.sql import func
 
-from .types import MemberStatus
+from .types import (
+    AuditPermissionCategory,
+    MemberStatus,
+    PaymentStatus,
+    TransactionStatus,
+)
 
 from .base import Base
 
@@ -23,7 +29,7 @@ class Member(Base):
     auth_user_id = mapped_column(
         Integer, ForeignKey("auth_users.user_id"), primary_key=True
     )
-    membership_expires = mapped_column(DateTime, nullable=False)
+    membership_expires: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     member_type_id = mapped_column(UUID, ForeignKey("member_types.id"), nullable=True)
     status: Mapped[MemberStatus] = mapped_column(String, nullable=False)
     cancelled = mapped_column(Boolean, nullable=False)
@@ -82,7 +88,7 @@ class Payment(Base):
     time = mapped_column(DateTime, nullable=False, server_default=func.now())
     amount = mapped_column(Integer, nullable=False)
     currency = mapped_column(String, nullable=False)
-    status = mapped_column(String, nullable=False)
+    status: Mapped[PaymentStatus] = mapped_column(String, nullable=False)
     product = mapped_column(JSON, nullable=False)
 
     transactions = relationship("Transaction", back_populates="payment")
@@ -94,6 +100,9 @@ class Transaction(Base):
     id = mapped_column(UUID, primary_key=True, index=True, default=uuid.uuid4)
     payment_id = mapped_column(UUID, ForeignKey(Payment.id), nullable=False)
     data = mapped_column(JSON, nullable=False)
+    last_known_status: Mapped[TransactionStatus] = mapped_column(
+        String, nullable=False, default=TransactionStatus.PENDING
+    )
 
     payment = relationship("Payment", back_populates="transactions")
 
@@ -144,7 +153,9 @@ class AuditLog(Base):
     __tablename__ = "auth_logs"
 
     auth_log_id = mapped_column(Integer, primary_key=True, index=True)
-    permission_category = mapped_column(String, nullable=False)
+    permission_category: Mapped[AuditPermissionCategory] = mapped_column(
+        String, nullable=False
+    )
     log = mapped_column(String, nullable=False)
     time = mapped_column(DateTime, server_default=func.now())
 
@@ -211,7 +222,9 @@ class MembershipApplication(Base):
     submitted_at = mapped_column(DateTime, server_default=func.now(), nullable=False)
     content = mapped_column(String, nullable=False)  # the application form's fields
 
-    member_type: Relationship[MemberType | None] = relationship("MemberType")
+    member_type: Relationship[MemberType | None] = relationship(
+        "MemberType", foreign_keys=[member_type_id]
+    )
 
 
 class Notification(Base):
@@ -234,4 +247,3 @@ class MemberType(Base):
     id = mapped_column(UUID, primary_key=True, index=True, default=uuid.uuid4)
     name = mapped_column(String, nullable=False)
     price = mapped_column(Integer, nullable=False)
-    allow_renewals = mapped_column(Boolean, nullable=False, default=True)

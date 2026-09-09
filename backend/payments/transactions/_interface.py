@@ -1,12 +1,6 @@
 from abc import abstractmethod
-from enum import Enum
+from database.types import TransactionStatus
 from utils import BaseModel
-
-
-class TransactionStatus(str, Enum):
-    PENDING = "pending"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"
 
 
 class TransactionInterface(BaseModel):

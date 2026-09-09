@@ -1,7 +1,8 @@
 from typing import Literal
 from pydantic import Field
 
-from payments.transactions import TransactionInterface, TransactionStatus
+from database.types import TransactionStatus
+from ._interface import TransactionInterface
 
 
 class MockTransaction(TransactionInterface):

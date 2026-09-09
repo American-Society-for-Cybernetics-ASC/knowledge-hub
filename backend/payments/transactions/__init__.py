@@ -4,10 +4,6 @@ from uuid import UUID
 from pydantic import Field, TypeAdapter
 
 from utils import BaseModel
-from ._interface import (
-    TransactionInterface as TransactionInterface,
-    TransactionStatus as TransactionStatus,
-)
 from .mock_transaction import MockTransaction
 from .stripe_transaction import StripeTransaction
 from database import model as dbmodel

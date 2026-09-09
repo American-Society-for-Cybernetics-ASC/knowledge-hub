@@ -12,9 +12,11 @@ from .products import DonationProduct
 from .transactions import Transaction, TransactionTypes
 from .module import PaymentsModule
 from .exceptions import (
+    PaymentAlreadyComplete,
     PaymentNotYoursError,
     PaymentProviderError,
     PaymentNotFoundError,
+    TransactionInProgressError,
     TransactionNotFoundError,
     TransactionNotSuccessful,
 )
@@ -138,6 +140,10 @@ def create_transaction(
         raise HTTPException(404, "No such payment")
     except PaymentNotYoursError:
         raise HTTPException(400, "Not your payment")
+    except PaymentAlreadyComplete:
+        raise HTTPException(400, "Payment already complete")
+    except TransactionInProgressError:
+        raise HTTPException(400, "Transaction in progress already")
 
 
 @payments_router.post("/transactions/{transaction_id}/confirm")

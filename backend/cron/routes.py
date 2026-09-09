@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -25,7 +25,7 @@ def run_cron_jobs(
     module: Annotated[CronModule, Depends(CronModule)],
     _: Annotated[None, Depends(cron_guard)],
 ):
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     for queued_job in module.get_queued_cron_jobs():
         queued_job.job.execute()
         queued_job.last_executed = now

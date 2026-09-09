@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from auth_module import user_id
 from .exceptions import (
     AlreadyAMemberError,
-    MembershipTypeNotFoundError,
     MembershipTypeOutOfDateError,
     NotAMemberError,
 )
@@ -28,16 +27,15 @@ def purchase_membership(
     user_id: Annotated[int | None, Depends(user_id)],
     module: MembershipModule = Depends(MembershipModule),
 ) -> ReadPayment:
-    if not user_id:
+    if user_id is None:
         raise HTTPException(401, "Unauthorized")
+
     try:
         return ReadPayment.from_payment(
             module.purchase_create_membership(body.application_id, user_id)
         )
     except AlreadyAMemberError:
         raise HTTPException(400, "Already a member")
-    except MembershipTypeNotFoundError:
-        raise HTTPException(404, "")
 
 
 @membership_router.post("/renew")
@@ -45,7 +43,7 @@ def renew_membership(
     user_id: Annotated[int | None, Depends(user_id)],
     module: MembershipModule = Depends(MembershipModule),
 ) -> ReadPayment:
-    if not user_id:
+    if user_id is None:
         raise HTTPException(401, "Unauthorized")
 
     try:
@@ -69,9 +67,9 @@ def update_membership(
     user_id: Annotated[int | None, Depends(user_id)],
     module: MembershipModule = Depends(MembershipModule),
 ):
-    """Start a membership for an approved member"""
+    """Change your membership type"""
 
-    if not user_id:
+    if user_id is None:
         raise HTTPException(401, "Unauthorized")
 
     try:
@@ -87,7 +85,7 @@ def get_membership(
 ) -> ReadMember:
     """View single membership's status, tier and payment info"""
 
-    if not user_id:
+    if user_id is None:
         raise HTTPException(401, "Unauthorized")
 
     member = module.get_member(user_id)

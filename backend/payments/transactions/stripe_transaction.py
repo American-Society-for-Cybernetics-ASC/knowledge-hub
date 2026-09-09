@@ -2,8 +2,8 @@ from typing import Literal
 from pydantic import Field
 
 from stripe import PaymentIntent
-
-from payments.transactions import TransactionInterface, TransactionStatus
+from database.types import TransactionStatus
+from ._interface import TransactionInterface
 from payments.payment import Payment
 
 STATUS_MAP = {

@@ -127,12 +127,12 @@ class MembershipModule:
 
             # Can be None if someone signs up with a Membership Type at the same time it gets deleted
             # In this case, we still allow their membership because they've already paid
-            membership_type = session.get(dbmodel.MemberType, membership_type_id)
+            member_type = session.get(dbmodel.MemberType, membership_type_id)
 
             member = dbmodel.Member(
                 auth_user_id=user_id,
                 membership_expires=datetime.now(timezone.utc) + duration,
-                membership_type=membership_type,
+                member_type=member_type,
                 status=MemberStatus.CURRENT,
                 cancelled=False,
             )
@@ -150,7 +150,7 @@ class MembershipModule:
 
             now = datetime.now(timezone.utc)
             new_expiry = max(
-                member.membership_expires + duration,
+                member.membership_expires.astimezone(timezone.utc) + duration,
                 now + duration,
             )
             member.membership_expires = new_expiry
