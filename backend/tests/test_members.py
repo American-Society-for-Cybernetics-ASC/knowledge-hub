@@ -17,7 +17,7 @@ def create_member(get_session: Callable[[], Session]) -> int:
         session.commit()
         session.refresh(member)
 
-        return member.member_id
+        return member.auth_user_id
 
 
 def test_get_profile_creates_empty_profile(mock_get_session):

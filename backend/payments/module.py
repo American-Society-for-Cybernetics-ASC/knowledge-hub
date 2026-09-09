@@ -4,6 +4,7 @@ from sqlalchemy.exc import NoResultFound
 
 import stripe
 
+from .products.handle_product import handle_successful_payment
 import database
 from database import model
 from utils.module_config import get_module_config
@@ -110,7 +111,7 @@ class PaymentsModule:
             session.commit()
 
         if product:
-            product.handle_successful_payment()
+            handle_successful_payment(product)
 
     def get_payment(self, payment_id: UUID) -> Payment:
         """:raises PaymentNotFoundError:"""

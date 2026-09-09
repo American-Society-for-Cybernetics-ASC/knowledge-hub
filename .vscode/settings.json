@@ -1,3 +1,4 @@
 {
-    "mypy-type-checker.cwd": "${workspaceFolder}/backend"
+    "mypy-type-checker.cwd": "${workspaceFolder}/backend",
+    "mypy-type-checker.importStrategy": "fromEnvironment",
 }

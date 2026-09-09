@@ -28,7 +28,7 @@ class MembersModule:
         tags = ProfileUpdate.model_validate({"tags": profile.tags or []}).tags or []
 
         return MemberProfile(
-            member_id=member.member_id,
+            member_id=member.auth_user_id,
             status=member.status,
             content=content,
             tags=tags,
@@ -50,7 +50,7 @@ class MembersModule:
             return member.profile
 
         profile = database_model.Profile(
-            member_id=member.member_id,
+            member_id=member.auth_user_id,
             content=ProfileContent().model_dump(mode="json"),
             tags=[],
         )

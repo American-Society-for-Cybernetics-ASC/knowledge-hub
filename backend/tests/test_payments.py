@@ -5,7 +5,7 @@ import pytest
 
 from payments.providers.stripe_provider import StripePaymentProvider
 from payments.payment import PaymentStatus, Payment
-from payments.products.donation_product import DonationProduct
+from payments.products import DonationProduct
 from payments.module import PaymentsModule
 from payments.config import PaymentModuleConfig, PaymentOption
 from utils.module_config import set_module_config

@@ -33,6 +33,28 @@ class Payment(BaseModel):
         )
 
 
+class ReadPayment(BaseModel):
+    id: UUID
+    user_id: int
+    time: datetime
+    amount: int
+    currency: str
+    status: PaymentStatus
+    product: ProductTypes
+
+    @staticmethod
+    def from_payment(payment: Payment) -> ReadPayment:
+        return ReadPayment(
+            id=payment.id,
+            user_id=payment.user_id,
+            time=payment.time,
+            amount=payment.amount,
+            currency=payment.currency,
+            status=payment.status,
+            product=payment.product,
+        )
+
+
 class PaymentStatus(str, Enum):
     PENDING = "pending"
     SUCCEEDED = "succeeded"

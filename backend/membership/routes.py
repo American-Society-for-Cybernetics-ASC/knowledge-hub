@@ -1,74 +1,128 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends
+from typing import Annotated
 
-from .module import MembershipModule
-from .schema import (
-    MembershipActionResult,
-    MembershipCreate,
-    MembershipListParams,
-    MembershipListResult,
-    MembershipRead,
+from fastapi import APIRouter, Depends, HTTPException
+
+from auth_module import user_id
+from .exceptions import (
+    AlreadyAMemberError,
+    MembershipTypeNotFoundError,
+    MembershipTypeOutOfDateError,
+    NotAMemberError,
 )
+from .model import ReadMember
+from payments.payment import ReadPayment
+from utils import BaseModel
+from .module import MembershipModule
 
 membership_router = APIRouter(prefix="/membership", tags=["membership"])
 
 
-@membership_router.post("", response_model=MembershipRead, status_code=201)
-def start_membership(
-    data: MembershipCreate,
+class StartMembership(BaseModel):
+    application_id: int
+
+
+@membership_router.post("/purchase")
+def purchase_membership(
+    body: StartMembership,
+    user_id: Annotated[int | None, Depends(user_id)],
+    module: MembershipModule = Depends(MembershipModule),
+) -> ReadPayment:
+    if not user_id:
+        raise HTTPException(401, "Unauthorized")
+    try:
+        return ReadPayment.from_payment(
+            module.purchase_create_membership(body.application_id, user_id)
+        )
+    except AlreadyAMemberError:
+        raise HTTPException(400, "Already a member")
+    except MembershipTypeNotFoundError:
+        raise HTTPException(404, "")
+
+
+@membership_router.post("/renew")
+def renew_membership(
+    user_id: Annotated[int | None, Depends(user_id)],
+    module: MembershipModule = Depends(MembershipModule),
+) -> ReadPayment:
+    if not user_id:
+        raise HTTPException(401, "Unauthorized")
+
+    try:
+        return ReadPayment.from_payment(module.purchase_renew_membership(user_id))
+    except NotAMemberError:
+        raise HTTPException(400, "Not a member")
+    except MembershipTypeOutOfDateError:
+        raise HTTPException(
+            400,
+            "Your membership type is no longer supported: please reapply for a new membership type",
+        )
+
+
+class UpdateMembership(BaseModel):
+    application_id: int
+
+
+@membership_router.post("/update")
+def update_membership(
+    body: StartMembership,
+    user_id: Annotated[int | None, Depends(user_id)],
     module: MembershipModule = Depends(MembershipModule),
 ):
     """Start a membership for an approved member"""
-    return module.start_membership(data)
+
+    if not user_id:
+        raise HTTPException(401, "Unauthorized")
+
+    try:
+        module.update_membership_type(body.application_id, user_id)
+    except NotAMemberError:
+        raise HTTPException(400, "Not a member")
 
 
-@membership_router.get("", response_model=MembershipListResult)
-def list_memberships(
-    params: MembershipListParams = Depends(),
-    module: MembershipModule = Depends(MembershipModule),
-):
-    """Lists memberships"""
-    memberships, total = module.list_memberships(params)
-    return MembershipListResult(
-        memberships=[MembershipRead.model_validate_sqlalchemy(m) for m in memberships],
-        total=total,
-    )
-
-
-@membership_router.get("/{membership_id}", response_model=MembershipRead)
+@membership_router.get("")
 def get_membership(
-    membership_id: int,
+    user_id: Annotated[int | None, Depends(user_id)],
     module: MembershipModule = Depends(MembershipModule),
-):
+) -> ReadMember:
     """View single membership's status, tier and payment info"""
-    return module.get_membership(membership_id)
+
+    if not user_id:
+        raise HTTPException(401, "Unauthorized")
+
+    member = module.get_member(user_id)
+
+    if not member:
+        raise HTTPException(400, "Not a member")
+
+    return ReadMember.from_member(member)
 
 
-@membership_router.post(
-    "/{membership_id}/cancel", response_model=MembershipActionResult
-)
+@membership_router.post("/cancel")
 def cancel_membership(
-    membership_id: int,
+    user_id: Annotated[int | None, Depends(user_id)],
     module: MembershipModule = Depends(MembershipModule),
 ):
-    """Cancels a memberhsip"""
-    membership = module.cancel_membership(membership_id)
-    return MembershipActionResult(
-        membership=MembershipRead.model_validate_sqlalchemy(membership),
-        message="Membership cancelled.",
-    )
+    """Cancels a membership"""
+    if user_id is None:
+        raise HTTPException(401, "Unauthorized")
+
+    try:
+        module.cancel_membership(user_id)
+    except NotAMemberError:
+        raise HTTPException(400, "Not a member")
 
 
-@membership_router.post(
-    "/{membership_id}/uncancel", response_model=MembershipActionResult
-)
+@membership_router.post("/uncancel")
 def uncancel_membership(
-    membership_id: int,
+    user_id: Annotated[int | None, Depends(user_id)],
     module: MembershipModule = Depends(MembershipModule),
 ):
     """Reinstates a previously cancelled membership (REQ-1.5)."""
-    membership = module.uncancel_membership(membership_id)
-    return MembershipActionResult(
-        membership=MembershipRead.model_validate_sqlalchemy(membership),
-        message="Membership reinstated.",
-    )
+    if user_id is None:
+        raise HTTPException(401, "Unauthorized")
+
+    try:
+        module.uncancel_membership(user_id)
+    except NotAMemberError:
+        raise HTTPException(400, "Not a member")

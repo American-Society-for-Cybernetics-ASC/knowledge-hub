@@ -48,7 +48,7 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
 
         session.add(
             dbmodel.Profile(
-                member_id=member.member_id,
+                member_id=member.auth_user_id,
                 content=ProfileContent(
                     identity=ProfileIdentity(display_name="Test User"),
                 ).model_dump(mode="json"),

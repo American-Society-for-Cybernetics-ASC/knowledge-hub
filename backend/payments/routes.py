@@ -1,6 +1,5 @@
 from typing import Annotated
 from uuid import UUID
-from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -8,9 +7,8 @@ from auth_module import user_id
 from utils.module_config import BaseModel, get_module_config, set_module_config
 from .config import PaymentOption, PaymentModuleConfig
 from .providers import ServiceName
-from .payment import Payment, PaymentStatus
-from .products.donation_product import DonationProduct
-from .products import ProductTypes
+from .payment import ReadPayment
+from .products import DonationProduct
 from .transactions import Transaction, TransactionTypes
 from .module import PaymentsModule
 from .exceptions import (
@@ -62,28 +60,6 @@ def get_config() -> ReadPaymentModuleConfig:
 
 class CreateDonation(BaseModel):
     amount: int
-
-
-class ReadPayment(BaseModel):
-    id: UUID
-    user_id: int
-    time: datetime
-    amount: int
-    currency: str
-    status: PaymentStatus
-    product: ProductTypes
-
-    @staticmethod
-    def from_payment(payment: Payment) -> ReadPayment:
-        return ReadPayment(
-            id=payment.id,
-            user_id=payment.user_id,
-            time=payment.time,
-            amount=payment.amount,
-            currency=payment.currency,
-            status=payment.status,
-            product=payment.product,
-        )
 
 
 @payments_router.get("/payments", response_model=list[ReadPayment])

@@ -48,7 +48,7 @@ def test_start_membership_succeeds_for_approved_member(approved_member):
     module = MembershipModule()
     data = MembershipCreate(member_id=approved_member, tier="Standard")
 
-    membership = module.start_membership(data)
+    membership = module.purchase_create_membership(data)
 
     assert membership.member_id == approved_member
     assert membership.tier == "Standard"
@@ -67,7 +67,7 @@ def test_start_membership_rejects_unapproved_member():
     data = MembershipCreate(member_id=member_id, tier="Standard")
 
     with pytest.raises(Exception) as exc_info:
-        module.start_membership(data)
+        module.purchase_create_membership(data)
 
     assert getattr(exc_info.value, "status_code", None) == 403
 
@@ -77,10 +77,10 @@ def test_start_membership_rejects_duplicate_active_membership(approved_member):
     module = MembershipModule()
     data = MembershipCreate(member_id=approved_member, tier="Standard")
 
-    module.start_membership(data)
+    module.purchase_create_membership(data)
 
     with pytest.raises(Exception) as exc_info:
-        module.start_membership(data)
+        module.purchase_create_membership(data)
 
     assert getattr(exc_info.value, "status_code", None) == 409
 
@@ -88,11 +88,11 @@ def test_start_membership_rejects_duplicate_active_membership(approved_member):
 def test_get_membership_returns_correct_record(approved_member):
     """Fetching a membership by ID should return the exact record created"""
     module = MembershipModule()
-    created = module.start_membership(
+    created = module.purchase_create_membership(
         MembershipCreate(member_id=approved_member, tier="Standard")
     )
 
-    fetched = module.get_membership(created.membership_id)
+    fetched = module.get_member(created.membership_id)
 
     assert fetched.membership_id == created.membership_id
     assert fetched.tier == "Standard"
@@ -103,7 +103,7 @@ def test_get_membership_missing_raises_404():
     module = MembershipModule()
 
     with pytest.raises(Exception) as exc_info:
-        module.get_membership(9999)
+        module.get_member(9999)
 
     assert getattr(exc_info.value, "status_code", None) == 404
 
@@ -111,7 +111,7 @@ def test_get_membership_missing_raises_404():
 def test_cancel_then_uncancel_membership(approved_member):
     """A membership can be cancelled and then reinstated via uncancel"""
     module = MembershipModule()
-    membership = module.start_membership(
+    membership = module.purchase_create_membership(
         MembershipCreate(member_id=approved_member, tier="Standard")
     )
 
@@ -125,7 +125,7 @@ def test_cancel_then_uncancel_membership(approved_member):
 def test_cancel_already_cancelled_membership_raises_409(approved_member):
     """Cancelling an already-cancelled membership should raise 409"""
     module = MembershipModule()
-    membership = module.start_membership(
+    membership = module.purchase_create_membership(
         MembershipCreate(member_id=approved_member, tier="Standard")
     )
     module.cancel_membership(membership.membership_id)
@@ -139,7 +139,7 @@ def test_cancel_already_cancelled_membership_raises_409(approved_member):
 def test_list_memberships_filters_by_status(approved_member):
     """Listing memberships with a status filter should only return matches"""
     module = MembershipModule()
-    membership = module.start_membership(
+    membership = module.purchase_create_membership(
         MembershipCreate(member_id=approved_member, tier="Standard")
     )
 
