@@ -52,6 +52,7 @@ class CurrentUserResponse(BaseModel):
     user_id: int
     email: str
     name: str | None
+    totp_enabled: bool
 
 
 # Endpoints
@@ -203,4 +204,5 @@ def get_current_user(
         user_id=user.user_id,
         email=user.email,
         name=user.name,
+        totp_enabled=user.totp_enabled,
     )
