@@ -1,17 +1,33 @@
-from datetime import datetime
+from datetime import datetime, timezone
+from enum import Enum
 from uuid import UUID
 
 from utils import BaseModel
 from database import model as dbmodel
-from database.types import MemberStatus
+
+
+class MemberStatus(str, Enum):
+    CURRENT = "Current"
+    EXPIRED = "Expired"
+
+    @staticmethod
+    def calc_expiry(expiry_date: datetime) -> MemberStatus:
+        return (
+            MemberStatus.CURRENT
+            if expiry_date > datetime.now(timezone.utc)
+            else MemberStatus.EXPIRED
+        )
 
 
 class Member(BaseModel):
     auth_user_id: int
     membership_expires: datetime
     member_type_id: UUID | None
-    status: MemberStatus
     cancelled: bool
+
+    @property
+    def status(self) -> MemberStatus:
+        return MemberStatus.calc_expiry(self.membership_expires)
 
     @staticmethod
     def from_db_model(model: dbmodel.Member) -> Member:
@@ -19,7 +35,6 @@ class Member(BaseModel):
             auth_user_id=model.auth_user_id,
             membership_expires=model.membership_expires,
             member_type_id=model.member_type_id,
-            status=model.status,
             cancelled=model.cancelled,
         )
 

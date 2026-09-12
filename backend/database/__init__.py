@@ -9,7 +9,8 @@ class LocalDatabaseInterface:
 
     def connect(self):
         self.engine = create_engine(
-            "postgresql+psycopg2://username:password@db:5432/database"
+            "postgresql+psycopg2://username:password@db:5432/database",
+            connect_args={"options": "-c timezone=utc"},
         )
         return self.engine
 
@@ -19,7 +20,9 @@ class SupabaseDatabaseInterface:
         self.engine = None
 
     def connect(self):
-        self.engine = create_engine(SETTINGS.supabase_database_url)
+        self.engine = create_engine(
+            SETTINGS.supabase_database_url, connect_args={"options": "-c timezone=utc"}
+        )
         return self.engine
 
 

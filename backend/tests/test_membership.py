@@ -4,7 +4,6 @@ from uuid import UUID
 from fastapi.testclient import TestClient
 import pytest
 from .conftest import TEST_USER_ID
-from database.types import MemberStatus
 from member_application.model import ApplicationStatus
 from database import model as dbmodel
 
@@ -41,7 +40,6 @@ def mock_member(mock_get_session) -> int:
             auth_user_id=TEST_USER_ID,
             membership_expires=datetime.datetime.now(datetime.timezone.utc)
             + datetime.timedelta(days=10),
-            status=MemberStatus.CURRENT,
             cancelled=False,
             member_type_id=None,
         )

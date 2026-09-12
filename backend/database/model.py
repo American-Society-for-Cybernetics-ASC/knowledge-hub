@@ -7,7 +7,6 @@ from sqlalchemy import (
     Integer,
     String,
     Boolean,
-    DateTime,
     ForeignKey,
 )
 from sqlalchemy.orm import Mapped, Relationship, mapped_column, relationship
@@ -15,9 +14,9 @@ from sqlalchemy.sql import func
 
 from .types import (
     AuditPermissionCategory,
-    MemberStatus,
     PaymentStatus,
     TransactionStatus,
+    TZDateTime,
 )
 
 from .base import Base
@@ -29,10 +28,9 @@ class Member(Base):
     auth_user_id = mapped_column(
         Integer, ForeignKey("auth_users.user_id"), primary_key=True
     )
-    membership_expires: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    membership_expires: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)
     member_type_id = mapped_column(UUID, ForeignKey("member_types.id"), nullable=True)
-    status: Mapped[MemberStatus] = mapped_column(String, nullable=False)
-    cancelled = mapped_column(Boolean, nullable=False)
+    cancelled = mapped_column(Boolean, nullable=False, default=False)
 
     profile = relationship("Profile", back_populates="member", uselist=False)
     member_type: Relationship[MemberType | None] = relationship(
@@ -85,7 +83,7 @@ class Payment(Base):
 
     id = mapped_column(UUID, primary_key=True, index=True, default=uuid.uuid4)
     user_id = mapped_column(Integer, ForeignKey(Member.auth_user_id), nullable=False)
-    time = mapped_column(DateTime, nullable=False, server_default=func.now())
+    time = mapped_column(TZDateTime, nullable=False, server_default=func.now())
     amount = mapped_column(Integer, nullable=False)
     currency = mapped_column(String, nullable=False)
     status: Mapped[PaymentStatus] = mapped_column(String, nullable=False)
@@ -135,17 +133,17 @@ class AuthUser(Base):
     email = mapped_column(String, unique=True, index=True, nullable=False)
     permissions = mapped_column(JSON)
 
-    created_at = mapped_column(DateTime)
-    updated_at = mapped_column(DateTime)
+    created_at = mapped_column(TZDateTime)
+    updated_at = mapped_column(TZDateTime)
 
     totp_secret = mapped_column(String)
     totp_enabled = mapped_column(Boolean, default=False, nullable=False)
 
     failed_attempt = mapped_column(Integer, default=0)
-    locked_until = mapped_column(DateTime)
+    locked_until = mapped_column(TZDateTime)
     admin_locked = mapped_column(Boolean, default=False)
 
-    last_login = mapped_column(DateTime)
+    last_login = mapped_column(TZDateTime)
     hash_password = mapped_column(String)
 
 
@@ -157,7 +155,7 @@ class AuditLog(Base):
         String, nullable=False
     )
     log = mapped_column(String, nullable=False)
-    time = mapped_column(DateTime, server_default=func.now())
+    time = mapped_column(TZDateTime, server_default=func.now())
 
 
 class Module(Base):
@@ -191,17 +189,17 @@ class CronJobTable(Base):
     __tablename__ = "cron_jobs"
 
     id = mapped_column(Integer, primary_key=True, index=True)
-    enabled = mapped_column(Boolean)
-    last_executed = mapped_column(DateTime)
-    period = mapped_column(Integer)
-    job = mapped_column(JSON)
+    enabled = mapped_column(Boolean, nullable=False)
+    last_executed = mapped_column(TZDateTime, nullable=False)
+    period = mapped_column(Integer, nullable=False)
+    job = mapped_column(JSON, nullable=False)
 
 
 class FailedEmailTable(Base):
     __tablename__ = "failed_emails"
 
     id = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
-    last_sent = mapped_column(DateTime, server_default=func.now())
+    last_sent = mapped_column(TZDateTime, server_default=func.now())
     retries = mapped_column(Integer, default=0)
     email = mapped_column(JSON)
     error = mapped_column(String, nullable=True)
@@ -219,7 +217,7 @@ class MembershipApplication(Base):
     status = mapped_column(
         String, nullable=False
     )  # pending, approved, denied, revision_requested
-    submitted_at = mapped_column(DateTime, server_default=func.now(), nullable=False)
+    submitted_at = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
     content = mapped_column(String, nullable=False)  # the application form's fields
 
     member_type: Relationship[MemberType | None] = relationship(
@@ -235,7 +233,7 @@ class Notification(Base):
     subject = mapped_column(String, nullable=False)
     message = mapped_column(String, nullable=False)
     read = mapped_column(Boolean, default="False")
-    created_at = mapped_column(DateTime, server_default=func.now())
+    created_at = mapped_column(TZDateTime, server_default=func.now())
 
     # Relationship
     user = relationship("AuthUser")

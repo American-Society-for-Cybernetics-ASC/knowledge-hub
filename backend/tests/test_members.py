@@ -4,7 +4,7 @@ from typing import Callable
 import pytest
 from sqlalchemy.orm import Session
 
-from database.types import MemberStatus
+from membership.model import MemberStatus
 from database import model
 from members.model import ProfileUpdate
 from members.module import MemberNotFoundError, MembersModule
@@ -23,7 +23,6 @@ def create_member(get_session: Callable[[], Session]) -> int:
             auth_user=auth_user,
             membership_expires=datetime.datetime.now(datetime.timezone.utc)
             + datetime.timedelta(days=100),
-            status=MemberStatus.CURRENT,
             cancelled=False,
         )
         session.add(member)

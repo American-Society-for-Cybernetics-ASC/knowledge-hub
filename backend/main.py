@@ -1,5 +1,8 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from auth_module import PermissionTier, Permissions, AuthModule
 from settings import SETTINGS
 import database
@@ -40,8 +43,8 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         ).model_dump_json()
 
         member = dbmodel.Member(
-            status="active",
             auth_user_id=user.user_id,
+            membership_expires=datetime.now(timezone.utc) + timedelta(365),
         )
         session.add(member)
         session.flush()

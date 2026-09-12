@@ -4,7 +4,6 @@ from typing import Callable
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from database.types import MemberStatus
 from database import model
 from mailing_list.module import MailingListModule
 
@@ -39,7 +38,6 @@ def create_member(get_session: Callable[[], Session]) -> int:
             auth_user=auth_user,
             membership_expires=datetime.datetime.now(datetime.timezone.utc)
             + datetime.timedelta(days=100),
-            status=MemberStatus.CURRENT,
             cancelled=False,
         )
         session.add(member)
