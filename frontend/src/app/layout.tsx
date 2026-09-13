@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
-import PublicEnvProvider from "./public-env-provider";
 import { ThemeProvider, CssBaseline, Box} from "@mui/material";
 import { theme } from "./theme";
 import SidePanel from "./sidepanel";
@@ -33,8 +32,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <PublicEnvProvider publicEnv={{backendUrl: process.env.BACKEND_URL || ""}}>
-          <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+        <AppRouterCacheProvider options={{ enableCssLayer: true }}>
             <ThemeProvider theme={theme}>
               <CssBaseline />
               <SidePanel />
@@ -42,8 +40,7 @@ export default function RootLayout({
                 {children}
               </Box>
             </ThemeProvider>
-          </AppRouterCacheProvider>
-        </PublicEnvProvider>
+        </AppRouterCacheProvider>
       </body>
     </html>
   );

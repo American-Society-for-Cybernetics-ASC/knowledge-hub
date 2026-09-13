@@ -1,59 +1,27 @@
 "use client";
 
-import { PublicEnv } from "@/app/public-env-provider";
 import { useContext, useState } from "react";
 import { Box, Button, TextField, Typography } from "@mui/material"
-import useSWR from "swr";
+import { mutate } from "swr";
 import PaymentLog from "@/components/features/billing/PaymentLog";
-
-interface TransactionData {
-    payment_id: string;
-    kind: string;
-    transaction_type: string;
-    amount_value: number;
-    currency: string;
-}
-
-interface PaymentRecord {
-    payment_id: number;
-    date: string;
-    status: string;
-    kind: string;
-    transaction: TransactionData;
-}
-
-const fetcher = (url: string) => fetch(url, { credentials: "include" }).then((r) => r.json());
+import { backendFetch } from "@/lib/api/client";
 
 export default function MembershipPage() {
-    const publicEnv = useContext(PublicEnv);
     const [amount, setAmount] = useState("");
     const [memberId, setMemberId] = useState("00000000-0000-4000-8000-000000000000");
     const [status, setStatus] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const { data: payments, error: paymentsError, isLoading: paymentsLoading, mutate: fetchPayments } = useSWR<PaymentRecord[]>(`${publicEnv?.backendUrl}/payments`, fetcher);
-
     const handleCreatePaymentIntent = async () => {
-        console.log("publicEnv:", publicEnv)
         setLoading(true);
         setStatus("Creating payment intent...");
         try {
-            const res = await fetch(`${publicEnv?.backendUrl}/payments`, {
+            const data = await backendFetch("/payments", {
                 method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    member_id: memberId,
-                    amount: Number(amount)
-                })
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                setStatus(`Error (${res.status}): ${JSON.stringify(data)}`)
-            } else {
-                setStatus(JSON.stringify(data, null, 2));
-                fetchPayments();
-            }
+                body: JSON.stringify({ member_id: memberId, amount: Number(amount) })
+            })
+            setStatus(JSON.stringify(data, null, 2));
+            mutate("/payments");
         } catch (err) {
             setStatus(`Request failed: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
