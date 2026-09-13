@@ -1,7 +1,6 @@
 from abc import abstractmethod
+from pydantic import BaseModel
 from payments.transactions import TransactionInterface
-from utils import BaseModel
-
 
 class PaymentProviderInterface(BaseModel):
     @abstractmethod

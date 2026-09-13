@@ -113,7 +113,7 @@ class Payment(Base):
     date = mapped_column(DateTime, nullable=False)
     status = mapped_column(String, nullable=False)
     kind = mapped_column(String, nullable=False)
-    provider = mapped_column(String, nullable=False)
+    transaction = mapped_column(JSON, nullable=False)
 
 
 class MemberMatching(Base):
