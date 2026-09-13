@@ -1,6 +1,5 @@
 "use client";
 
-import { PublicEnv } from "@/app/public-env-provider";
 import { useContext, useState } from "react";
 import { Box, Button, TextField, Typography } from "@mui/material"
 import { mutate } from "swr";
@@ -8,14 +7,12 @@ import PaymentLog from "@/components/features/billing/PaymentLog";
 import { backendFetch } from "@/lib/api/client";
 
 export default function MembershipPage() {
-    const publicEnv = useContext(PublicEnv);
     const [amount, setAmount] = useState("");
     const [memberId, setMemberId] = useState("00000000-0000-4000-8000-000000000000");
     const [status, setStatus] = useState("");
     const [loading, setLoading] = useState(false);
 
     const handleCreatePaymentIntent = async () => {
-        console.log("publicEnv:", publicEnv)
         setLoading(true);
         setStatus("Creating payment intent...");
         try {
