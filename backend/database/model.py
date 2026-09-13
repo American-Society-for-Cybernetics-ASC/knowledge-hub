@@ -8,6 +8,8 @@ from sqlalchemy import (
     String,
     Boolean,
     ForeignKey,
+    CheckConstraint,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, Relationship, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -75,6 +77,9 @@ class Profile(Base):
     tags = mapped_column(JSON)
     content = mapped_column(JSON)
 
+    # Members can opt out of matching
+    matching_opt_out = mapped_column(Boolean, nullable=False, default=False)
+
     member = relationship("Member", back_populates="profile")
 
 
@@ -107,20 +112,45 @@ class Transaction(Base):
 
 class MemberMatching(Base):
     __tablename__ = "member_matching"
+    __table_args__ = (
+        UniqueConstraint(
+            "active_member_id",
+            "suggested_member_id",
+            name="uq_member_matching_directed_pair",
+        ),
+        CheckConstraint(
+            "active_member_id != suggested_member_id",
+            name="ck_member_matching_no_self_match",
+        ),
+    )
 
     memMatching_id = mapped_column(Integer, primary_key=True, index=True)
 
     # Two foreign keys to Member
-    active_member_id = mapped_column(Integer, ForeignKey("members.auth_user_id"))
-    suggested_member_id = mapped_column(Integer, ForeignKey("members.auth_user_id"))
-
-    # Two relationship  with Member table
-    active_member = relationship(
-        "Member", foreign_keys=[active_member_id], back_populates="outgoing_matches"
+    active_member_id = mapped_column(
+        Integer,
+        ForeignKey("members.member_id"),
+        nullable=False,
+    )
+    suggested_member_id = mapped_column(
+        Integer,
+        ForeignKey("members.member_id"),
+        nullable=False,
     )
 
+    # Used later to calc the dismissal period
+    dismissed_at = mapped_column(TZDateTime, nullable=False)
+
+    # Two relationships with Member table
+    active_member = relationship(
+        "Member",
+        foreign_keys=[active_member_id],
+        back_populates="outgoing_matches",
+    )
     suggested_member = relationship(
-        "Member", foreign_keys=[suggested_member_id], back_populates="incoming_matches"
+        "Member",
+        foreign_keys=[suggested_member_id],
+        back_populates="incoming_matches",
     )
 
 

@@ -24,6 +24,7 @@ export interface LoginResponse {
 export interface VerifyOTPRequest {
   email: string;
   code: string;
+  challenge_token: string;
 }
 
 export async function register(

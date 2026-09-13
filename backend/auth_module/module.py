@@ -222,7 +222,7 @@ class AuthModule:
             # Return challenge token
             return {"challenge_token": f"challenge:{user.user_id}", "token": None}
 
-    def verify_otp(self, email: str, code: str) -> str:
+    def verify_otp(self, email: str, code: str, challenge_token: str) -> str:
         """
         Second step of login - verifies TOTP code and issues JWT.
 
@@ -243,6 +243,11 @@ class AuthModule:
 
             if not user:
                 raise ValueError("User not found")
+
+            # Validate the challenge token
+            expected_token = f"challenge:{user.user_id}"
+            if challenge_token != expected_token:
+                raise ValueError("Invalid challenge token")
 
             # Decrypt TOTP secret
             f = self._get_fernet()

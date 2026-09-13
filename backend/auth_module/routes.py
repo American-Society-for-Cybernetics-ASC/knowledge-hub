@@ -27,6 +27,7 @@ class LoginRequest(BaseModel):
 class VerifyOTPRequest(BaseModel):
     email: str
     code: str
+    challenge_token: str
 
 
 class ConfirmTOTPRequest(BaseModel):
@@ -157,6 +158,7 @@ def verify_otp(
         token = module.verify_otp(
             email=req.email,
             code=req.code,
+            challenge_token=req.challenge_token,
         )
         response.set_cookie(
             key="access_token",
