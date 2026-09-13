@@ -155,7 +155,7 @@ class AuditLog(Base):
         String, nullable=False
     )
     log = mapped_column(String, nullable=False)
-    time = mapped_column(TZDateTime, server_default=func.now())
+    time = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
 
 
 class Module(Base):
