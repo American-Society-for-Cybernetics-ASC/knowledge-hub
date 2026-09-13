@@ -7,6 +7,7 @@ from utils import BaseModel
 from .mock_transaction import MockTransaction
 from .stripe_transaction import StripeTransaction
 from database import model as dbmodel
+from database.types import TransactionStatus
 
 type TransactionTypes = Annotated[
     Union[StripeTransaction, MockTransaction], Field(discriminator="transaction_type")
@@ -23,6 +24,7 @@ class Transaction(BaseModel):
     id: UUID
     payment_id: UUID
     data: TransactionTypes
+    last_known_status: TransactionStatus
 
     @staticmethod
     def from_db_model(model: dbmodel.Transaction) -> Transaction:
@@ -32,4 +34,5 @@ class Transaction(BaseModel):
             data=TypeAdapter[TransactionTypes](TransactionTypes).validate_json(
                 model.data
             ),
+            last_known_status=model.last_known_status,
         )
