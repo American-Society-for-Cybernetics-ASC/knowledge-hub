@@ -2,7 +2,6 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 from sqlalchemy import select
 
-from membership.model import MemberStatus
 import database
 from database import model
 
