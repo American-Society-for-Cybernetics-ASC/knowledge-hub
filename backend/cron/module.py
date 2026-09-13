@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Annotated, Literal, Union
 from pydantic import Field, field_serializer, field_validator
 from sqlalchemy import select, update
@@ -22,7 +22,7 @@ class CronModule:
 
     def get_queued_cron_jobs(self) -> list[CronJob]:
         """Returns the cron jobs currently queued for the next execution cycle"""
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         return list(
             filter(
                 lambda job: job.enabled and (job.last_executed + job.period < now),

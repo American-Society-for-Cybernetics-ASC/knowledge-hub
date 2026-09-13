@@ -33,7 +33,7 @@ def get_current_member_id(
                 detail="Member account not found",
             )
 
-        return member.member_id
+        return member.auth_user_id
 
 
 # GET /members/me

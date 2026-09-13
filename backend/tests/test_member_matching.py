@@ -14,6 +14,7 @@ from members.routes import get_current_member_id
 
 def create_member(
     get_session: Callable[[], Session],
+    email: str,
     *,
     tags: list[str] | None = None,
     display_name: str | None = None,
@@ -22,13 +23,22 @@ def create_member(
 ) -> int:
     """Create a member with a profile and current membership."""
     with get_session() as session:
-        member = model.Member(status="active")
+        auth_user = model.AuthUser(email=email)
+        session.add(auth_user)
+        session.flush()
+
+        member = model.Member(
+            auth_user_id=auth_user.user_id,
+            membership_expires=datetime.now(timezone.utc)
+            + (timedelta(10) if has_current_membership else timedelta(-10)),
+            member_type_id=None,
+        )
         session.add(member)
         session.flush()
 
         session.add(
             model.Profile(
-                member_id=member.member_id,
+                member_id=member.auth_user_id,
                 tags=tags or [],
                 content={
                     "identity": {
@@ -39,21 +49,9 @@ def create_member(
             )
         )
 
-        if has_current_membership:
-            now = datetime.now(timezone.utc)
-            
-            session.add(
-                model.Membership(
-                    member_id=member.member_id,
-                    tier="Standard",
-                    status="Current",
-                    start_date=now,
-                    membership_expires=now + timedelta(days=365),
-                )
-            )
-
         session.commit()
-        return member.member_id
+        return member.auth_user_id
+
 
 @pytest.fixture
 def authenticate_member():
@@ -77,21 +75,25 @@ def test_suggestions_rank_members_by_tags(mock_get_session):
     """Suggestions use shared tags, exclude self."""
     active_member_id = create_member(
         mock_get_session,
+        email="a",
         tags=[" AI ", "Python", "ai"],
         display_name="Active Member",
-    )  
+    )
     one_shared_tag_member_id = create_member(
         mock_get_session,
+        email="b",
         tags=["python"],
         display_name="One Shared Tag",
     )
     two_shared_tags_member_id = create_member(
         mock_get_session,
+        email="c",
         tags=["AI", "PYTHON"],
         display_name="Two Shared Tags",
     )
     create_member(
         mock_get_session,
+        email="d",
         tags=["AI"],
         display_name="No Current Membership",
         has_current_membership=False,
@@ -110,25 +112,29 @@ def test_suggestions_rank_members_by_tags(mock_get_session):
         suggestion.member_id for suggestion in result.suggestions
     ]
 
+
 def test_opted_out_members_receive_no_suggestions(mock_get_session):
     """Opted-out members receive no suggestions."""
     active_member_id = create_member(
         mock_get_session,
+        email="a",
         tags=["cybernetics"],
         matching_opt_out=True,
     )
-    create_member(mock_get_session, tags=["cybernetics"])
+    create_member(mock_get_session, email="b", tags=["cybernetics"])
 
     result = MemberMatchingModule().get_suggestions(active_member_id)
 
     assert result.opted_out is True
     assert result.suggestions == []
 
+
 def test_opted_out_candidates_are_not_suggested(mock_get_session):
     """Opted-out members are not suggested."""
-    active_member_id = create_member(mock_get_session, tags=["cybernetics"])
+    active_member_id = create_member(mock_get_session, email="a", tags=["cybernetics"])
     opted_out_member_id = create_member(
         mock_get_session,
+        email="b",
         tags=["cybernetics"],
         matching_opt_out=True,
     )
@@ -139,13 +145,16 @@ def test_opted_out_candidates_are_not_suggested(mock_get_session):
         suggestion.member_id for suggestion in result.suggestions
     ]
 
+
 def test_dismissal_hides_suggestion_until_cooldown_expires(
     mock_get_session,
     monkeypatch,
 ):
     """Dismissed suggestions are hidden until cooldown expires."""
-    active_member_id = create_member(mock_get_session, tags=["cybernetics"])
-    suggested_member_id = create_member(mock_get_session, tags=["cybernetics"])
+    active_member_id = create_member(mock_get_session, email="a", tags=["cybernetics"])
+    suggested_member_id = create_member(
+        mock_get_session, email="b", tags=["cybernetics"]
+    )
 
     now = datetime(2026, 8, 16, 12, 0, tzinfo=timezone.utc)
     # Replace _now() with the test time
@@ -188,19 +197,21 @@ def test_dismissal_hides_suggestion_until_cooldown_expires(
         suggested_member_id,
     ]
 
+
 def test_empty_tags_return_no_suggestions(mock_get_session):
     """A member needs profile tags before the system can suggest matches."""
-    active_member_id = create_member(mock_get_session, tags=[])
-    create_member(mock_get_session, tags=["cybernetics"])
+    active_member_id = create_member(mock_get_session, email="a", tags=[])
+    create_member(mock_get_session, email="b", tags=["cybernetics"])
 
     result = MemberMatchingModule().get_suggestions(active_member_id)
 
     assert result.opted_out is False
     assert result.suggestions == []
 
+
 def test_dismissing_unknown_member_returns_not_found(mock_get_session):
     """Dismissal rejects a member that does not exist."""
-    active_member_id = create_member(mock_get_session, tags=["cybernetics"])
+    active_member_id = create_member(mock_get_session, email="a", tags=["cybernetics"])
 
     # Dismissing an unknown member should raise a 404
     with pytest.raises(HTTPException) as error:
@@ -211,14 +222,17 @@ def test_dismissing_unknown_member_returns_not_found(mock_get_session):
 
     assert error.value.status_code == 404
 
+
 def test_member_matching_routes(
     test_server: TestClient,
     mock_get_session,
     authenticate_member,
 ):
     """Routes use authenticated identity."""
-    active_member_id = create_member(mock_get_session, tags=["cybernetics"])
-    suggested_member_id = create_member(mock_get_session, tags=["cybernetics"])
+    active_member_id = create_member(mock_get_session, email="a", tags=["cybernetics"])
+    suggested_member_id = create_member(
+        mock_get_session, email="b", tags=["cybernetics"]
+    )
 
     authenticate_member(active_member_id)
 
@@ -241,6 +255,3 @@ def test_member_matching_routes(
     opt_in_response = test_server.post("/member-matching/opt-in")
     assert opt_in_response.status_code == 200
     assert opt_in_response.json() == {"matching_opt_out": False}
-    
-
-

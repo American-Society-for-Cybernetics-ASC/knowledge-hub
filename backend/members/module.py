@@ -1,5 +1,6 @@
 from typing import Any
 
+from membership.model import MemberStatus
 import database
 from database import model as database_model
 from members.model import MemberProfile, ProfileContent, ProfileUpdate
@@ -28,8 +29,8 @@ class MembersModule:
         tags = ProfileUpdate.model_validate({"tags": profile.tags or []}).tags or []
 
         return MemberProfile(
-            member_id=member.member_id,
-            status=member.status,
+            member_id=member.auth_user_id,
+            status=MemberStatus.calc_expiry(member.membership_expires),
             content=content,
             tags=tags,
         )
@@ -50,7 +51,7 @@ class MembersModule:
             return member.profile
 
         profile = database_model.Profile(
-            member_id=member.member_id,
+            member_id=member.auth_user_id,
             content=ProfileContent().model_dump(mode="json"),
             tags=[],
         )
