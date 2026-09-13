@@ -129,12 +129,12 @@ class MemberMatching(Base):
     # Two foreign keys to Member
     active_member_id = mapped_column(
         Integer,
-        ForeignKey("members.member_id"),
+        ForeignKey(Member.auth_user_id),
         nullable=False,
     )
     suggested_member_id = mapped_column(
         Integer,
-        ForeignKey("members.member_id"),
+        ForeignKey(Member.auth_user_id),
         nullable=False,
     )
 

@@ -2,9 +2,9 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 from sqlalchemy import select
 
+from membership.model import MemberStatus
 import database
 from database import model
-from membership.schema import MembershipStatus
 
 from .config import MemberMatchingConfig
 from .schema import (
@@ -157,11 +157,10 @@ class MemberMatchingModule:
             candidates = session.scalars(
                 select(model.Member)
                 .join(model.Profile)
-                .join(model.Membership)
                 .where(
-                    model.Member.member_id != member_id,
+                    model.Member.auth_user_id != member_id,
                     model.Profile.matching_opt_out.is_(False),
-                    model.Membership.status == MembershipStatus.CURRENT.value,
+                    model.Member.membership_expires > datetime.now(timezone.utc),
                 )
             ).all()
 
@@ -171,12 +170,12 @@ class MemberMatchingModule:
 
             for candidate in candidates:
                 # Prevent duplicate candidates
-                if candidate.member_id in processed_member_ids:
+                if candidate.auth_user_id in processed_member_ids:
                     continue
-                processed_member_ids.add(candidate.member_id)
+                processed_member_ids.add(candidate.auth_user_id)
 
                 # Prevent dismissed candidates
-                if candidate.member_id in suppressed_member_ids:
+                if candidate.auth_user_id in suppressed_member_ids:
                     continue
 
                 if candidate.profile is None:
@@ -200,7 +199,7 @@ class MemberMatchingModule:
                 # Create the suggestion
                 suggestions.append(
                     MemberMatchingSuggestion(
-                        member_id=candidate.member_id,
+                        member_id=candidate.auth_user_id,
                         display_name=self._display_name(candidate.profile),
                         shared_tags=shared_tags,
                         score=len(shared_tags),
