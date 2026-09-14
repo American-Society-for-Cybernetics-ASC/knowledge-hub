@@ -1,6 +1,6 @@
 "use client";
 
-import { Link, Tab, Tabs, Typography } from "@mui/material";
+import { Link, Tab, Tabs} from "@mui/material";
 import { usePathname } from "next/navigation";
 import { JSX } from "react";
 
@@ -25,7 +25,7 @@ export default function SettingsNav({ children }: { children: React.ReactNode })
 
   return (
     <>
-      <Typography variant="h4">Settings</Typography>
+      <h1 className="text-2xl font-bold mb-2 p-4">Settings</h1>
       <Tabs value={usePathname()} role="navigation">
         {tabs}
       </Tabs>

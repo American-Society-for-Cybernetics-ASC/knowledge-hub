@@ -352,6 +352,7 @@ export default function AuthSettingsPage() {
         <p className="text-sm text-gray-600 mb-4">
           This action is permanent and cannot be undone.
         </p>
+        {/* TODO: Implement delete account once relationships between AuthUser, Member, Membership and Notification tables are establshid */}
         <button
           type="button"
           className="bg-red-600 text-white px-4 py-2 rounded font-medium hover:bg-red-700 text-sm"

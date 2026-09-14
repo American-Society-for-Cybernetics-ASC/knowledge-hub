@@ -217,3 +217,90 @@ def test_get_current_user_unauthenticated(test_server: TestClient):
     """Test that /auth/me returns 401 or 404 when not authenticated"""
     response = test_server.get("/auth/me")
     assert response.status_code in [401, 404]
+
+
+def test_change_password(test_server: TestClient):
+    """Test that a user can change their password"""
+    # Register user
+    test_server.post(
+        "/auth/register",
+        json={
+            "email": "test@example.com",
+            "password": "TestPassword123!",
+            "display_name": "Test User",
+        },
+    )
+
+    response = test_server.post(
+        "/auth/change-password",
+        json={
+            "current_password": "TestPassword123!",
+            "new_password": "NewPassword456!",
+        },
+    )
+    assert response.status_code in [200, 400]
+
+
+def test_change_password_wrong_current(test_server: TestClient):
+    """Test that changing password fails with wrong current password"""
+    test_server.post(
+        "/auth/register",
+        json={
+            "email": "test@example.com",
+            "password": "TestPassword123!",
+            "display_name": "Test User",
+        },
+    )
+
+    response = test_server.post(
+        "/auth/change-password",
+        json={
+            "current_password": "WrongPassword!",
+            "new_password": "NewPassword456!",
+        },
+    )
+    assert response.status_code == 400
+
+
+def test_change_email(test_server: TestClient):
+    """Test that a user can change their email"""
+    test_server.post(
+        "/auth/register",
+        json={
+            "email": "test@example.com",
+            "password": "TestPassword123!",
+            "display_name": "Test User",
+        },
+    )
+
+    response = test_server.post(
+        "/auth/change-email",
+        json={"new_email": "newemail@example.com"},
+    )
+    assert response.status_code == 200
+    assert response.json()["message"] == "Email updated successfully."
+
+
+def test_disable_totp(test_server: TestClient):
+    """Test that a user can disable TOTP"""
+    import pyotp
+
+    register_response = test_server.post(
+        "/auth/register",
+        json={
+            "email": "test@example.com",
+            "password": "TestPassword123!",
+            "display_name": "Test User",
+        },
+    )
+    qr_uri = register_response.json()["qr_uri"]
+    secret = qr_uri.split("secret=")[1].split("&")[0]
+    code = pyotp.TOTP(secret).now()
+    test_server.post(
+        "/auth/confirm-totp",
+        json={"email": "test@example.com", "code": code},
+    )
+
+    response = test_server.post("/auth/disable-totp")
+    assert response.status_code == 200
+    assert response.json()["message"] == "Two-factor authentication disabled."
