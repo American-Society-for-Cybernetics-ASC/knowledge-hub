@@ -65,3 +65,20 @@ def update_my_profile(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Member not found",
         ) from None
+
+
+# GET /members/{member_id}
+@members_router.get("/{member_id}", response_model=MemberProfile)
+def get_member_profile(
+    member_id: int,
+    _: Annotated[int, Depends(get_current_member_id)],
+    module: Annotated[MembersModule, Depends(MembersModule)],
+) -> MemberProfile:
+    try:
+        return module.get_profile(member_id)
+    except MemberNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Member not found",
+        ) from None
+
