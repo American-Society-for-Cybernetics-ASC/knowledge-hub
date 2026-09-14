@@ -8,13 +8,19 @@ from membership.model import MemberStatus
 from database import model
 from members.model import ProfileUpdate
 from members.module import MemberNotFoundError, MembersModule
+from fastapi.testclient import TestClient
+from main import app
+from members.routes import get_current_member_id
 
 
-def create_member(get_session: Callable[[], Session]) -> int:
+def create_member(
+    get_session: Callable[[], Session],
+    email: str = "example@example.com",
+) -> int:
     """Create a basic member and return its database ID."""
 
     with get_session() as session:
-        auth_user = model.AuthUser(email="Example")
+        auth_user = model.AuthUser(email=email)
         session.add(auth_user)
         session.commit()
         session.refresh(auth_user)
@@ -153,3 +159,123 @@ def test_invalid_affiliation_years():
                 }
             }
         )
+
+
+@pytest.fixture
+def authenticate_member():
+    """Override member authentication for testing."""
+
+    def authenticate(member_id: int) -> None:
+        app.dependency_overrides[get_current_member_id] = lambda: member_id
+
+    yield authenticate
+    
+    app.dependency_overrides.pop(get_current_member_id, None)
+
+
+def test_get_member_profile_by_id(mock_get_session, authenticate_member):
+    """An authenticated member can view another member's profile."""
+    requesting_member_id = create_member(mock_get_session, "requesting@example.com")
+    target_member_id = create_member(mock_get_session, "target@example.com")
+
+    MembersModule().update_profile(
+        target_member_id,
+        ProfileUpdate(
+            identity={"display_name": "Sonion Ring"},
+            personal_statement="Interested in cybernetics.",
+            tags=["cybernetics"],
+        ),
+    )
+
+    authenticate_member(requesting_member_id)
+    response = TestClient(app).get(f"/members/{target_member_id}")
+
+    assert response.status_code == 200
+    assert response.json()["member_id"] == target_member_id
+    assert response.json()["content"]["identity"]["display_name"] == "Sonion Ring"
+    assert response.json()["tags"] == ["cybernetics"]
+
+
+def test_get_member_profile_returns_expired_status(
+    mock_get_session, 
+    authenticate_member,
+):
+    """A profile's status is calculated from membership expiration."""
+    requesting_member_id = create_member(mock_get_session, "requesting@example.com")
+    expired_member_id = create_member(mock_get_session, "expired@example.com")
+
+    with mock_get_session() as session:
+        expired_member = session.get(model.Member, expired_member_id)
+        expired_member.membership_expires = (
+            datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)
+        )
+        session.commit()
+    
+    authenticate_member(requesting_member_id)
+    response = TestClient(app).get(f"/members/{expired_member_id}")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == MemberStatus.EXPIRED
+
+
+def test_get_member_profile_returns_metadata(
+    mock_get_session,
+    authenticate_member,
+):
+    """Profile metadata is returned."""
+    requesting_member_id = create_member(mock_get_session, "requesting@example.com")
+    target_member_id = create_member(mock_get_session, "target@example.com")
+    MembersModule().update_profile(
+        target_member_id,
+        ProfileUpdate(
+            metadata={
+                "affiliations": {
+                    "type": "affiliations",
+                    "value": [
+                        {
+                            "organisation": "Example University",
+                            "role": "Researcher",
+                            "start_year": 2024,
+                        }
+                    ],
+                },
+                "publications": {
+                    "type": "publications",
+                    "value": [
+                        {
+                            "title": "Cybernetics Today",
+                            "year": 2025,
+                            "doi": "10.1234/example",
+                        }
+                    ],
+                },
+            }
+        ),
+    )
+    authenticate_member(requesting_member_id)
+    response = TestClient(app).get(f"/members/{target_member_id}")
+    assert response.status_code == 200
+    metadata = response.json()["content"]["metadata"]
+    assert metadata["affiliations"]["value"][0]["organisation"] == "Example University"
+    assert metadata["publications"]["value"][0]["title"] == "Cybernetics Today"
+
+
+def test_get_missing_member_profile_returns_404(
+    mock_get_session,
+    authenticate_member,
+):
+    """Requesting an unknown profile returns a clear not-found response."""
+    requesting_member_id = create_member(mock_get_session)
+    authenticate_member(requesting_member_id)
+    response = TestClient(app).get("/members/99999")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Member not found"
+
+
+@pytest.mark.logged_out
+def test_get_member_profile_requires_authentication(mock_get_session):
+    """Unauthenticated requests cannot view member profiles."""
+    member_id = create_member(mock_get_session)
+    response = TestClient(app).get(f"/members/{member_id}")
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Authentication required"
