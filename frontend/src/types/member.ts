@@ -45,7 +45,7 @@ export interface ProfileContent {
 
 export interface MemberProfile {
   member_id: number;
-  status: string;
+  status: MemberStatus;
   content: ProfileContent;
   tags: string[];
 }
