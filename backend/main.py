@@ -20,6 +20,8 @@ from member_application.routes import member_application_router
 from payments.routes import payments_router
 from audit_log.routes import audit_router
 from members.model import ProfileContent, ProfileIdentity
+from email_templates.routes import email_templates_router
+from email_templates.module import EmailTemplatesModule
 
 if SETTINGS.local_deployment and not SETTINGS.testing:
     with database.get_session() as session:
@@ -28,6 +30,9 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         database.base.Base.metadata.create_all(conn)
         conn.commit()
         session.close()
+
+    # Seed deafult email templates
+    EmailTemplatesModule().seed_defaults()
 
     AuthModule().register("test@test.com", "test", "Test User")
 
@@ -83,3 +88,4 @@ app.include_router(member_matching_router)
 app.include_router(member_application_router)
 app.include_router(payments_router)
 app.include_router(audit_router)
+app.include_router(email_templates_router)

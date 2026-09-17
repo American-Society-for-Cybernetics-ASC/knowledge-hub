@@ -30,3 +30,85 @@ DEFAULT_TEMPLATES: list[EmailTemplateData] = [
         variables=["{{name}}", "{{amount}}", "{{date}}"],
     ),
 ]
+
+
+class EmailTemplatesModule:
+    def seed_defaults(self):
+        """Seed the default templates if the do not exist."""
+        with database.get_session() as session:
+            for template in DEFAULT_TEMPLATES:
+                existing = session.get(model.EmailTemplate, template.name)
+                if not existing:
+                    session.add(
+                        model.EmailTemplate(
+                            name=template.name,
+                            subject=template.subject,
+                            body=template.body,
+                            variables=template.variables,
+                        )
+                    )
+            session.commit()
+
+    def get_templates(self) -> list[EmailTemplateData]:
+        """Get all email templates."""
+        with database.get_session() as session:
+            templates = session.query(model.EmailTemplate).all()
+            return [
+                EmailTemplateData(
+                    name=t.name,
+                    subject=t.subject,
+                    body=t.body,
+                    variables=t.variables,
+                )
+                for t in templates
+            ]
+
+    def get_template(self, name: str) -> EmailTemplateData | None:
+        """Get a specific email template by name."""
+        with database.get_session() as session:
+            template = session.get(model.EmailTemplate, name)
+            if not template:
+                return None
+            return EmailTemplateData(
+                name=template.name,
+                subject=template.subject,
+                body=template.body,
+                variables=template.variables,
+            )
+
+    def update_template(
+            self, name: str, update: EmailTemplateUpdate
+    ) -> EmailTemplateData | None:
+        """Update an email template."""
+        with database.get_session() as session:
+            template = session.get(model.EmailTemplate, name)
+            if not template:
+                return None
+            if update.subject is not None:
+                template.subject = update.subject
+            if update.body is not None:
+                template.body = update.body
+            session.commit()
+            return EmailTemplateData(
+                name=template.name,
+                subject=template.subject,
+                body=template.body,
+                variables=template.variables,
+            )
+
+    def render_template(self, name: str, variables: dict[str, str]) -> tuple[str, str] | None:
+        """
+        Render a template by replacing variables with actual values. Returns tuple or None if template not found.
+        """
+        template = self.get_template(name)
+        if not template:
+            return None
+
+        subject = template.subject
+        body = template.body
+
+        for key, value in variables.items():
+            subject = subject.replace(f"{{{{{key}}}}}", value)
+            body = body.replace(f"{{{{{key}}}}}", value)
+
+        return subject, body
