@@ -1,11 +1,15 @@
 export type StripePaymentProvider = {
-  provider_type: "stripe";
+  service_name: "stripe";
   api_key: string;
   publishable_key: string;
   webhook_secret: string;
 };
 
-export type PaymentProvider = StripePaymentProvider;
+export type MockPaymentProvider = {
+  service_name: "mock";
+};
+
+export type PaymentProvider = StripePaymentProvider | MockPaymentProvider;
 
 export type PaymentOption = {
   name: string;
@@ -14,5 +18,7 @@ export type PaymentOption = {
 };
 
 export type PaymentsConfig = {
-  payment_options: PaymentOption[];
+  payment_options: {
+    [uuid: string]: PaymentOption;
+  };
 };

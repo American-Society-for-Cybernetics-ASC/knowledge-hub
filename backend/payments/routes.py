@@ -1,5 +1,7 @@
-from typing import Annotated
+from typing import Annotated, Literal
+import typing
 from uuid import UUID
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -28,7 +30,7 @@ payments_router = APIRouter(prefix="/payments", tags=["payments", "admin"])
 
 
 class PatchPaymentModuleConfig(BaseModel):
-    payment_options: dict[UUID, PaymentOption] | None = None
+    payment_options: dict[UUID | Literal["new"], PaymentOption] | None = None
 
 
 class ReadPaymentModuleConfig(BaseModel):
@@ -45,7 +47,12 @@ def update_config(
 ) -> ReadPaymentModuleConfig:
     config = get_module_config(PaymentModuleConfig)
     if patch.payment_options is not None:
-        config.payment_options = patch.payment_options
+        # Process "new" payment provider
+        if "new" in patch.payment_options:
+            patch.payment_options[uuid.uuid4()] = patch.payment_options.pop("new")
+        payment_options = typing.cast(dict[UUID, PaymentOption], patch.payment_options)
+
+        config.payment_options = payment_options
     set_module_config(config)
     return ReadPaymentModuleConfig.from_model(config)
 
