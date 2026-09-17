@@ -33,6 +33,10 @@ export default function AdminNav({ children }: { children: React.ReactNode }) {
       label: "Payments",
       href: "/admin/payments",
     }),
+    LinkTab({
+      label: "Email Templates",
+      href: "/admin/email-templates",
+    }),
   ];
   return (
     <>

@@ -17,7 +17,7 @@ def get_templates(
     _=Depends(authorized(["email_templates"], PermissionTier.manager)),
 ) -> list[EmailTemplateData]:
     """Get all email templates."""
-    return module.get_template()
+    return module.get_templates()
 
 
 @email_templates_router.get("/{name}")

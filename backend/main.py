@@ -31,9 +31,6 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         conn.commit()
         session.close()
 
-    # Seed deafult email templates
-    EmailTemplatesModule().seed_defaults()
-
     AuthModule().register("test@test.com", "test", "Test User")
 
     with database.get_session() as session:
@@ -65,6 +62,9 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         )
 
         session.commit()
+
+# Seed deafult email templates
+EmailTemplatesModule().seed_defaults()
 
 app = FastAPI()
 
