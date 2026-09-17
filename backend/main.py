@@ -43,8 +43,13 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
             tier=PermissionTier.adminstrator
         ).model_dump_json()
 
+        member_type = dbmodel.MemberType(name="Test Member Type", price=10_00)
+
+        session.flush()
+
         member = dbmodel.Member(
             auth_user_id=user.user_id,
+            member_type=member_type,
             membership_expires=datetime.now(timezone.utc) + timedelta(365),
         )
         session.add(member)

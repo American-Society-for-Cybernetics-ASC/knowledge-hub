@@ -36,7 +36,7 @@ class Member(Base):
 
     profile = relationship("Profile", back_populates="member", uselist=False)
     member_type: Relationship[MemberType | None] = relationship(
-        "MemberType", uselist=False
+        "MemberType", uselist=False, lazy="joined"
     )
     mailing_list_memberships = relationship(
         "MailingListMember", back_populates="member"
