@@ -102,7 +102,7 @@ class MailingListModule:
                 .where(model.AuthUser.email == email)
             ).scalar_one_or_none()
 
-            member_id = member.member_id if member is not None else None
+            member_id = member.auth_user_id if member is not None else None
 
             membership = model.MailingListMember(
                 mailing_list_id=mailing_list_id,

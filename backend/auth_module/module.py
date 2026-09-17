@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives import serialization
 import pyotp
 
 from audit_log.module import AuditLogModule
-from audit_log.enums import AuditPermissionCategory
+from database.types import AuditPermissionCategory
 import database
 from database import model
 from settings import SETTINGS
@@ -179,7 +179,7 @@ class AuthModule:
                 raise ValueError("Account locked. Please contact an administrator.")
 
             # Check temporary lockout
-            if user.locked_until and user.locked_until > datetime.now():
+            if user.locked_until and user.locked_until > datetime.now(timezone.utc):
                 raise ValueError("Account temporarily locked. Please try again later.")
 
             # Verify password
@@ -191,7 +191,9 @@ class AuthModule:
 
                 # After 3 failures - temporary lockout
                 if user.failed_attempt >= 3:
-                    user.locked_until = datetime.now() + timedelta(minutes=10)
+                    user.locked_until = datetime.now(timezone.utc) + timedelta(
+                        minutes=10
+                    )
 
                 # After 6 total failures - permanent lock
                 if user.failed_attempt >= 6:

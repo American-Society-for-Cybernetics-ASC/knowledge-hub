@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from .enums import AuditPermissionCategory
+from database.types import AuditPermissionCategory
 from utils import BaseModel
 
 

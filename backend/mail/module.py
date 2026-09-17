@@ -1,6 +1,6 @@
 from sqlalchemy import select
 
-from utils import ModuleConfig, get_module_config
+from utils.module_config import ModuleConfig, get_module_config
 from mail.model import Email, FailedEmail
 import database
 from database import model

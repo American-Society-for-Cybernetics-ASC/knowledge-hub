@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -49,33 +49,52 @@ def test_time_queries(test_server: TestClient, mock_get_session: Callable[[], Se
             model.AuditLog(
                 permission_category=AuditPermissionCategory.payments,
                 log="1",
-                time=datetime(2020, 1, 1),
+                time=datetime(2020, 1, 1, tzinfo=timezone.utc),
             )
         )
         session.add(
             model.AuditLog(
                 permission_category=AuditPermissionCategory.mail,
                 log="2",
-                time=datetime(2021, 1, 1),
+                time=datetime(2021, 1, 1, tzinfo=timezone.utc),
             )
         )
         session.commit()
+
+    # --- Reject timezoneless data ---
+    response = test_server.get("/audit_log?before=2020-06-01T00:00:00")
+    assert response.status_code == 400
+
+    response = test_server.get("/audit_log?after=2020-06-01T00:00:00")
+    assert response.status_code == 400
+
+    # --- Accept valid requests, and respond correctly ---
     response = test_server.get("/audit_log")
+    assert response.status_code == 200
     assert len(response.json()) == 2
 
-    response = test_server.get("/audit_log?before=2020-06-01")
+    response = test_server.get("/audit_log?before=2020-06-01T00:00:00Z")
+    assert response.status_code == 200
     assert len(response.json()) == 1
 
-    response = test_server.get("/audit_log?after=2020-06-01")
+    response = test_server.get("/audit_log?after=2020-06-01T00:00:00Z")
+    assert response.status_code == 200
     assert len(response.json()) == 1
 
-    response = test_server.get("/audit_log?before=2020-06-01")
+    response = test_server.get("/audit_log?before=2020-06-01T00:00:00Z")
+    assert response.status_code == 200
     assert len(response.json()) == 1
 
-    response = test_server.get("/audit_log?after=2020-06-01&before=2020-06-02")
+    response = test_server.get(
+        "/audit_log?after=2020-06-01T00:00:00Z&before=2020-06-02T00:00:00Z"
+    )
+    assert response.status_code == 200
     assert len(response.json()) == 0
 
-    response = test_server.get("/audit_log?after=2019-12-31&before=2020-01-02")
+    response = test_server.get(
+        "/audit_log?after=2019-12-31T00:00:00Z&before=2020-01-02T00:00:00Z"
+    )
+    assert response.status_code == 200
     assert len(response.json()) == 1
 
 
@@ -87,14 +106,14 @@ def test_category_queries(
             model.AuditLog(
                 permission_category=AuditPermissionCategory.payments,
                 log="1",
-                time=datetime(2020, 1, 1),
+                time=datetime(2020, 1, 1, tzinfo=timezone.utc),
             )
         )
         session.add(
             model.AuditLog(
                 permission_category=AuditPermissionCategory.mail,
                 log="2",
-                time=datetime(2021, 1, 1),
+                time=datetime(2021, 1, 1, tzinfo=timezone.utc),
             )
         )
         session.commit()

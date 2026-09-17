@@ -178,7 +178,11 @@ def test_verify_otp_returns_cookie(test_server: TestClient):
     code = pyotp.TOTP(secret).now()
     response = test_server.post(
         "/auth/verify-otp",
-        json={"email": "test@example.com", "code": code, "challenge_token": challenge_token},
+        json={
+            "email": "test@example.com",
+            "code": code,
+            "challenge_token": challenge_token,
+        },
     )
     assert response.status_code == 200
     assert response.json()["message"] == "Login successful."

@@ -2,16 +2,18 @@
 
 
 from typing import Callable
+import uuid
 
 from fastapi import Request
 
+from payments.config import PaymentModuleConfig, PaymentOption
+from payments.providers.mock_provider import MockPaymentProvider
+from utils.module_config import set_module_config
 from mail.module import MailModuleConfig
 from mail.provider.mock_provider import MockMailProvider
-
 import database
 from database import model
 from database.base import Base
-
 import auth_module
 
 from settings import SETTINGS
@@ -100,6 +102,9 @@ def mock_get_session(monkeypatch):
         yield get_session
 
 
+TEST_USER_ID = 0
+
+
 # Keep the scope in sync with mock_get_session
 @pytest.fixture(autouse=True, scope="function")
 def default_database(mock_get_session: Callable[[], Session]):
@@ -112,7 +117,7 @@ def default_database(mock_get_session: Callable[[], Session]):
         )
         session.add(
             model.AuthUser(
-                user_id=0,
+                user_id=TEST_USER_ID,
                 email="test@email.com",
                 totp_enabled=False,
                 permissions=auth_module.Permissions(
@@ -129,9 +134,26 @@ def override_permissions(request: pytest.FixtureRequest, monkeypatch):
         if "logged_out" not in request.keywords:
 
             def mock_user_id(request: Request) -> int | None:
-                return 0
+                return TEST_USER_ID
 
             monkeypatch.setitem(
                 app.dependency_overrides, auth_module.user_id, mock_user_id
             )
         yield m
+
+
+@pytest.fixture()
+def mock_provider(mock_get_session) -> uuid.UUID:
+    id = uuid.uuid4()
+    set_module_config(
+        PaymentModuleConfig(
+            payment_options={
+                id: PaymentOption(
+                    name="Example",
+                    description="Example Provider",
+                    provider=MockPaymentProvider(),
+                )
+            }
+        )
+    )
+    return id

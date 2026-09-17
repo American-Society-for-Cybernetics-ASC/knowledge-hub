@@ -30,4 +30,10 @@ def get_logs(
     else:
         categories = module.all_permitted_audit_categories(permissions)
 
+    if after is not None and after.tzinfo is None:
+        raise HTTPException(400, "Expected time zone for 'after'")
+
+    if before is not None and before.tzinfo is None:
+        raise HTTPException(400, "Expected time zone for 'before'")
+
     return module.get_audit_logs(categories=categories, before=before, after=after)
