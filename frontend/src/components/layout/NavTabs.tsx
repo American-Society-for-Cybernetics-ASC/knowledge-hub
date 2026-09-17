@@ -4,7 +4,7 @@ import { Link, Tab, Tabs } from "@mui/material";
 import { usePathname } from "next/navigation";
 import { JSX } from "react";
 
-interface NavTabsProps {
+export interface NavTabsProps {
     links: {
         label: string;
         href: string;
