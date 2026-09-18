@@ -92,7 +92,9 @@ function EditMemberTypeDialog({
     name: dirty.name || base.name,
   };
 
+  const isDirty = Object.values(dirty).some((p) => p !== undefined);
   const readyToSubmit =
+    isDirty &&
     current.name &&
     current.price !== undefined &&
     (memberType === "new" || current.id);
