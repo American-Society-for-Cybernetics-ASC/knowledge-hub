@@ -7,8 +7,14 @@ export const SIDEPANEL_WIDTH = 240
 
 const links = [
     { label: "Home", href: "/"},
-    { label: "Membership", href: "/billing/membership"},
+    { label: "Knowledge Hub", href: "/knowledge-hub" },
+    { label: "Events", href: "/events" },
+    { label: "Groups", href: "/groups" },
+    { label: "Knowledge Graph", href: "/knowledge-graph" },
+    { label: "Membership", href: "/billing/membership" },
+    { label: "Notifications", href: "/notifications" },
     { label: "Admin", href: "/admin"}
+    
 ]
 
 export default function SidePanel() {
