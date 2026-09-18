@@ -156,12 +156,32 @@ function MetadataValue({ metadata }: { metadata: ProfileMetadata }) {
   }
 }
 
+// Checks if a metadata value is present and should be displayed.
+function hasMetadataValue(metadata: ProfileMetadata): boolean {
+  switch (metadata.type) {
+    case "str":
+      return metadata.value.trim().length > 0;
+
+    case "int":
+    case "affiliation":
+    case "publication":
+      return true;
+
+    case "tag_list":
+    case "affiliations":
+    case "publications":
+      return metadata.value.length > 0;
+  }
+}
+
 function MetadataSection({
   metadata,
 }: {
   metadata: Record<string, ProfileMetadata>;
 }) {
-  const entries = Object.entries(metadata);
+  const entries = Object.entries(metadata).filter(([, value]) =>
+    hasMetadataValue(value),
+  );
 
   if (entries.length === 0) {
     return null;

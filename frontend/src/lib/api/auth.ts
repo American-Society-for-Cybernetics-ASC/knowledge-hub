@@ -53,7 +53,7 @@ export async function verifyOTP(
 }
 
 export async function confirmTOTP(
-  data: VerifyOTPRequest,
+  data: ConfirmTOTPRequest,
 ): Promise<{ message: string }> {
   return backendFetch<{ message: string }>("/auth/confirm-totp", {
     method: "POST",
@@ -65,4 +65,9 @@ export async function logout(): Promise<void> {
   return backendFetch<void>("/auth/logout", {
     method: "POST",
   });
+}
+
+export interface ConfirmTOTPRequest {
+  email: string;
+  code: string;
 }
