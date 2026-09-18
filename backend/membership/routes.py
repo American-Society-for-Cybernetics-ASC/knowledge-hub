@@ -82,7 +82,7 @@ def update_membership(
 def get_membership(
     user_id: Annotated[int | None, Depends(user_id)],
     module: MembershipModule = Depends(MembershipModule),
-) -> ReadMember:
+) -> ReadMember | None:
     """View single membership's status, tier and payment info"""
 
     if user_id is None:
@@ -91,7 +91,7 @@ def get_membership(
     member = module.get_member(user_id)
 
     if not member:
-        raise HTTPException(400, "Not a member")
+        return None
 
     return ReadMember.from_member(member)
 
