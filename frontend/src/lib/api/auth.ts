@@ -27,6 +27,11 @@ export interface VerifyOTPRequest {
   challenge_token: string;
 }
 
+export interface ConfirmTOTPRequest {
+  email: string;
+  code: string;
+}
+
 export async function register(
   data: RegisterRequest,
 ): Promise<RegisterResponse> {
