@@ -15,6 +15,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import MemberTypes from "./MembershipTypeConfig";
 import Errors from "@/components/layout/Errors";
+import MemberStatusChip from "@/components/features/membership/MemberStatusChip";
 
 export default function Page() {
   return (
@@ -68,7 +69,7 @@ function MembershipTable({ data }: { data: MembershipSummary[] }) {
               <TableCell>{member.email}</TableCell>
               <TableCell>{member.display_name}</TableCell>
               <TableCell>{membership_expires.toLocaleString()}</TableCell>
-              <TableCell>{member.status}</TableCell>
+              <TableCell><MemberStatusChip status={member.status} /></TableCell>
               <TableCell sx={{ textTransform: "capitalize" }}>
                 {member.cancelled.toString()}
               </TableCell>

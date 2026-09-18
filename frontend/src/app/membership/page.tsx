@@ -1,5 +1,6 @@
 "use client";
 
+import MemberStatusChip from "@/components/features/membership/MemberStatusChip";
 import {
   DescriptionList,
   DescriptionListData,
@@ -112,7 +113,7 @@ function MembershipInner({
       <DescriptionList>
         <DescriptionListRow>
           <DescriptionListLabel>Membership Status:</DescriptionListLabel>
-          <DescriptionListData>{memberData.status}</DescriptionListData>
+          <DescriptionListData><MemberStatusChip status={memberData.status}/></DescriptionListData>
         </DescriptionListRow>
         <DescriptionListRow>
           <DescriptionListLabel>Membership Type:</DescriptionListLabel>
