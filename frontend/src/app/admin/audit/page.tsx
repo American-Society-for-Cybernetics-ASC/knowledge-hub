@@ -2,13 +2,11 @@
 
 import { backendFetch } from "@/lib/api/client";
 import {
-  Input,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TableSortLabel,
   TextField,
   Typography,
 } from "@mui/material";
@@ -30,10 +28,12 @@ export default function AdminAuditPage() {
     ([url, before, after]) => {
       const params = new URLSearchParams();
       if (before) {
-        params.append("before", before as string);
+        const beforeDate = new Date(before as string);
+        params.append("before", beforeDate.toISOString());
       }
       if (after) {
-        params.append("after", after as string);
+        const afterDate = new Date(before as string);
+        params.append("after", afterDate.toISOString());
       }
       return backendFetch(`${url}?${params}`);
     },
@@ -74,10 +74,11 @@ function Inner({ data }: { data: AuditLog[] }) {
       </TableHead>
       <TableBody>
         {data.map((log) => {
+          const time = new Date(log.time);
           return (
             <TableRow key={log.time}>
               <TableCell>{log.category}</TableCell>
-              <TableCell>{log.time}</TableCell>
+              <TableCell>{time.toLocaleString()}</TableCell>
               <TableCell>{log.log}</TableCell>
             </TableRow>
           );

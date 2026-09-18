@@ -2,18 +2,18 @@ from typing import Literal
 from pydantic import Field
 
 from stripe import PaymentIntent
-
-from payments.transactions import TransactionInterface
-from payments.enums import PaymentStatus
+from database.types import TransactionStatus
+from ._interface import TransactionInterface
+from payments.payment import Payment
 
 STATUS_MAP = {
-    "requires_payment_method": PaymentStatus.PENDING,
-    "requires_confirmation": PaymentStatus.PENDING,
-    "required_action": PaymentStatus.PENDING,
-    "processing": PaymentStatus.PENDING,
-    "requires_capture": PaymentStatus.PENDING,
-    "succeeded": PaymentStatus.SUCCEEDED,
-    "canceled": PaymentStatus.FAILED,
+    "requires_payment_method": TransactionStatus.PENDING,
+    "requires_confirmation": TransactionStatus.PENDING,
+    "required_action": TransactionStatus.PENDING,
+    "processing": TransactionStatus.PENDING,
+    "requires_capture": TransactionStatus.PENDING,
+    "succeeded": TransactionStatus.SUCCEEDED,
+    "canceled": TransactionStatus.FAILED,
 }
 
 
@@ -23,24 +23,17 @@ class StripeTransaction(TransactionInterface):
     transaction_type: Literal["stripe"] = Field(default="stripe")
 
     payment_id: str
-    amount_value: int
-    currency: str = "usd"
 
     @staticmethod
-    def create_one_off(amount: int, currency: str = "usd") -> StripeTransaction:
+    def create_one_off(payment: Payment) -> StripeTransaction:
         intent: PaymentIntent = PaymentIntent.create(
-            amount=amount,
-            currency=currency,
+            amount=payment.amount,
+            currency=payment.currency,
             automatic_payment_methods={"enabled": True},
         )
 
-        return StripeTransaction(
-            payment_id=intent.id, amount_value=amount, currency=currency
-        )
+        return StripeTransaction(payment_id=intent.id)
 
-    def check(self) -> PaymentStatus:
+    def check_status(self) -> TransactionStatus:
         intent = PaymentIntent.retrieve(self.payment_id)
-        return STATUS_MAP.get(intent.status, PaymentStatus.FAILED)
-
-    def amount(self) -> int:
-        return self.amount_value
+        return STATUS_MAP.get(intent.status, TransactionStatus.FAILED)

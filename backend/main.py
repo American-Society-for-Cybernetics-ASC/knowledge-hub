@@ -1,5 +1,8 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from auth_module import PermissionTier, Permissions, AuthModule
 from settings import SETTINGS
 import database
@@ -9,10 +12,8 @@ from example_module.routes import example_router
 from cron.routes import cron_router
 from auth_module.routes import auth_router
 from mail.routes import mail_router
-from payments.routes import payments_router
 from mailing_list.routes import mailing_list_router
 from members.routes import members_router
-from membership.routes import membership_router
 from notifications.routes import notifications_router
 from member_matching.routes import member_matching_router
 from member_application.routes import member_application_router
@@ -42,15 +43,15 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         ).model_dump_json()
 
         member = dbmodel.Member(
-            status="active",
             auth_user_id=user.user_id,
+            membership_expires=datetime.now(timezone.utc) + timedelta(365),
         )
         session.add(member)
         session.flush()
 
         session.add(
             dbmodel.Profile(
-                member_id=member.member_id,
+                member_id=member.auth_user_id,
                 content=ProfileContent(
                     identity=ProfileIdentity(display_name="Test User"),
                 ).model_dump(mode="json"),
@@ -77,7 +78,6 @@ app.include_router(members_router)
 app.include_router(example_router)
 app.include_router(auth_router)
 app.include_router(mailing_list_router)
-app.include_router(membership_router)
 app.include_router(notifications_router)
 app.include_router(member_matching_router)
 app.include_router(member_application_router)

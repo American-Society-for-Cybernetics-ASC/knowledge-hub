@@ -1,47 +1,11 @@
 from abc import abstractmethod
-from typing import Any, Self
+from typing import Self
 
-import pydantic
 from sqlalchemy.exc import NoResultFound
 
+from . import BaseModel
 from database import model
 import database
-
-
-class BaseModel(pydantic.BaseModel):
-    """
-    Wrapper around pydantic.BaseModel.
-
-    - Adds "model_validate_sqlalchemy", which ensures sqlalchemy mapped types are validated correctly.
-    """
-
-    @classmethod
-    def model_validate_sqlalchemy(
-        cls,
-        obj: Any,
-        *args,
-        strict: bool | None = None,
-        extra: pydantic.config.ExtraValues | None = None,
-        context: Any | None = None,
-        by_alias: bool | None = None,
-        by_name: bool | None = None,
-        **kwargs,
-    ) -> Self:
-        """
-        Calls pydantic's :func:`~pydantic.BaseModel.model_validate`, with the correct parameters,
-        to support validating a mapped sqlalchemy model.
-        """
-        return cls.model_validate(
-            obj,
-            *args,
-            from_attributes=True,
-            strict=strict,
-            extra=extra,
-            context=context,
-            by_alias=by_alias,
-            by_name=by_name,
-            **kwargs,
-        )
 
 
 class ModuleConfig(BaseModel):
@@ -75,6 +39,13 @@ def get_module_config[T: ModuleConfig](cls: type[T]) -> T:
 def set_module_config[T: ModuleConfig](value: T):
     """Fetch the module's config from the database"""
     with database.get_session() as session:
-        current = session.get_one(model.Module, value.module_id())
-        current.config = value.model_dump(mode="json")
+        try:
+            current = session.get_one(model.Module, value.module_id())
+            current.config = value.model_dump(mode="json")
+        except NoResultFound:
+            config_record = model.Module(
+                module_name=value.module_id(),
+                config=value.model_dump(mode="json"),
+            )
+            session.add(config_record)
         session.commit()

@@ -1,9 +1,9 @@
 from typing import Annotated
-from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Response
 import database
 from database import model
 
+from utils import BaseModel
 from . import AuthModule, user_id
 
 
@@ -35,6 +35,15 @@ class ConfirmTOTPRequest(BaseModel):
     code: str
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class ChangeEmailRequest(BaseModel):
+    new_email: str
+
+
 # Response schemas
 
 
@@ -52,6 +61,7 @@ class CurrentUserResponse(BaseModel):
     user_id: int
     email: str
     name: str | None
+    totp_enabled: bool
 
 
 # Endpoints
@@ -203,4 +213,59 @@ def get_current_user(
         user_id=user.user_id,
         email=user.email,
         name=user.name,
+        totp_enabled=user.totp_enabled,
     )
+
+
+@auth_router.post("/change-password")
+def change_password(
+    req: ChangePasswordRequest,
+    current_user_id: Annotated[int | None, Depends(user_id)],
+    module: Annotated[AuthModule, Depends(AuthModule)],
+) -> dict:
+    """Change the authenticated user's password."""
+    if current_user_id is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        module.change_password(
+            user_id=current_user_id,
+            current_password=req.current_password,
+            new_password=req.new_password,
+        )
+        return {"message": "Password updated successfully."}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@auth_router.post("/change-email")
+def change_email(
+    req: ChangeEmailRequest,
+    current_user_id: Annotated[int | None, Depends(user_id)],
+    module: Annotated[AuthModule, Depends(AuthModule)],
+) -> dict:
+    """Change the authenticated user's email address."""
+    if current_user_id is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try: 
+        module.change_email(
+            user_id=current_user_id,
+            new_email=req.new_email,
+        )
+        return {"message": "Email updated successfully."}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@auth_router.post("/disable-totp")
+def disable_totp(
+    current_user_id: Annotated[int | None, Depends(user_id)],
+    module: Annotated[AuthModule, Depends(AuthModule)],
+) -> dict:
+    """Disable two-factor authentication for the authenticated user."""
+    if current_user_id is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        module.disable_totp(user_id=current_user_id)
+        return {"message": "Two-factor authentication disabled."}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

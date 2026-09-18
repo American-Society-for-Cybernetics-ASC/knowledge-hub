@@ -4,7 +4,6 @@ from sqlalchemy import select
 
 import database
 from database import model
-from membership.schema import MembershipStatus
 
 from .config import MemberMatchingConfig
 from .schema import (
@@ -13,6 +12,7 @@ from .schema import (
     MemberMatchSuggestionsResult,
     MatchingPreferenceResult,
 )
+
 
 class MemberMatchingModule:
     """
@@ -33,7 +33,7 @@ class MemberMatchingModule:
         """Convert raw JSON profile tags into unique values."""
 
         if not isinstance(tags, list):
-            return{}
+            return {}
 
         normalized: dict[str, str] = {}
 
@@ -46,27 +46,25 @@ class MemberMatchingModule:
 
             if cleaned_tag and comparison_key not in normalized:
                 normalized[comparison_key] = cleaned_tag
-                
+
         return normalized
 
-    def get_config(self) -> MemberMatchingConfig: 
+    def get_config(self) -> MemberMatchingConfig:
         """Load matching config, creating MVP defaults when absent."""
         with database.get_session() as session:
             config_record = session.scalar(
-                select(model.Module).where(
-                    model.Module.module_name == self.MODULE_NAME
-                )
-            )   
+                select(model.Module).where(model.Module.module_name == self.MODULE_NAME)
+            )
 
             if config_record is None:
                 config = MemberMatchingConfig()
                 config_record = model.Module(
-                    module_name = self.MODULE_NAME,
-                    config = config.model_dump(),
+                    module_name=self.MODULE_NAME,
+                    config=config.model_dump(),
                 )
                 session.add(config_record)
                 session.commit()
-                
+
             return MemberMatchingConfig.model_validate(config_record.config)
 
     @staticmethod
@@ -117,14 +115,14 @@ class MemberMatchingModule:
                 return MemberMatchSuggestionsResult(
                     opted_out=False,
                     suggestions=[],
-                )   
+                )
 
             # If member has disabled matching
             if active_profile.matching_opt_out:
                 return MemberMatchSuggestionsResult(
                     opted_out=True,
                     suggestions=[],
-                )     
+                )
 
             # Get their tags and normalize
             active_tags = self._normalize_tags(active_profile.tags)
@@ -135,9 +133,7 @@ class MemberMatchingModule:
                 )
 
             # Calc the dismissal cooldown
-            cooldown_cutoff = self._now() - timedelta(
-                days=config.dismissal_days
-            )
+            cooldown_cutoff = self._now() - timedelta(days=config.dismissal_days)
 
             # Get all dismissals for the member
             dismissals = session.scalars(
@@ -160,11 +156,10 @@ class MemberMatchingModule:
             candidates = session.scalars(
                 select(model.Member)
                 .join(model.Profile)
-                .join(model.Membership)
                 .where(
-                    model.Member.member_id != member_id,
+                    model.Member.auth_user_id != member_id,
                     model.Profile.matching_opt_out.is_(False),
-                    model.Membership.status == MembershipStatus.CURRENT.value,
+                    model.Member.membership_expires > datetime.now(timezone.utc),
                 )
             ).all()
 
@@ -174,12 +169,12 @@ class MemberMatchingModule:
 
             for candidate in candidates:
                 # Prevent duplicate candidates
-                if candidate.member_id in processed_member_ids:
+                if candidate.auth_user_id in processed_member_ids:
                     continue
-                processed_member_ids.add(candidate.member_id)
+                processed_member_ids.add(candidate.auth_user_id)
 
                 # Prevent dismissed candidates
-                if candidate.member_id in suppressed_member_ids:
+                if candidate.auth_user_id in suppressed_member_ids:
                     continue
 
                 if candidate.profile is None:
@@ -200,10 +195,10 @@ class MemberMatchingModule:
                     key=str.casefold,
                 )
 
-                # Create the suggestion 
+                # Create the suggestion
                 suggestions.append(
                     MemberMatchingSuggestion(
-                        member_id=candidate.member_id,
+                        member_id=candidate.auth_user_id,
                         display_name=self._display_name(candidate.profile),
                         shared_tags=shared_tags,
                         score=len(shared_tags),
@@ -217,8 +212,7 @@ class MemberMatchingModule:
 
             # Return the suggestions, depends on max config
             return MemberMatchSuggestionsResult(
-                opted_out=False,
-                suggestions=suggestions[:config.maximum_suggestions]
+                opted_out=False, suggestions=suggestions[: config.maximum_suggestions]
             )
 
     def set_opt_out(
@@ -260,7 +254,7 @@ class MemberMatchingModule:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot dismiss self",
             )
-            
+
         # Find both members
         with database.get_session() as session:
             active_member = session.get(model.Member, member_id)
