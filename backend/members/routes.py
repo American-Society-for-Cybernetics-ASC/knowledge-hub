@@ -71,6 +71,7 @@ def update_my_profile(
 @members_router.get("/{member_id}", response_model=MemberProfile)
 def get_member_profile(
     member_id: int,
+    # Require the caller to be an authenticated member
     _: Annotated[int, Depends(get_current_member_id)],
     module: Annotated[MembersModule, Depends(MembersModule)],
 ) -> MemberProfile:

@@ -71,8 +71,3 @@ export async function logout(): Promise<void> {
     method: "POST",
   });
 }
-
-export interface ConfirmTOTPRequest {
-  email: string;
-  code: string;
-}
