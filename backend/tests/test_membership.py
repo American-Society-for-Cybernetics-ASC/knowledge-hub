@@ -53,7 +53,8 @@ def test_full_cycle(
     mock_provider: UUID, mock_application: int, test_server: TestClient
 ):
     response = test_server.get("/membership")
-    assert response.status_code == 400  # Not a member
+    assert response.status_code == 200
+    assert response.json() == None  # Not a member
 
     response = test_server.post(
         "/membership/purchase", json={"application_id": mock_application}
@@ -100,7 +101,7 @@ def test_cancel(test_server: TestClient, mock_member):
 def test_update(test_server: TestClient, mock_member, mock_application):
     response = test_server.get("/membership")
     assert response.status_code == 200
-    assert response.json()["member_type_id"] is None
+    assert response.json()["member_type"] is None
 
     response = test_server.post(
         "/membership/update", json={"application_id": mock_application}
@@ -109,13 +110,13 @@ def test_update(test_server: TestClient, mock_member, mock_application):
 
     response = test_server.get("/membership")
     assert response.status_code == 200
-    assert response.json()["member_type_id"] is not None
+    assert response.json()["member_type"] is not None
 
 
 def test_renew(test_server: TestClient, mock_member, mock_application, mock_provider):
     response = test_server.get("/membership")
     assert response.status_code == 200
-    assert response.json()["member_type_id"] is None
+    assert response.json()["member_type"] is None
     current_membership_duration = response.json()["membership_expires"]
 
     # Not currently renewable

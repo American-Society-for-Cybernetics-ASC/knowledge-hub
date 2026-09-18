@@ -133,7 +133,6 @@ class MembershipModule:
                 auth_user_id=user_id,
                 membership_expires=datetime.now(timezone.utc) + duration,
                 member_type=member_type,
-                status=MemberStatus.CURRENT,
                 cancelled=False,
             )
             session.add(member)
