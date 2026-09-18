@@ -2,6 +2,7 @@
 
 import { backendFetch } from "@/lib/api/client";
 import {
+  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -22,8 +23,8 @@ interface AuditLog {
 export default function AdminAuditPage() {
   const [before, setBefore] = useState<string | undefined>();
   const [after, setAfter] = useState<string | undefined>();
-  // TODO: handle errors and loading nicer
-  const { data, error, isLoading } = useSWR<AuditLog[]>(
+
+  const { data, error } = useSWR<AuditLog[]>(
     ["/audit_log", before, after],
     ([url, before, after]) => {
       const params = new URLSearchParams();
@@ -41,7 +42,7 @@ export default function AdminAuditPage() {
 
   return (
     <>
-      <Typography variant={"h5"}>Audit Logs</Typography>
+      <Typography variant={"h4"}>Audit Log</Typography>
       <form>
         {/* These text fields must not rerender every time we refetch */}
         <TextField
@@ -57,12 +58,12 @@ export default function AdminAuditPage() {
           slotProps={{ inputLabel: { shrink: true } }}
         ></TextField>
       </form>
-      <Inner data={data || []} />
+      {data ? <AuditLogTable data={data} /> : <Skeleton />}
     </>
   );
 }
 
-function Inner({ data }: { data: AuditLog[] }) {
+function AuditLogTable({ data }: { data: AuditLog[] }) {
   return (
     <Table>
       <TableHead>

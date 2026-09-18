@@ -11,7 +11,7 @@ from sqlalchemy import (
     CheckConstraint,
     UniqueConstraint,
 )
-from sqlalchemy.orm import Mapped, Relationship, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from .types import (
@@ -35,7 +35,7 @@ class Member(Base):
     cancelled = mapped_column(Boolean, nullable=False, default=False)
 
     profile = relationship("Profile", back_populates="member", uselist=False)
-    member_type: Relationship[MemberType | None] = relationship(
+    member_type: Mapped[MemberType | None] = relationship(
         "MemberType", uselist=False, lazy="joined"
     )
     mailing_list_memberships = relationship(
@@ -52,7 +52,7 @@ class Member(Base):
         back_populates="suggested_member",
     )
 
-    auth_user = relationship("AuthUser")
+    auth_user: Mapped[AuthUser] = relationship("AuthUser")
 
 
 class MailingList(Base):
@@ -250,7 +250,7 @@ class MembershipApplication(Base):
     submitted_at = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
     content = mapped_column(String, nullable=False)  # the application form's fields
 
-    member_type: Relationship[MemberType | None] = relationship(
+    member_type: Mapped[MemberType | None] = relationship(
         "MemberType", foreign_keys=[member_type_id]
     )
 

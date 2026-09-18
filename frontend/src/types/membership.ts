@@ -7,3 +7,18 @@ export interface ReadMember {
   status: MemberStatus;
   cancelled: boolean;
 }
+
+export interface MembershipSummary {
+  email: string;
+  display_name: string;
+  membership_expires: string;
+  member_type: string | null;
+  status: MemberStatus;
+  cancelled: boolean;
+}
+
+export interface MemberType {
+  id: string;
+  name: string;
+  price: number;
+}

@@ -71,7 +71,7 @@ class CreateDonation(BaseModel):
     amount: int
 
 
-@payments_router.get("/payments", response_model=list[ReadPayment])
+@payments_router.get("", response_model=list[ReadPayment])
 def list_payments(
     payments: Annotated[PaymentsModule, Depends(PaymentsModule)],
 ) -> list[ReadPayment]:

@@ -39,7 +39,7 @@ export default function Page() {
 
   return (
     <>
-      <Typography variant={"h5"}>Mail</Typography>
+      <Typography variant={"h4"}>Mail</Typography>
       {body}
     </>
   );
