@@ -19,7 +19,20 @@ const links = [
 
 export default function SidePanel() {
     return (
-        <Drawer variant="permanent" sx={{ width: SIDEPANEL_WIDTH, flexShrink: 0, [`& .MuiDrawer-paper`]: { width: SIDEPANEL_WIDTH, boxSizing: "border-box" }}}>
+        <Drawer variant="permanent" sx={{ 
+            width: SIDEPANEL_WIDTH, 
+            flexShrink: 0, 
+            [`& .MuiDrawer-paper`]: { 
+                width: SIDEPANEL_WIDTH, 
+                boxSizing: "border-box", 
+                bgcolor: "surfaces.panel", 
+                borderRight: "1px solid", 
+                borderColor: "surfaces.panelBorder",
+                "& .MuiTypography-root, & .MuiListItemText-primary": {
+                    color: "text.tertiary",
+                },
+            },
+        }}>
             <Toolbar>
                 <Typography variant="h6" noWrap>
                     CKH
