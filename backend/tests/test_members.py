@@ -279,3 +279,99 @@ def test_get_member_profile_requires_authentication(mock_get_session):
     response = TestClient(app).get(f"/members/{member_id}")
     assert response.status_code == 401
     assert response.json()["detail"] == "Authentication required"
+
+def test_search_members_matches_name_tag_and_affiliation(
+    mock_get_session,
+    authenticate_member,
+):
+    """Search matches name, tag, affiliation organisation and role."""
+    requesting_member_id = create_member(mock_get_session, "requesting@example.com")
+    name_member_id = create_member(mock_get_session, "name@example.com")
+    tag_member_id = create_member(mock_get_session, "tag@example.com")
+    affiliation_member_id = create_member(
+        mock_get_session,
+        "affiliation@example.com",
+    )
+
+    members = MembersModule()
+    members.update_profile(
+        name_member_id,
+        ProfileUpdate(identity={"display_name": "Sonion Ring"}),
+    )
+    members.update_profile(
+        tag_member_id,
+        ProfileUpdate(
+            identity={"display_name": "Tag Member"},
+            tags=["cybernetics"],
+        ),
+    )
+    members.update_profile(
+        affiliation_member_id,
+        ProfileUpdate(
+            identity={"display_name": "Affiliation Member"},
+            metadata={
+                "affiliations": {
+                    "type": "affiliations",
+                    "value": [
+                        {
+                            "organisation": "Curtin University",
+                            "role": "Researcher",
+                        }
+                    ],
+                }
+            },
+        ),
+    )
+
+    authenticate_member(requesting_member_id)
+    client = TestClient(app)
+
+    name_response = client.get("/members", params={"q": "SONION"})
+    assert name_response.status_code == 200
+    assert [result["member_id"] for result in name_response.json()] == [
+        name_member_id
+    ]
+
+    tag_response = client.get("/members", params={"q": "cyber"})
+    assert tag_response.status_code == 200
+    assert [result["member_id"] for result in tag_response.json()] == [
+        tag_member_id
+    ]
+
+    organisation_response = client.get("/members", params={"q": "curtin"})
+    assert organisation_response.status_code == 200
+    assert [result["member_id"] for result in organisation_response.json()] == [
+        affiliation_member_id
+    ]
+
+    role_response = client.get("/members", params={"q": "researcher"})
+    assert role_response.status_code == 200
+    assert [result["member_id"] for result in role_response.json()] == [
+        affiliation_member_id
+    ]
+
+
+def test_search_members_rejects_missing_or_empty_query(
+    mock_get_session,
+    authenticate_member,
+):
+    """The endpoint requires a non-empty search query."""
+    requesting_member_id = create_member(mock_get_session)
+    authenticate_member(requesting_member_id)
+
+    client = TestClient(app)
+
+    missing_query_response = client.get("/members")
+    assert missing_query_response.status_code == 422
+
+    empty_query_response = client.get("/members", params={"q": ""})
+    assert empty_query_response.status_code == 422
+
+
+@pytest.mark.logged_out
+def test_search_members_requires_authentication():
+    """Unauthenticated requests cannot search for members."""
+    response = TestClient(app).get("/members", params={"q": "cybernetics"})
+    
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Authentication required"

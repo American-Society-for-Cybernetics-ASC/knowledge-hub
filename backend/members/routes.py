@@ -74,7 +74,7 @@ def search_members(
     _: Annotated[int, Depends(get_current_member_id)],
     module: Annotated[MembersModule, Depends(MembersModule)],
 ) -> list[MemberSearchResult]:
-    """Search currnet member profiles by display name, tag or affiliation."""
+    """Search current member profiles by display name, tag or affiliation."""
     return module.search_members(q)[:50]
 
 
@@ -93,4 +93,3 @@ def get_member_profile(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Member not found",
         ) from None
-
