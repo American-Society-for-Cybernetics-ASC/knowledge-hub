@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { searchMembers } from "@/lib/api/members";
 import type { MemberSearchResult } from "@/types/member";
 
+// Delay to avoid sending API request for every keystroke.
 const SEARCH_DEBOUNCE_MS = 300;
 
 function getErrorMessage(error: unknown): string {

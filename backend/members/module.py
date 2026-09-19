@@ -40,7 +40,7 @@ class MembersModule:
 
     @staticmethod
     def _get_affiliations(content: ProfileContent) -> list[Affiliation]:
-        """Collect affiliation metadata"""
+        """Helper method to collect affiliation metadata."""
         affiliations: list[Affiliation] = []
 
         for metadata in content.metadata.values():
@@ -53,11 +53,23 @@ class MembersModule:
 
     @staticmethod
     def _matches_query(value: str | None, query: str) -> bool:
-        """Return whether a text values contains the query."""
+        """Helper method to check if a text value matches a query."""
         return value is not None and query in value.casefold()
 
     def search_members(self, query: str) -> list[MemberSearchResult]:
-        """Search current member profiles by display name, tag or affiliation."""
+        """
+        Method to search current member profiles by display name, tag or affiliation.
+
+        1. Normalize the query.
+        2. For each member, get the profile.
+        6. Serialize the profile.
+        7. Get the display name and affiliations from the profile.
+        8. Check if the display name, tags or affiliations match the query.
+        9. If no matches, continue.
+        10. Add the member to the results.
+        11. Sort the results by priority and display name.
+        12. Return the results.
+        """
         normalized_query = query.strip().casefold()
 
         if not normalized_query:
