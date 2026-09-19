@@ -63,8 +63,9 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
 
         session.commit()
 
-# Seed deafult email templates
-EmailTemplatesModule().seed_defaults()
+# Seed default email templates
+if not SETTINGS.testing:
+    EmailTemplatesModule().seed_defaults()
 
 app = FastAPI()
 
