@@ -2,7 +2,7 @@ export type MemberStatus = "Current" | "Expired";
 
 export interface ReadMember {
   user_id: number;
-  membership_expires: string;
+  due_date: string;
   member_type: string | null;
   status: MemberStatus;
   cancelled: boolean;
@@ -11,7 +11,7 @@ export interface ReadMember {
 export interface MembershipSummary {
   email: string;
   display_name: string;
-  membership_expires: string;
+  due_date: string;
   member_type: string | null;
   status: MemberStatus;
   cancelled: boolean;

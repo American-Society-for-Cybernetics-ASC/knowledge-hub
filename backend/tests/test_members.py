@@ -21,7 +21,7 @@ def create_member(get_session: Callable[[], Session]) -> int:
 
         member = model.Member(
             auth_user=auth_user,
-            membership_expires=datetime.datetime.now(datetime.timezone.utc)
+            due_date=datetime.datetime.now(datetime.timezone.utc)
             + datetime.timedelta(days=100),
             cancelled=False,
         )

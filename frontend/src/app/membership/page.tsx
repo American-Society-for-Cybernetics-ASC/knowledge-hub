@@ -1,6 +1,7 @@
 "use client";
 
 import MemberStatusChip from "@/components/features/membership/MemberStatusChip";
+import { AddErrorContext } from "@/components/layout/ErrorContext";
 import {
   DescriptionList,
   DescriptionListData,
@@ -8,82 +9,50 @@ import {
   DescriptionListRow,
 } from "@/components/ui/DescriptionList";
 import { backendFetch } from "@/lib/api/client";
-import { CurrentUser } from "@/lib/api/me";
 import { ReadMember } from "@/types/membership";
 import { ReadPayment } from "@/types/payments";
-import { Info } from "@mui/icons-material";
-import {
-  Alert,
-  Box,
-  Button,
-  Skeleton,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { CompareArrows, Info } from "@mui/icons-material";
+import { Box, Button, Skeleton, Tooltip, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useContext } from "react";
 import useSWR from "swr";
 
-export default function MembershipCard() {
+export default function YourMembership() {
+  const addError = useContext(AddErrorContext);
   const router = useRouter();
-  const { error: authError, isLoading: authIsLoading } = useSWR<CurrentUser>(
-    "/auth/me",
-    backendFetch,
-  );
 
-  useEffect(() => {
-    if (authError) {
-      router.push("/auth/login");
-    }
-  }, [router, authError]);
+  async function handleRenew() {
+    await backendFetch<ReadPayment>("/membership/renew", {
+      method: "POST",
+    })
+      .then((payment) => router.push(`/pay/${payment.id}`))
+      .catch((err) => {
+        addError(err.message);
+      });
+  }
 
   const { data: memberData, isLoading } = useSWR<ReadMember | null>(
     "/membership",
     backendFetch,
     {
-      onError: (err) => setError(err.message),
+      onError: (err) => addError(err.message),
       onSuccess: (data) => {
-        if (data == null) {
-          setError("You aren't a member");
+        if (data === null) {
+          router.push("/membership/application");
         }
       },
     },
   );
 
-  const [error, setError] = useState<string>();
-
-  async function handleRenew() {
-    const payment = await backendFetch<ReadPayment>("/membership/renew", {
-      method: "POST",
-    }).catch((err) => {
-      setError(err.message);
-      throw err;
-    });
-    router.push(`/pay/${payment.id}`);
+  if (isLoading) {
+    return <Skeleton variant="rectangular" sx={{ minHeight: 300 }} />;
   }
 
-  return (
-    <>
-      <Typography variant="h5">Your Membership</Typography>
-      {error && <Alert severity="error">{error}</Alert>}
-      {(authIsLoading || isLoading) && (
-        <Skeleton variant="rectangular" sx={{ minHeight: 300 }} />
-      )}
-      {memberData && (
-        <MembershipInner memberData={memberData} handleRenew={handleRenew} />
-      )}
-    </>
-  );
-}
+  if (!memberData) {
+    return <></>; // About to be redirected;
+  }
 
-function MembershipInner({
-  memberData,
-  handleRenew,
-}: {
-  memberData: ReadMember;
-  handleRenew: () => void;
-}) {
-  const expiryDate = new Date(memberData.membership_expires);
+  const expiryDate = new Date(memberData.due_date);
   const now = new Date();
   const expired = now > expiryDate;
   const diffMillis = expiryDate.valueOf() - now.valueOf();
@@ -95,15 +64,19 @@ function MembershipInner({
         <DescriptionListRow>
           <DescriptionListLabel>Membership Status</DescriptionListLabel>
           <DescriptionListData>
-            <MemberStatusChip status={memberData.status} />
+            {memberData && <MemberStatusChip status={memberData.status} />}
           </DescriptionListData>
         </DescriptionListRow>
         <DescriptionListRow>
           <DescriptionListLabel>
             <Typography noWrap>Membership Type</Typography>
-            <Tooltip title="Apply for a different membership type below">
-              <Info></Info>
-            </Tooltip>
+            <Button
+            onClick={() => router.push("/membership/application")}
+              title="Change membership type"
+              sx={{ padding: 0.1, minWidth: 0.05, minHeight: 0 }}
+            >
+              <CompareArrows color="info" fontSize="medium" />
+            </Button>
           </DescriptionListLabel>
           <DescriptionListData>
             {memberData.member_type || "<None Selected>"}

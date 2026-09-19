@@ -134,7 +134,7 @@ def uncancel_membership(
 class MembershipSummary(BaseModel):
     email: str
     display_name: str
-    membership_expires: datetime
+    due_date: datetime
     member_type: str | None
     status: MemberStatus
     cancelled: bool
@@ -149,11 +149,11 @@ def get_memberships(
             MembershipSummary(
                 email=db_member.auth_user.email,
                 display_name=db_member.auth_user.name or db_member.auth_user.email,
-                membership_expires=db_member.membership_expires,
+                due_date=db_member.due_date,
                 member_type=db_member.member_type.name
                 if db_member.member_type is not None
                 else None,
-                status=MemberStatus.calc_expiry(db_member.membership_expires),
+                status=MemberStatus.calc_expiry(db_member.due_date),
                 cancelled=db_member.cancelled,
             )
             for db_member in session.query(dbmodel.Member)

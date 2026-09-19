@@ -11,11 +11,11 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useContext } from "react";
 import useSWR from "swr";
 import MemberTypes from "./MembershipTypeConfig";
-import Errors from "@/components/layout/Errors";
 import MemberStatusChip from "@/components/features/membership/MemberStatusChip";
+import { AddErrorContext } from "@/components/layout/ErrorContext";
 
 export default function Page() {
   return (
@@ -30,23 +30,18 @@ export default function Page() {
 }
 
 function MembershipList() {
-  const [errors, setErrors] = useState<string[]>([]);
+  const addError = useContext(AddErrorContext);
   const { data } = useSWR<MembershipSummary[]>(
     "/membership/admin/members",
     backendFetch,
     {
       onError: (err) => {
-        setErrors([...errors, err.message]);
+        addError(err.message);
       },
     },
   );
 
-  return (
-    <>
-      <Errors errors={errors} setErrors={setErrors} />
-      {data ? <MembershipTable data={data} /> : <Skeleton />}
-    </>
-  );
+  return <>{data ? <MembershipTable data={data} /> : <Skeleton />}</>;
 }
 
 function MembershipTable({ data }: { data: MembershipSummary[] }) {
@@ -63,13 +58,15 @@ function MembershipTable({ data }: { data: MembershipSummary[] }) {
       </TableHead>
       <TableBody>
         {data.map((member) => {
-          const membership_expires = new Date(member.membership_expires);
+          const due_date = new Date(member.due_date);
           return (
             <TableRow key={`membership-row-${member.email}`}>
               <TableCell>{member.email}</TableCell>
               <TableCell>{member.display_name}</TableCell>
-              <TableCell>{membership_expires.toLocaleString()}</TableCell>
-              <TableCell><MemberStatusChip status={member.status} /></TableCell>
+              <TableCell>{due_date.toLocaleString()}</TableCell>
+              <TableCell>
+                <MemberStatusChip status={member.status} />
+              </TableCell>
               <TableCell sx={{ textTransform: "capitalize" }}>
                 {member.cancelled.toString()}
               </TableCell>

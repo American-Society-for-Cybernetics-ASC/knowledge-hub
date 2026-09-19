@@ -131,7 +131,7 @@ class MembershipModule:
 
             member = dbmodel.Member(
                 auth_user_id=user_id,
-                membership_expires=datetime.now(timezone.utc) + duration,
+                due_date=datetime.now(timezone.utc) + duration,
                 member_type=member_type,
                 cancelled=False,
             )
@@ -149,10 +149,10 @@ class MembershipModule:
 
             now = datetime.now(timezone.utc)
             new_expiry = max(
-                member.membership_expires.astimezone(timezone.utc) + duration,
+                member.due_date.astimezone(timezone.utc) + duration,
                 now + duration,
             )
-            member.membership_expires = new_expiry
+            member.due_date = new_expiry
             session.commit()
 
             return Member.from_db_model(member)

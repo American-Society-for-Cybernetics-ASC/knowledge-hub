@@ -30,7 +30,7 @@ class Member(Base):
     auth_user_id = mapped_column(
         Integer, ForeignKey("auth_users.user_id"), primary_key=True
     )
-    membership_expires: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)
+    due_date: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)
     member_type_id = mapped_column(UUID, ForeignKey("member_types.id"), nullable=True)
     cancelled = mapped_column(Boolean, nullable=False, default=False)
 

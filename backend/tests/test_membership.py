@@ -38,7 +38,7 @@ def mock_member(mock_get_session) -> int:
     with mock_get_session() as session:
         member = dbmodel.Member(
             auth_user_id=TEST_USER_ID,
-            membership_expires=datetime.datetime.now(datetime.timezone.utc)
+            due_date=datetime.datetime.now(datetime.timezone.utc)
             + datetime.timedelta(days=10),
             cancelled=False,
             member_type_id=None,
@@ -117,7 +117,7 @@ def test_renew(test_server: TestClient, mock_member, mock_application, mock_prov
     response = test_server.get("/membership")
     assert response.status_code == 200
     assert response.json()["member_type"] is None
-    current_membership_duration = response.json()["membership_expires"]
+    current_membership_duration = response.json()["due_date"]
 
     # Not currently renewable
     response = test_server.post("/membership/renew")
@@ -148,4 +148,4 @@ def test_renew(test_server: TestClient, mock_member, mock_application, mock_prov
 
     response = test_server.get("/membership")
     assert response.status_code == 200
-    assert response.json()["membership_expires"] > current_membership_duration
+    assert response.json()["due_date"] > current_membership_duration

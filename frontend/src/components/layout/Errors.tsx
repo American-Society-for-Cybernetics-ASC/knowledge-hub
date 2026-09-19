@@ -1,4 +1,4 @@
-import { Alert } from "@mui/material";
+import { Alert, Snackbar } from "@mui/material";
 
 export default function Errors({
   errors,
@@ -7,15 +7,16 @@ export default function Errors({
   errors: string[];
   setErrors: (newErrors: string[]) => void;
 }) {
-  return errors.map((e, i) => (
-    <Alert
-      key={`error-${i}`}
-      severity="error"
-      onClose={() => {
-        setErrors(errors.toSpliced(i, 1));
-      }}
-    >
-      {e}
-    </Alert>
-  ));
+  return (
+    <Snackbar open={errors.length > 0}>
+      <Alert
+        severity="error"
+        onClose={() => {
+          setErrors(errors.toSpliced(0, 1));
+        }}
+      >
+        {errors.at(0) || ""}
+      </Alert>
+    </Snackbar>
+  );
 }

@@ -29,7 +29,7 @@ def create_member(
 
         member = model.Member(
             auth_user_id=auth_user.user_id,
-            membership_expires=datetime.now(timezone.utc)
+            due_date=datetime.now(timezone.utc)
             + (timedelta(10) if has_current_membership else timedelta(-10)),
             member_type_id=None,
         )

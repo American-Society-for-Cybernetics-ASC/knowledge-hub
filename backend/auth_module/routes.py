@@ -195,19 +195,19 @@ def get_public_key(
 @auth_router.get("/me")
 def get_current_user(
     current_user_id: Annotated[int | None, Depends(user_id)],
-) -> CurrentUserResponse:
+) -> CurrentUserResponse | None:
     """
     Returns the current authenticated user's details.
     Reads user_id from JWT cookie automatically.
     """
     if current_user_id is None:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        return None
 
     session = database.get_session()
     user = session.get(model.AuthUser, current_user_id)
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        return None
 
     return CurrentUserResponse(
         user_id=user.user_id,
@@ -246,7 +246,7 @@ def change_email(
     """Change the authenticated user's email address."""
     if current_user_id is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    try: 
+    try:
         module.change_email(
             user_id=current_user_id,
             new_email=req.new_email,

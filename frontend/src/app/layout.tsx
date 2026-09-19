@@ -3,9 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import { SWRConfig } from "swr";
-import { ThemeProvider, CssBaseline, Box} from "@mui/material";
+import { ThemeProvider, CssBaseline, Box } from "@mui/material";
 import { theme } from "./theme";
 import SidePanel from "./sidepanel";
+import { ErrorWrapper } from "@/components/layout/ErrorContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,11 +37,13 @@ export default function RootLayout({
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <SWRConfig value={{ shouldRetryOnError: false }}>
             <ThemeProvider theme={theme}>
-              <CssBaseline />
-              <SidePanel />
-              <Box component="main" sx={{ flexGrow: 1, ml: "240px", p: 3}}>
-                {children}
-              </Box>
+              <ErrorWrapper>
+                <CssBaseline />
+                <SidePanel />
+                <Box component="main" sx={{ flexGrow: 1, ml: "240px", p: 3 }}>
+                  {children}
+                </Box>
+              </ErrorWrapper>
             </ThemeProvider>
           </SWRConfig>
         </AppRouterCacheProvider>

@@ -30,7 +30,7 @@ class MembersModule:
 
         return MemberProfile(
             member_id=member.auth_user_id,
-            status=MemberStatus.calc_expiry(member.membership_expires),
+            status=MemberStatus.calc_expiry(member.due_date),
             content=content,
             tags=tags,
         )
