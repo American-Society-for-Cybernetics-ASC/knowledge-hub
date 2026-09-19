@@ -1,5 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
+
+from database.types import PermissionCategory
 from .module import MailingListModule, MemberNotFoundError
 from .model import MailingList, MailingListMember
 from auth_module import authorized, user_id, PermissionTier
@@ -18,7 +20,7 @@ def get_mailing_lists(
 def register_mailing_list(
     mailing_list_email: str,
     module: Annotated[MailingListModule, Depends(MailingListModule)],
-    _=Depends(authorized(["groups"], PermissionTier.manager)),
+    _=Depends(authorized([PermissionCategory.MAILING_LISTS], PermissionTier.manager)),
 ) -> MailingList:
     """Manager register an existing Google Workspace Group"""
     try:
@@ -60,7 +62,7 @@ def add_member(
     mailing_list_id: int,
     email: str,
     module: Annotated[MailingListModule, Depends(MailingListModule)],
-    _=Depends(authorized(["groups"], PermissionTier.manager)),
+    _=Depends(authorized([PermissionCategory.MAILING_LISTS], PermissionTier.manager)),
 ) -> None:
     """Manager add a member to a group by email"""
     try:
@@ -93,7 +95,7 @@ def kick_member(
     mailing_list_id: int,
     email: str,
     module: Annotated[MailingListModule, Depends(MailingListModule)],
-    _=Depends(authorized(["groups"], PermissionTier.manager)),
+    _=Depends(authorized([PermissionCategory.MAILING_LISTS], PermissionTier.manager)),
 ) -> None:
     """Manager kick a member from a mailing list by email"""
     try:

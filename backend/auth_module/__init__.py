@@ -62,7 +62,7 @@ def authorized(heirarchy: list[str], tier: PermissionTier) -> Callable:
     Usage example:
     ```python
     @app.get("")
-    def my_route(_ = Depends(authorized(["module", "subpermission"], PermissionTier.manager))):
+    def my_route(_ = Depends(authorized([PermissionCategory.<module>, "subpermission"], PermissionTier.manager))):
         ...
     ```
     """

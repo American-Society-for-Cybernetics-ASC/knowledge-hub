@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from auth_module import authorized, user_id
 from auth_module.model import PermissionTier
+from database.types import PermissionCategory
 from database import get_session, model as dbmodel
 from .exceptions import (
     AlreadyAMemberError,
@@ -141,7 +142,7 @@ class MembershipSummary(BaseModel):
 
 @membership_router.get("/admin/members")
 def get_memberships(
-    _=Depends(authorized(["memberships"], PermissionTier.manager)),
+    _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
 ) -> list[MembershipSummary]:
     with get_session() as session:
         return [
@@ -176,7 +177,7 @@ class PostMembershipType(BaseModel):
 @membership_router.post("/member_type")
 def create_membership_type(
     body: PostMembershipType,
-    _=Depends(authorized(["memberships"], PermissionTier.manager)),
+    _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
 ) -> MemberType:
     with get_session() as session:
         record = dbmodel.MemberType(
@@ -199,7 +200,7 @@ class PatchMembershipType(BaseModel):
 def patch_membership_type(
     member_type_id: UUID,
     patch: PatchMembershipType,
-    _=Depends(authorized(["memberships"], PermissionTier.manager)),
+    _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
 ) -> MemberType:
     with get_session() as session:
         record = session.get(dbmodel.MemberType, member_type_id)

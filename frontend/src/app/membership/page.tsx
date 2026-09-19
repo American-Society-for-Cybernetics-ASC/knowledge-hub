@@ -16,8 +16,6 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   Skeleton,
   Tooltip,
   Typography,
@@ -55,42 +53,25 @@ export default function MembershipCard() {
   const [error, setError] = useState<string>();
 
   async function handleRenew() {
-    const payment = await backendFetch<ReadPayment>("/membership/renew", { method: "POST" }).catch(
-      (err) => {
-        setError(err.message);
-        throw err;
-      },
-    );
+    const payment = await backendFetch<ReadPayment>("/membership/renew", {
+      method: "POST",
+    }).catch((err) => {
+      setError(err.message);
+      throw err;
+    });
     router.push(`/pay/${payment.id}`);
-  }
-
-  if (authIsLoading || isLoading) {
-    return (
-      <>
-        <Card>
-          <CardContent>
-            <Typography variant="h5">Your Membership</Typography>
-            <Skeleton variant="rectangular" sx={{minHeight: 300}} />
-          </CardContent>
-        </Card>
-      </>
-    );
   }
 
   return (
     <>
-      <Card>
-        <CardContent>
-          <Typography variant="h5">Your Membership</Typography>
-          {error && <Alert severity="error">{error}</Alert>}
-          {memberData && (
-            <MembershipInner
-              memberData={memberData}
-              handleRenew={handleRenew}
-            />
-          )}
-        </CardContent>
-      </Card>
+      <Typography variant="h5">Your Membership</Typography>
+      {error && <Alert severity="error">{error}</Alert>}
+      {(authIsLoading || isLoading) && (
+        <Skeleton variant="rectangular" sx={{ minHeight: 300 }} />
+      )}
+      {memberData && (
+        <MembershipInner memberData={memberData} handleRenew={handleRenew} />
+      )}
     </>
   );
 }
@@ -112,18 +93,25 @@ function MembershipInner({
     <>
       <DescriptionList>
         <DescriptionListRow>
-          <DescriptionListLabel>Membership Status:</DescriptionListLabel>
-          <DescriptionListData><MemberStatusChip status={memberData.status}/></DescriptionListData>
+          <DescriptionListLabel>Membership Status</DescriptionListLabel>
+          <DescriptionListData>
+            <MemberStatusChip status={memberData.status} />
+          </DescriptionListData>
         </DescriptionListRow>
         <DescriptionListRow>
-          <DescriptionListLabel>Membership Type:</DescriptionListLabel>
+          <DescriptionListLabel>
+            <Typography noWrap>Membership Type</Typography>
+            <Tooltip title="Apply for a different membership type below">
+              <Info></Info>
+            </Tooltip>
+          </DescriptionListLabel>
           <DescriptionListData>
             {memberData.member_type || "<None Selected>"}
           </DescriptionListData>
         </DescriptionListRow>
         <DescriptionListRow>
           <DescriptionListLabel>
-            {expired ? "Expiry:" : "Expired:"}
+            {expired ? "Expiry" : "Expired"}
           </DescriptionListLabel>
           <DescriptionListData>
             {expiryDate.toLocaleString()}
@@ -131,7 +119,7 @@ function MembershipInner({
         </DescriptionListRow>
         {!expired && (
           <DescriptionListRow>
-            <DescriptionListLabel>Time till expiry:</DescriptionListLabel>
+            <DescriptionListLabel>Time till expiry</DescriptionListLabel>
             <DescriptionListData>
               {diffDays} days, {diffHours} hours
             </DescriptionListData>

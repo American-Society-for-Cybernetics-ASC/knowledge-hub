@@ -15,7 +15,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from .types import (
-    AuditPermissionCategory,
+    PermissionCategory,
     PaymentStatus,
     TransactionStatus,
     TZDateTime,
@@ -181,7 +181,7 @@ class AuditLog(Base):
     __tablename__ = "auth_logs"
 
     auth_log_id = mapped_column(Integer, primary_key=True, index=True)
-    permission_category: Mapped[AuditPermissionCategory] = mapped_column(
+    permission_category: Mapped[PermissionCategory] = mapped_column(
         String, nullable=False
     )
     log = mapped_column(String, nullable=False)

@@ -1,5 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
+from auth_module.model import PermissionTier, Permissions
+from database.types import PermissionCategory
 from member_application.module import (
     MemberApplicationModule,
     ApplicationNotFoundError,
@@ -10,7 +12,7 @@ from member_application.model import (
     SubmitApplication,
     ReviseApplication,
 )
-from auth_module import user_id
+from auth_module import authorized, permissions, user_id
 
 member_application_router = APIRouter(
     prefix="/member-applications", tags=["member-applications"]
@@ -20,6 +22,7 @@ member_application_router = APIRouter(
 @member_application_router.get("/")
 def get_applications(
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
+    _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
 ) -> list[MemberApplication]:
     """get a list of all member applications"""
     return module.get_applications()
@@ -28,11 +31,20 @@ def get_applications(
 @member_application_router.get("/{application_id}")
 def get_application(
     application_id: int,
+    user_id: Annotated[int, Depends(user_id)],
+    permissions: Annotated[Permissions, Depends(permissions)],
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
 ) -> MemberApplication:
     """get a single member application"""
     try:
-        return module.get_application(application_id)
+        application = module.get_application(application_id)
+        if application.auth_user_id != user_id:
+            # Moderator permission required to view other's applications
+            if not permissions.includes(
+                [PermissionCategory.MEMBERSHIP], PermissionTier.moderator
+            ):
+                raise ApplicationNotFoundError()
+        return application
     except ApplicationNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -80,6 +92,7 @@ def revise_application(
 def approve_application(
     application_id: int,
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
+    _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
 ) -> MemberApplication:
     """approve a member application"""
     try:
@@ -92,6 +105,7 @@ def approve_application(
 def deny_application(
     application_id: int,
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
+    _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
 ) -> MemberApplication:
     """deny a member application"""
     try:
@@ -104,6 +118,7 @@ def deny_application(
 def request_revision(
     application_id: int,
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
+    _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
 ) -> MemberApplication:
     """ "requets a revision for an application"""
     try:

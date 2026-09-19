@@ -1,20 +1,20 @@
 from datetime import datetime
 
-from audit_log.model import AuditPermissionCategory, AuditLog
+from audit_log.model import PermissionCategory, AuditLog
 from auth_module.model import Permissions, PermissionTier
 import database
 import database.model as model
 
 
 class AuditLogModule:
-    def post_audit(self, category: AuditPermissionCategory, log: str):
+    def post_audit(self, category: PermissionCategory, log: str):
         with database.get_session() as session:
             session.add(model.AuditLog(permission_category=category, log=log))
             session.commit()
 
     def get_audit_logs(
         self,
-        categories: list[AuditPermissionCategory],
+        categories: list[PermissionCategory],
         before: datetime | None = None,
         after: datetime | None = None,
     ) -> list[AuditLog]:
@@ -37,9 +37,9 @@ class AuditLogModule:
     @staticmethod
     def all_permitted_audit_categories(
         permissions: Permissions,
-    ) -> list[AuditPermissionCategory]:
+    ) -> list[PermissionCategory]:
         return [
             category
-            for category in AuditPermissionCategory
+            for category in PermissionCategory
             if permissions.includes([category], PermissionTier.manager)
         ]

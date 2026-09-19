@@ -8,11 +8,8 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Knowledge Hub", href: "/knowledge-hub" },
-  { label: "Events", href: "/events" },
   { label: "Groups", href: "/groups" },
-  { label: "Knowledge Graph", href: "/knowledge-graph" },
-  { label: "Membership", href: "/billing/membership" },
+  { label: "Membership", href: "/membership" },
   { label: "Notifications", href: "/notifications" },
   { label: "Admin", href: "/admin" },
 ];
@@ -22,12 +19,19 @@ export default function Home() {
     <div>
       <header>
         <Typography variant="h4">Welcome to the Knowledge Hub</Typography>
-        <Typography variant="body1">Jump to a section below to get started.</Typography>
+        <Typography variant="body1">
+          Jump to a section below to get started.
+        </Typography>
       </header>
 
       <Grid container spacing={2} sx={{ mt: 2 }}>
-        {navItems.map((item) => (
-          <Button variant="contained" href={item.href} sx={{ py: 1.5 }}>
+        {navItems.map((item, i) => (
+          <Button
+            key={`nav-button-${i}`}
+            variant="contained"
+            href={item.href}
+            sx={{ py: 1.5 }}
+          >
             {item.label}
           </Button>
         ))}
