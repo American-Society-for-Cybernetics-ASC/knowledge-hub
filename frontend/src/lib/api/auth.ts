@@ -27,6 +27,11 @@ export interface VerifyOTPRequest {
   challenge_token: string;
 }
 
+export interface ConfirmTOTPRequest {
+  email: string;
+  code: string;
+}
+
 export async function register(
   data: RegisterRequest,
 ): Promise<RegisterResponse> {
@@ -53,7 +58,7 @@ export async function verifyOTP(
 }
 
 export async function confirmTOTP(
-  data: VerifyOTPRequest,
+  data: ConfirmTOTPRequest,
 ): Promise<{ message: string }> {
   return backendFetch<{ message: string }>("/auth/confirm-totp", {
     method: "POST",
