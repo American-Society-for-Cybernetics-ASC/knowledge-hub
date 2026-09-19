@@ -1,6 +1,6 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
-from members.model import MemberProfile, ProfileUpdate
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from members.model import MemberProfile, MemberSearchResult, ProfileUpdate
 from members.module import MemberNotFoundError, MembersModule
 import database
 from auth_module import user_id as get_authenticated_user_id
@@ -65,6 +65,17 @@ def update_my_profile(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Member not found",
         ) from None
+
+
+# GET /members?q=<search query>
+@members_router.get("", response_model=list[MemberSearchResult])
+def search_members(
+    q: Annotated[str, Query(min_length=1, max_length=100)],
+    _: Annotated[int, Depends(get_current_member_id)],
+    module: Annotated[MembersModule, Depends(MembersModule)],
+) -> list[MemberSearchResult]:
+    """Search currnet member profiles by display name, tag or affiliation."""
+    return module.search_members(q)[:50]
 
 
 # GET /members/{member_id}

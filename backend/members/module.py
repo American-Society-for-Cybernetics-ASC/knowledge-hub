@@ -1,9 +1,12 @@
+from datetime import datetime, timezone
 from typing import Any
+
+from sqlalchemy import select
 
 from membership.model import MemberStatus
 import database
 from database import model as database_model
-from members.model import MemberProfile, ProfileContent, ProfileUpdate
+from members.model import Affiliation, MemberProfile, MemberSearchResult, ProfileContent, ProfileUpdate
 
 
 class MemberNotFoundError(LookupError):
@@ -34,6 +37,102 @@ class MembersModule:
             content=content,
             tags=tags,
         )
+
+    @staticmethod
+    def _get_affiliations(content: ProfileContent) -> list[Affiliation]:
+        """Collect affiliation metadata"""
+        affiliations: list[Affiliation] = []
+
+        for metadata in content.metadata.values():
+            if metadata.type == "affiliation":
+                affiliations.append(metadata.value)
+            elif metadata.type == "affiliations":
+                affiliations.extend(metadata.value)
+
+        return affiliations
+
+    @staticmethod
+    def _matches_query(value: str | None, query: str) -> bool:
+        """Return whether a text values contains the query."""
+        return value is not None and query in value.casefold()
+
+    def search_members(self, query: str) -> list[MemberSearchResult]:
+        """Search current member profiles by display name, tag or affiliation."""
+        normalized_query = query.strip().casefold()
+
+        if not normalized_query:
+            return []
+
+        with database.get_session() as session:
+            current_members = session.scalars(
+                select(database_model.Member)
+                .join(database_model.Profile)
+                .where(
+                    database_model.Member.membership_expires 
+                    > datetime.now(timezone.utc)
+                )
+            ).all()
+
+            results: list[tuple[int, MemberSearchResult]] = []
+
+            for member in current_members:
+                profile = member.profile
+
+                if profile is None:
+                    continue
+                
+                member_profile = self._serialize_profile(member, profile)
+                display_name = member_profile.content.identity.display_name
+                affiliations = self._get_affiliations(member_profile.content)
+
+                name_matches = self._matches_query(
+                    display_name, 
+                    normalized_query,
+                )
+                tag_matches = any(
+                    self._matches_query(tag, normalized_query) 
+                    for tag in member_profile.tags
+                )
+                affiliation_matches = any(
+                    self._matches_query(
+                        affiliation.organisation,
+                        normalized_query,
+                    )
+                    or self._matches_query(
+                        affiliation.role,
+                        normalized_query,
+                    )
+                    for affiliation in affiliations
+                )
+                
+                if not (name_matches or tag_matches or affiliation_matches):
+                    continue
+                
+                # Prefer name matches, remaining results sort by name and member ID.
+                result_priority = 0 if name_matches else 1
+
+                results.append(
+                    (
+                        result_priority,
+                        MemberSearchResult(
+                            member_id=member.auth_user_id,
+                            display_name=display_name,
+                            status=member_profile.status,
+                            tags=member_profile.tags,
+                            affiliations=affiliations,
+                        ),
+                    )
+                )
+
+        results.sort(
+            key=lambda item: (
+                item[0],
+                (item[1].display_name or "").casefold(),
+                item[1].member_id,
+            )
+        )
+
+        return [result for _, result in results]
 
     @staticmethod
     def _get_or_create_profile(
