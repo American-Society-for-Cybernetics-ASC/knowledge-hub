@@ -1,31 +1,67 @@
+from datetime import datetime
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 from auth_module.model import PermissionTier, Permissions
-from database.types import PermissionCategory
+from member_application.model import MembershipApplication
+from utils import BaseModel
+from database.types import ApplicationStatus, PermissionCategory
 from member_application.module import (
     MemberApplicationModule,
     ApplicationNotFoundError,
     ApplicationNotOwnedError,
 )
-from member_application.model import (
-    MemberApplication,
-    SubmitApplication,
-    ReviseApplication,
-)
 from auth_module import authorized, permissions, user_id
 
 member_application_router = APIRouter(
-    prefix="/member-applications", tags=["member-applications"]
+    prefix="/membership/application", tags=["membership", "application"]
 )
 
 
-@member_application_router.get("/")
+class SubmitApplication(BaseModel):
+    content: str
+
+
+class ReviseApplication(BaseModel):
+    content: str
+
+
+class ReadMembershipApplication(BaseModel):
+    application_id: int
+    auth_user_id: int
+    member_type: str | None
+    status: ApplicationStatus
+    submitted_at: datetime
+    content: str
+
+    @staticmethod
+    def from_model(
+        model: MembershipApplication,
+    ) -> ReadMembershipApplication:
+        return ReadMembershipApplication(
+            application_id=model.application_id,
+            auth_user_id=model.auth_user_id,
+            member_type=model.member_type.name
+            if model.member_type is not None
+            else None,
+            status=model.status,
+            submitted_at=model.submitted_at,
+            content=model.content,
+        )
+
+
+@member_application_router.get("")
 def get_applications(
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
-    _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
-) -> list[MemberApplication]:
-    """get a list of all member applications"""
-    return module.get_applications()
+    user_id: Annotated[int, Depends(user_id)],
+) -> list[ReadMembershipApplication]:
+    """get a list of all of your member applications"""
+    return list(
+        map(
+            ReadMembershipApplication.from_model,
+            module.get_users_applications(user_id),
+        )
+    )
 
 
 @member_application_router.get("/{application_id}")
@@ -34,7 +70,7 @@ def get_application(
     user_id: Annotated[int, Depends(user_id)],
     permissions: Annotated[Permissions, Depends(permissions)],
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
-) -> MemberApplication:
+) -> ReadMembershipApplication:
     """get a single member application"""
     try:
         application = module.get_application(application_id)
@@ -44,7 +80,7 @@ def get_application(
                 [PermissionCategory.MEMBERSHIP], PermissionTier.moderator
             ):
                 raise ApplicationNotFoundError()
-        return application
+        return ReadMembershipApplication.from_model(application)
     except ApplicationNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -54,15 +90,17 @@ def submit_application(
     application: SubmitApplication,
     auth_user_id: Annotated[int, Depends(user_id)],
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
-) -> MemberApplication:
+) -> ReadMembershipApplication:
     """submit a new application"""
 
     if auth_user_id is None:
         raise HTTPException(status_code=401, detail="authentication required")
 
-    return module.submit_application(
-        auth_user_id,
-        application.content,
+    return ReadMembershipApplication.from_model(
+        module.submit_application(
+            auth_user_id,
+            application.content,
+        )
     )
 
 
@@ -72,15 +110,15 @@ def revise_application(
     application: ReviseApplication,
     auth_user_id: Annotated[int, Depends(user_id)],
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
-) -> MemberApplication:
+) -> ReadMembershipApplication:
     """revise an existing application"""
 
     if auth_user_id is None:
         raise HTTPException(status_code=401, detail="Authentication required")
 
     try:
-        return module.revise_application(
-            application_id, auth_user_id, application.content
+        return ReadMembershipApplication.from_model(
+            module.revise_application(application_id, auth_user_id, application.content)
         )
     except ApplicationNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -93,10 +131,12 @@ def approve_application(
     application_id: int,
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
     _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
-) -> MemberApplication:
+) -> ReadMembershipApplication:
     """approve a member application"""
     try:
-        return module.approve_application(application_id)
+        return ReadMembershipApplication.from_model(
+            module.approve_application(application_id)
+        )
     except ApplicationNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -106,10 +146,12 @@ def deny_application(
     application_id: int,
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
     _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
-) -> MemberApplication:
+) -> ReadMembershipApplication:
     """deny a member application"""
     try:
-        return module.deny_application(application_id)
+        return ReadMembershipApplication.from_model(
+            module.deny_application(application_id)
+        )
     except ApplicationNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -119,9 +161,22 @@ def request_revision(
     application_id: int,
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
     _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
-) -> MemberApplication:
+) -> ReadMembershipApplication:
     """ "requets a revision for an application"""
     try:
-        return module.request_revision(application_id)
+        return ReadMembershipApplication.from_model(
+            module.request_revision(application_id)
+        )
     except ApplicationNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@member_application_router.get("/admin/all")
+def get_all_applications(
+    module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
+    _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
+) -> list[ReadMembershipApplication]:
+    """get a list of all member applications"""
+    return list(
+        map(ReadMembershipApplication.from_model, module.get_all_applications())
+    )

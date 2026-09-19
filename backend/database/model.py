@@ -15,6 +15,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from .types import (
+    ApplicationStatus,
     PermissionCategory,
     PaymentStatus,
     TransactionStatus,
@@ -244,14 +245,14 @@ class MembershipApplication(Base):
         UUID, ForeignKey("member_types.id"), nullable=True
     )
     """None for out-of-date membership types"""
-    status = mapped_column(
+    status: Mapped[ApplicationStatus] = mapped_column(
         String, nullable=False
     )  # pending, approved, denied, revision_requested
     submitted_at = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
     content = mapped_column(String, nullable=False)  # the application form's fields
 
     member_type: Mapped[MemberType | None] = relationship(
-        "MemberType", foreign_keys=[member_type_id]
+        "MemberType", foreign_keys=[member_type_id], lazy="joined"
     )
 
 

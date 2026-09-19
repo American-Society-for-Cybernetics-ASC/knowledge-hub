@@ -3,8 +3,9 @@ from uuid import UUID
 
 from fastapi.testclient import TestClient
 import pytest
+
+from database.types import ApplicationStatus
 from .conftest import TEST_USER_ID
-from member_application.model import ApplicationStatus
 from database import model as dbmodel
 
 
