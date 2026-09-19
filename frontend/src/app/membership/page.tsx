@@ -71,7 +71,7 @@ export default function YourMembership() {
           <DescriptionListLabel>
             <Typography noWrap>Membership Type</Typography>
             <Button
-            onClick={() => router.push("/membership/application")}
+              onClick={() => router.push("/membership/application")}
               title="Change membership type"
               sx={{ padding: 0.1, minWidth: 0.05, minHeight: 0 }}
             >
@@ -83,16 +83,14 @@ export default function YourMembership() {
           </DescriptionListData>
         </DescriptionListRow>
         <DescriptionListRow>
-          <DescriptionListLabel>
-            {expired ? "Expiry" : "Expired"}
-          </DescriptionListLabel>
+          <DescriptionListLabel>Due Date</DescriptionListLabel>
           <DescriptionListData>
             {expiryDate.toLocaleString()}
           </DescriptionListData>
         </DescriptionListRow>
         {!expired && (
           <DescriptionListRow>
-            <DescriptionListLabel>Time till expiry</DescriptionListLabel>
+            <DescriptionListLabel>Time till due date</DescriptionListLabel>
             <DescriptionListData>
               {diffDays} days, {diffHours} hours
             </DescriptionListData>

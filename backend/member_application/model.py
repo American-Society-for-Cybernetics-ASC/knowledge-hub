@@ -12,6 +12,7 @@ class MembershipApplication(BaseModel):
     member_type: MemberType | None
     status: ApplicationStatus
     submitted_at: datetime
+    last_edited: datetime
     content: str
 
     @staticmethod
@@ -26,5 +27,6 @@ class MembershipApplication(BaseModel):
             else None,
             status=model.status,
             submitted_at=model.submitted_at,
+            last_edited=model.last_edited,
             content=model.content,
         )

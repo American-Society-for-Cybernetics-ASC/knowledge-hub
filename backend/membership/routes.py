@@ -22,13 +22,13 @@ from .module import MembershipModule
 membership_router = APIRouter(prefix="/membership", tags=["membership"])
 
 
-class StartMembership(BaseModel):
+class PurchaseMembership(BaseModel):
     application_id: int
 
 
 @membership_router.post("/purchase")
 def purchase_membership(
-    body: StartMembership,
+    body: PurchaseMembership,
     user_id: Annotated[int | None, Depends(user_id)],
     module: MembershipModule = Depends(MembershipModule),
 ) -> ReadPayment:
@@ -68,7 +68,7 @@ class UpdateMembership(BaseModel):
 
 @membership_router.post("/update")
 def update_membership(
-    body: StartMembership,
+    body: PurchaseMembership,
     user_id: Annotated[int | None, Depends(user_id)],
     module: MembershipModule = Depends(MembershipModule),
 ):

@@ -41,18 +41,17 @@ def create_application(
         return application.application_id
 
 
-def test_submit_application(mock_get_session):
+def test_submit_application(mock_get_session, mock_member_type):
     auth_user_id = 0
 
     application = MemberApplicationModule().submit_application(
-        auth_user_id,
-        "I want to join please",
+        auth_user_id, "I want to join please", mock_member_type
     )
 
     assert application.application_id is not None
     assert application.auth_user_id == auth_user_id
     assert application.status == ApplicationStatus.PENDING
-    assert application.submitted_at is not None
+    assert application.last_edited is not None
     assert application.content == "I want to join please"
 
 
@@ -146,17 +145,23 @@ def test_request_revision(mock_get_session):
     assert application.status == ApplicationStatus.REVISION_REQUIRED
 
 
-def test_submit_application_api(test_server: TestClient, mock_get_session):
+def test_submit_application_api(
+    test_server: TestClient, mock_get_session, mock_member_type
+):
     """test submitting an application through the api"""
     auth_user_id = 0
     response = test_server.post(
-        "/membership/application/", json={"content": "I want to join please"}
+        "/membership/application/",
+        json={
+            "content": "I want to join please",
+            "member_type_id": str(mock_member_type),
+        },
     )
 
     assert response.status_code == 200
     data = response.json()
     assert data["application_id"] is not None
-    assert data["auth_user_id"] == auth_user_id
+    assert data["user_id"] == auth_user_id
     assert data["status"] == "pending"
     assert data["content"] == ("I want to join please")
     assert data["submitted_at"] is not None
@@ -193,7 +198,7 @@ def test_get_application_api(test_server: TestClient, mock_get_session):
     data = response.json()
 
     assert data["application_id"] == application_id
-    assert data["auth_user_id"] == auth_user_id
+    assert data["user_id"] == auth_user_id
     assert data["status"] == "pending"
     assert data["content"] == "Test application"
 

@@ -249,6 +249,7 @@ class MembershipApplication(Base):
         String, nullable=False
     )  # pending, approved, denied, revision_requested
     submitted_at = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
+    last_edited = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
     content = mapped_column(String, nullable=False)  # the application form's fields
 
     member_type: Mapped[MemberType | None] = relationship(

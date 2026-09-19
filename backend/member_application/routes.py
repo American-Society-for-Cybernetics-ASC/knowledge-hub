@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from auth_module.model import PermissionTier, Permissions
@@ -18,20 +19,13 @@ member_application_router = APIRouter(
 )
 
 
-class SubmitApplication(BaseModel):
-    content: str
-
-
-class ReviseApplication(BaseModel):
-    content: str
-
-
 class ReadMembershipApplication(BaseModel):
     application_id: int
-    auth_user_id: int
+    user_id: int
     member_type: str | None
     status: ApplicationStatus
     submitted_at: datetime
+    last_edited: datetime
     content: str
 
     @staticmethod
@@ -40,12 +34,13 @@ class ReadMembershipApplication(BaseModel):
     ) -> ReadMembershipApplication:
         return ReadMembershipApplication(
             application_id=model.application_id,
-            auth_user_id=model.auth_user_id,
+            user_id=model.auth_user_id,
             member_type=model.member_type.name
             if model.member_type is not None
             else None,
             status=model.status,
             submitted_at=model.submitted_at,
+            last_edited=model.last_edited,
             content=model.content,
         )
 
@@ -64,28 +59,12 @@ def get_applications(
     )
 
 
-@member_application_router.get("/{application_id}")
-def get_application(
-    application_id: int,
-    user_id: Annotated[int, Depends(user_id)],
-    permissions: Annotated[Permissions, Depends(permissions)],
-    module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
-) -> ReadMembershipApplication:
-    """get a single member application"""
-    try:
-        application = module.get_application(application_id)
-        if application.auth_user_id != user_id:
-            # Moderator permission required to view other's applications
-            if not permissions.includes(
-                [PermissionCategory.MEMBERSHIP], PermissionTier.moderator
-            ):
-                raise ApplicationNotFoundError()
-        return ReadMembershipApplication.from_model(application)
-    except ApplicationNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+class SubmitApplication(BaseModel):
+    member_type_id: UUID
+    content: str
 
 
-@member_application_router.post("/")
+@member_application_router.post("")
 def submit_application(
     application: SubmitApplication,
     auth_user_id: Annotated[int, Depends(user_id)],
@@ -98,10 +77,13 @@ def submit_application(
 
     return ReadMembershipApplication.from_model(
         module.submit_application(
-            auth_user_id,
-            application.content,
+            auth_user_id, application.content, application.member_type_id
         )
     )
+
+
+class ReviseApplication(BaseModel):
+    content: str
 
 
 @member_application_router.patch("/{application_id}")
@@ -124,6 +106,27 @@ def revise_application(
         raise HTTPException(status_code=404, detail=str(e))
     except ApplicationNotOwnedError as e:
         raise HTTPException(status_code=403, detail=str(e))
+
+
+@member_application_router.get("/{application_id}")
+def get_application(
+    application_id: int,
+    user_id: Annotated[int, Depends(user_id)],
+    permissions: Annotated[Permissions, Depends(permissions)],
+    module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
+) -> ReadMembershipApplication:
+    """get a single member application"""
+    try:
+        application = module.get_application(application_id)
+        if application.auth_user_id != user_id:
+            # Moderator permission required to view other's applications
+            if not permissions.includes(
+                [PermissionCategory.MEMBERSHIP], PermissionTier.moderator
+            ):
+                raise ApplicationNotFoundError()
+        return ReadMembershipApplication.from_model(application)
+    except ApplicationNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @member_application_router.post("/{application_id}/approve")

@@ -1,4 +1,6 @@
-from sqlalchemy import select
+from uuid import UUID
+
+from sqlalchemy import desc, select
 from datetime import datetime, timezone
 
 from database.types import ApplicationStatus
@@ -30,6 +32,7 @@ class MemberApplicationModule:
                         select(dbmodel.MembershipApplication).where(
                             dbmodel.MembershipApplication.auth_user_id == user_id
                         )
+                        .order_by(desc(dbmodel.MembershipApplication.last_edited))
                     )
                     .scalars()
                     .all(),
@@ -60,13 +63,17 @@ class MemberApplicationModule:
             return MembershipApplication.from_db_model(application)
 
     def submit_application(
-        self, auth_user_id: int, content: str
+        self,
+        auth_user_id: int,
+        content: str,
+        member_type_id: UUID,
     ) -> MembershipApplication:
         """Submit a new member application"""
         with database.get_session() as session:
             application = dbmodel.MembershipApplication(
                 auth_user_id=auth_user_id,
                 status=ApplicationStatus.PENDING,
+                member_type_id=member_type_id,
                 submitted_at=datetime.now(timezone.utc),
                 content=content,
             )
@@ -92,6 +99,7 @@ class MemberApplicationModule:
 
             application.content = content
             application.status = ApplicationStatus.PENDING
+            application.last_edited = datetime.now(timezone.utc)
 
             session.commit()
             return MembershipApplication.from_db_model(application)

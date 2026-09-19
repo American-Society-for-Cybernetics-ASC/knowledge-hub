@@ -10,16 +10,6 @@ from database import model as dbmodel
 
 
 @pytest.fixture()
-def mock_member_type(mock_get_session) -> UUID:
-    with mock_get_session() as session:
-        member_type = dbmodel.MemberType(name="ExampleType", price=10_000)
-        session.add(member_type)
-        session.commit()
-        session.refresh(member_type)
-        return member_type.id
-
-
-@pytest.fixture()
 def mock_application(mock_get_session, mock_member_type) -> int:
     with mock_get_session() as session:
         application = dbmodel.MembershipApplication(

@@ -6,6 +6,7 @@ import { ReadMember } from "@/types/membership";
 import { backendFetch } from "@/lib/api/client";
 import { useRouter } from "next/navigation";
 import { CurrentUser } from "@/lib/api/me";
+import { Typography } from "@mui/material";
 
 export default function MembershipNav({
   children,
@@ -28,6 +29,7 @@ export default function MembershipNav({
 
   return (
     <>
+      <Typography variant="h3">Your Membership</Typography>
       <NavTabs
         links={[
           {

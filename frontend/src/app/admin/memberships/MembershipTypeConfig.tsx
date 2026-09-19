@@ -130,7 +130,7 @@ function EditMemberTypeDialog({
       <DialogTitle>Configure Member Type</DialogTitle>
       <DialogContent dividers={true}>
         <Errors errors={errors} setErrors={setErrors} />
-        <form id="provider-form" action={handleSubmit}>
+        <form id="member-type-form" action={handleSubmit}>
           <Stack spacing={1}>
             <TextField
               required
@@ -163,7 +163,7 @@ function EditMemberTypeDialog({
           variant="contained"
           disabled={!readyToSubmit}
           type={"submit"}
-          form="provider-form"
+          form="member-type-form"
         >
           {memberType === "new" ? "Create" : "Save"}
         </Button>
