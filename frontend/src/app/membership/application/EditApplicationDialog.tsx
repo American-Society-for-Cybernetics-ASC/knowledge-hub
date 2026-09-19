@@ -46,7 +46,7 @@ export default function EditApplicationDialog({
 
   return (
     <Dialog open={true} onClose={onClose}>
-      <DialogTitle>Submit Membership Application</DialogTitle>
+      <DialogTitle>Edit Membership Application</DialogTitle>
       <DialogContent>
         <form id="application-form" action={handleSubmit}>
           <Stack spacing={1}>

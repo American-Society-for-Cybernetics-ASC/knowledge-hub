@@ -88,7 +88,7 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id = mapped_column(UUID, primary_key=True, index=True, default=uuid.uuid4)
-    user_id = mapped_column(Integer, ForeignKey(Member.auth_user_id), nullable=False)
+    user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"), nullable=False)
     time = mapped_column(TZDateTime, nullable=False, server_default=func.now())
     amount = mapped_column(Integer, nullable=False)
     currency = mapped_column(String, nullable=False)

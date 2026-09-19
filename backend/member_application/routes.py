@@ -8,6 +8,7 @@ from member_application.model import MembershipApplication
 from utils import BaseModel
 from database.types import ApplicationStatus, PermissionCategory
 from member_application.module import (
+    ApplicationCompleteError,
     MemberApplicationModule,
     ApplicationNotFoundError,
     ApplicationNotOwnedError,
@@ -106,6 +107,8 @@ def revise_application(
         raise HTTPException(status_code=404, detail=str(e))
     except ApplicationNotOwnedError as e:
         raise HTTPException(status_code=403, detail=str(e))
+    except ApplicationCompleteError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @member_application_router.get("/{application_id}")

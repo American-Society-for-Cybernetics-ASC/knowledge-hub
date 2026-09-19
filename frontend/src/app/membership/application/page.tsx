@@ -108,12 +108,13 @@ function ApplicationTable({
                 <ApplicationStatusChip status={application.status} />
               </TableCell>
               <TableCell>
-                <Button
+                {(application.status === "pending" || application.status === "revision_required") && (<Button
                   title="Revise application"
                   onClick={() => edit(application)}
                 >
                   <Settings />
-                </Button>
+                </Button>)
+                }
               </TableCell>
               <TableCell>
                 {memberData !== undefined &&
@@ -154,7 +155,7 @@ function ActionButton({
       })
         .then((payment) => router.push(`/pay/${payment.id}`))
         .catch((error) => {
-          addError(error);
+          addError(error.message);
         });
     }
 
@@ -178,7 +179,7 @@ function ActionButton({
         router.push(`/membership`);
   })
       .catch((error) => {
-        addError(error);
+        addError(error.message);
       });
   }
 

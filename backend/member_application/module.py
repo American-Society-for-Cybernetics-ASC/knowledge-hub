@@ -20,6 +20,11 @@ class ApplicationNotOwnedError(Exception):
 
     pass
 
+class ApplicationCompleteError(Exception):
+    """raised when a user tries to edit a completed application"""
+
+    pass
+
 
 class MemberApplicationModule:
     def get_users_applications(self, user_id: int) -> list[MembershipApplication]:
@@ -96,6 +101,9 @@ class MemberApplicationModule:
 
             if application.auth_user_id != auth_user_id:
                 raise ApplicationNotOwnedError("You do not own this application")
+
+            if application.status not in [ApplicationStatus.PENDING, ApplicationStatus.REVISION_REQUIRED]:
+                raise ApplicationCompleteError(f"This application is not in a state to be edited.")
 
             application.content = content
             application.status = ApplicationStatus.PENDING
