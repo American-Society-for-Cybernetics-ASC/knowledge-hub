@@ -20,6 +20,7 @@ from member_application.routes import member_application_router
 from payments.routes import payments_router
 from audit_log.routes import audit_router
 from members.model import ProfileContent, ProfileIdentity
+from member_application.routes import member_application_router
 
 if SETTINGS.local_deployment and not SETTINGS.testing:
     with database.get_session() as session:
@@ -83,3 +84,4 @@ app.include_router(member_matching_router)
 app.include_router(member_application_router)
 app.include_router(payments_router)
 app.include_router(audit_router)
+app.include_router(member_application_router)

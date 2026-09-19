@@ -62,3 +62,4 @@ Thumbs.db
 .venv
 .env.*
 !.env.example
+.env*
