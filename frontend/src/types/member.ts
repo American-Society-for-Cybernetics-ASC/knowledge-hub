@@ -2,7 +2,7 @@
  * Types for the authenticated member profile API.
  */
 
-export type MemberStatus = "Current" | "Expired";
+import { MemberStatus } from "./membership";
 
 export interface ProfileIdentity {
   display_name: string | null;

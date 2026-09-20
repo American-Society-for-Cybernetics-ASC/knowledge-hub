@@ -1,5 +1,5 @@
+import { TransactionData } from "@/types/payments";
 import { backendFetch } from "./client";
-import { TransactionData } from "@/types/billing";
 
 export interface ReadTransaction {
   id: string;
