@@ -60,5 +60,5 @@ Thumbs.db
 .env
 .env.local
 .venv
-.env.*
 !.env.example
+.env*

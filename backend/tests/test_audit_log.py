@@ -19,7 +19,7 @@ def test_permissions(test_server: TestClient, mock_get_session: Callable[[], Ses
         )
         session.get_one(model.AuthUser, 0).permissions = Permissions(
             tier=PermissionTier.adminstrator
-        ).model_dump_json()
+        ).model_dump(mode="json")
         session.commit()
 
     response = test_server.get("/audit_log")
@@ -31,7 +31,7 @@ def test_permissions(test_server: TestClient, mock_get_session: Callable[[], Ses
     with mock_get_session() as session:
         session.get_one(model.AuthUser, 0).permissions = Permissions(
             children={"mail": Permissions(tier=PermissionTier.manager)}
-        ).model_dump_json()
+        ).model_dump(mode="json")
         session.commit()
 
     response = test_server.get("/audit_log")
@@ -131,7 +131,9 @@ def test_category_queries(
 
     # You can't query a category that you don't have permission for
     with mock_get_session() as session:
-        session.get_one(model.AuthUser, 0).permissions = Permissions().model_dump_json()
+        session.get_one(model.AuthUser, 0).permissions = Permissions().model_dump(
+            mode="json"
+        )
         session.commit()
 
     response = test_server.get(

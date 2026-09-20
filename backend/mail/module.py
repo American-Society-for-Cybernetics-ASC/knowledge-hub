@@ -37,7 +37,9 @@ class MailModule:
 
         # Failed to send: add it to the failed email table.
         with database.get_session() as session:
-            session.add(model.FailedEmailTable(email=mail.model_dump(), error=error))
+            session.add(
+                model.FailedEmailTable(email=mail.model_dump(mode="json"), error=error)
+            )
             session.commit()
 
 
