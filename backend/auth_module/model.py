@@ -1,6 +1,7 @@
 from utils import BaseModel
 from enum import Enum
 from typing import Optional
+from database import model as dbmodel
 
 
 class PermissionTier(Enum):

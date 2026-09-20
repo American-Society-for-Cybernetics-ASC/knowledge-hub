@@ -11,7 +11,7 @@ import {
   TableHead,
   TableRow,
   Typography,
-  Box
+  Box,
 } from "@mui/material";
 import { useState } from "react";
 import useSWR from "swr";
@@ -38,11 +38,13 @@ export default function Page() {
 
   return (
     <>
-    <Typography variant={"h5"}>Payments</Typography>
-    {body}
-    <Box sx = {{ maxWidth: 700, display: "flex", flexDirection: "column", gap: 4 }}>
-        <PaymentLog/>
-    </Box>
+      <Typography variant={"h5"}>Payments</Typography>
+      {body}
+      <Box
+        sx={{ maxWidth: 700, display: "flex", flexDirection: "column", gap: 4 }}
+      >
+        <PaymentLog />
+      </Box>
     </>
   );
 }
@@ -50,8 +52,8 @@ export default function Page() {
 function ConfigForm(props: { config: PaymentsConfig }) {
   const [config, setConfig] = useState(props.config);
   const [dirtyConfig, setDirtyConfig] = useState<Partial<PaymentsConfig>>({});
-  const [providerModalIndex, setProviderModalIndex] = useState<
-    number | undefined
+  const [providerModalKey, setProviderModalKey] = useState<
+    string | "new" | undefined
   >(undefined);
 
   const submitEvent = () => {
@@ -64,27 +66,25 @@ function ConfigForm(props: { config: PaymentsConfig }) {
     });
   };
 
-const currentConfig = { ...config, ...dirtyConfig };
+  const currentConfig = { ...config, ...dirtyConfig };
 
   return (
     <>
-      {providerModalIndex !== undefined && (
+      {providerModalKey !== undefined && (
         <PaymentOptionDialog
-          option={currentConfig.payment_options[providerModalIndex]}
+          option={currentConfig.payment_options[providerModalKey]}
           onSubmit={(provider) => {
-            const newPaymentOptions = currentConfig.payment_options.toSpliced(
-              providerModalIndex,
-              1,
-              provider,
-            );
             setDirtyConfig({
               ...dirtyConfig,
-              payment_options: newPaymentOptions,
+              payment_options: {
+                ...currentConfig.payment_options,
+                [providerModalKey]: provider,
+              },
             });
-            setProviderModalIndex(undefined);
+            setProviderModalKey(undefined);
           }}
           isOpen
-          onClose={() => setProviderModalIndex(undefined)}
+          onClose={() => setProviderModalKey(undefined)}
         />
       )}
       <Typography variant={"h5"}>Config</Typography>
@@ -95,9 +95,7 @@ const currentConfig = { ...config, ...dirtyConfig };
             <Button
               variant="contained"
               size="small"
-              onClick={() =>
-                setProviderModalIndex(currentConfig.payment_options.length)
-              }
+              onClick={() => setProviderModalKey("new")}
             >
               <Add />
             </Button>
@@ -114,18 +112,20 @@ const currentConfig = { ...config, ...dirtyConfig };
                 </TableRow>
               </TableHead>
               <TableBody>
-                {currentConfig.payment_options.map((option, i) => (
-                  <TableRow key={`payment-option-${i}`}>
-                    <TableCell>{option.name}</TableCell>
-                    <TableCell>{option.description}</TableCell>
-                    <TableCell>{option.provider.provider_type}</TableCell>
-                    <TableCell>
-                      <Button onClick={() => setProviderModalIndex(i)}>
-                        <Settings />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {Object.entries(currentConfig.payment_options).map(
+                  ([key, option]) => (
+                    <TableRow key={`payment-option-${key}`}>
+                      <TableCell>{option.name}</TableCell>
+                      <TableCell>{option.description}</TableCell>
+                      <TableCell>{option.provider.service_name}</TableCell>
+                      <TableCell>
+                        <Button onClick={() => setProviderModalKey(key)}>
+                          <Settings />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ),
+                )}
               </TableBody>
             </Table>
           </Grid>

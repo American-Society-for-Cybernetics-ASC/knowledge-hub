@@ -36,7 +36,7 @@ class Member(Base):
 
     profile = relationship("Profile", back_populates="member", uselist=False)
     member_type: Relationship[MemberType | None] = relationship(
-        "MemberType", uselist=False
+        "MemberType", uselist=False, lazy="joined"
     )
     mailing_list_memberships = relationship(
         "MailingListMember", back_populates="member"
@@ -74,8 +74,8 @@ class Profile(Base):
         Integer, ForeignKey("members.auth_user_id"), primary_key=True
     )
 
-    tags = mapped_column(JSON)
-    content = mapped_column(JSON)
+    tags: Mapped[dict | None] = mapped_column(JSON)
+    content: Mapped[dict | None] = mapped_column(JSON)
 
     # Members can opt out of matching
     matching_opt_out = mapped_column(Boolean, nullable=False, default=False)
@@ -92,7 +92,7 @@ class Payment(Base):
     amount = mapped_column(Integer, nullable=False)
     currency = mapped_column(String, nullable=False)
     status: Mapped[PaymentStatus] = mapped_column(String, nullable=False)
-    product = mapped_column(JSON, nullable=False)
+    product: Mapped[dict] = mapped_column(JSON, nullable=False)
 
     transactions = relationship("Transaction", back_populates="payment")
 
@@ -102,7 +102,7 @@ class Transaction(Base):
 
     id = mapped_column(UUID, primary_key=True, index=True, default=uuid.uuid4)
     payment_id = mapped_column(UUID, ForeignKey(Payment.id), nullable=False)
-    data = mapped_column(JSON, nullable=False)
+    data: Mapped[dict] = mapped_column(JSON, nullable=False)
     last_known_status: Mapped[TransactionStatus] = mapped_column(
         String, nullable=False, default=TransactionStatus.PENDING
     )
@@ -161,7 +161,7 @@ class AuthUser(Base):
 
     name = mapped_column(String)
     email = mapped_column(String, unique=True, index=True, nullable=False)
-    permissions = mapped_column(JSON)
+    permissions: Mapped[dict | None] = mapped_column(JSON)
 
     created_at = mapped_column(TZDateTime)
     updated_at = mapped_column(TZDateTime)
@@ -192,7 +192,7 @@ class Module(Base):
     __tablename__ = "modules"
 
     module_name = mapped_column(String, primary_key=True, index=True)
-    config = mapped_column(JSON)
+    config: Mapped[dict | None] = mapped_column(JSON)
 
 
 class MailingListMember(Base):
@@ -222,7 +222,7 @@ class CronJobTable(Base):
     enabled = mapped_column(Boolean, nullable=False)
     last_executed = mapped_column(TZDateTime, nullable=False)
     period = mapped_column(Integer, nullable=False)
-    job = mapped_column(JSON, nullable=False)
+    job: Mapped[dict] = mapped_column(JSON, nullable=False)
 
 
 class FailedEmailTable(Base):
@@ -231,7 +231,7 @@ class FailedEmailTable(Base):
     id = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
     last_sent = mapped_column(TZDateTime, server_default=func.now())
     retries = mapped_column(Integer, default=0)
-    email = mapped_column(JSON)
+    email: Mapped[dict | None] = mapped_column(JSON)
     error = mapped_column(String, nullable=True)
 
 
@@ -283,4 +283,4 @@ class EmailTemplate(Base):
     name = mapped_column(String, primary_key=True, index=True)
     subject = mapped_column(String, nullable=False)
     body = mapped_column(String, nullable=False)
-    variables = mapped_column(JSON, nullable=False)
+    variables: Mapped[dict] = mapped_column(JSON, nullable=False)
