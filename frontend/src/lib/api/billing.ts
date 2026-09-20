@@ -1,11 +1,5 @@
-import { TransactionData } from "@/types/payments";
+import { ReadTransaction } from "@/types/payments";
 import { backendFetch } from "./client";
-
-export interface ReadTransaction {
-  id: string;
-  payment_id: string;
-  data: TransactionData;
-}
 
 export async function createTransaction(
   paymentId: string,

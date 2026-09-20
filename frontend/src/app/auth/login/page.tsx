@@ -25,7 +25,7 @@ export default function LoginPage() {
         sessionStorage.setItem("challenge_token", result.challenge_token);
         router.push("/auth/verify-otp");
       } else {
-        router.push("/dashboard");
+        router.push("/");
       }
     } catch (err: unknown) {
       if (err instanceof Error) {

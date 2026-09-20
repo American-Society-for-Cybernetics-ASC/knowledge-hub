@@ -44,7 +44,7 @@ export default function EditApplicationDialog({
       body: JSON.stringify(reviseApplication),
     })
       .then(() => onSubmit())
-      .catch((error) => addError(error.message));
+      .catch(addError);
   }
 
   return (

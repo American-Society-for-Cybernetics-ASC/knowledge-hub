@@ -17,6 +17,13 @@ export interface PaymentOption {
   provider: PaymentProvider;
 }
 
+export interface ReadPaymentOption {
+  id: string;
+  name: string;
+  description: string;
+  service_name: PaymentProvider["service_name"];
+}
+
 export interface PaymentsConfig {
   payment_options: {
     [uuid: string]: PaymentOption;
@@ -64,3 +71,14 @@ export interface MockTransaction {
 }
 
 export type TransactionData = StripeTransaction | MockTransaction;
+
+export interface ReadTransaction {
+  id: string;
+  payment_id: string;
+  data: TransactionData;
+}
+
+export interface CreateTransaction {
+  provider_id: string;
+  payment_id: string;
+}

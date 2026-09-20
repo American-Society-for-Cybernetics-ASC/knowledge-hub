@@ -30,7 +30,6 @@ dev = [
 ]
 
 [tool.mypy]
-disable_error_code = "empty-body" # This allows our dummy methods
 explicit_package_bases=true
 
 [[tool.mypy.overrides]]

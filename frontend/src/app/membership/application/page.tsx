@@ -155,10 +155,8 @@ function ActionButton({
         method: "POST",
         body: JSON.stringify(purchaseMembership),
       })
-        .then((payment) => router.push(`/pay/${payment.id}`))
-        .catch((error) => {
-          addError(error.message);
-        });
+        .then((payment) => router.push(`/billing/pay/${payment.id}`))
+        .catch(addError);
     }
 
     return (
@@ -180,9 +178,7 @@ function ActionButton({
         mutate("/membership");
         router.push(`/membership`);
       })
-      .catch((error) => {
-        addError(error.message);
-      });
+      .catch(addError);
   }
 
   return (
