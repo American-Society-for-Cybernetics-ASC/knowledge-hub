@@ -4,7 +4,7 @@ from .model import EmailTemplateData, EmailTemplateUpdate
 
 
 # Default templates
-DEFAULT_TEMPLATES: list[EmailTemplateData] = [
+TEMPLATES: list[EmailTemplateData] = [
     EmailTemplateData(
         name="new_member_joins",
         subject="Welcome to ASC, {{name}}!",
@@ -34,9 +34,9 @@ DEFAULT_TEMPLATES: list[EmailTemplateData] = [
 
 class EmailTemplatesModule:
     def seed_defaults(self):
-        """Seed the default templates if the do not exist."""
+        """Seed the default templates if they do not exist."""
         with database.get_session() as session:
-            for template in DEFAULT_TEMPLATES:
+            for template in TEMPLATES:
                 existing = session.get(model.EmailTemplate, template.name)
                 if not existing:
                     session.add(
@@ -107,6 +107,7 @@ class EmailTemplatesModule:
         subject = template.subject
         body = template.body
 
+        # TODO: Fix minor attack vector of unintended substitution with users naming themselves {{date}} or other template variables.
         for key, value in variables.items():
             subject = subject.replace(f"{{{{{key}}}}}", value)
             body = body.replace(f"{{{{{key}}}}}", value)
