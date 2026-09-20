@@ -33,7 +33,7 @@ class MembersModule:
 
         return MemberProfile(
             member_id=member.auth_user_id,
-            status=MemberStatus.calc_expiry(member.membership_expires),
+            status=MemberStatus.calc_expiry(member.due_date),
             content=content,
             tags=tags,
         )
@@ -80,7 +80,7 @@ class MembersModule:
                 select(database_model.Member)
                 .join(database_model.Profile)
                 .where(
-                    database_model.Member.membership_expires 
+                    database_model.Member.due_date 
                     > datetime.now(timezone.utc)
                 )
             ).all()

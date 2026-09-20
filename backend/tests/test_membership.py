@@ -3,19 +3,10 @@ from uuid import UUID
 
 from fastapi.testclient import TestClient
 import pytest
+
+from database.types import ApplicationStatus
 from .conftest import TEST_USER_ID
-from member_application.model import ApplicationStatus
 from database import model as dbmodel
-
-
-@pytest.fixture()
-def mock_member_type(mock_get_session) -> UUID:
-    with mock_get_session() as session:
-        member_type = dbmodel.MemberType(name="ExampleType", price=10_000)
-        session.add(member_type)
-        session.commit()
-        session.refresh(member_type)
-        return member_type.id
 
 
 @pytest.fixture()
@@ -38,7 +29,7 @@ def mock_member(mock_get_session) -> int:
     with mock_get_session() as session:
         member = dbmodel.Member(
             auth_user_id=TEST_USER_ID,
-            membership_expires=datetime.datetime.now(datetime.timezone.utc)
+            due_date=datetime.datetime.now(datetime.timezone.utc)
             + datetime.timedelta(days=10),
             cancelled=False,
             member_type_id=None,
@@ -54,7 +45,7 @@ def test_full_cycle(
 ):
     response = test_server.get("/membership")
     assert response.status_code == 200
-    assert response.json() == None  # Not a member
+    assert response.json() is None  # Not a member
 
     response = test_server.post(
         "/membership/purchase", json={"application_id": mock_application}
@@ -117,7 +108,7 @@ def test_renew(test_server: TestClient, mock_member, mock_application, mock_prov
     response = test_server.get("/membership")
     assert response.status_code == 200
     assert response.json()["member_type"] is None
-    current_membership_duration = response.json()["membership_expires"]
+    current_membership_duration = response.json()["due_date"]
 
     # Not currently renewable
     response = test_server.post("/membership/renew")
@@ -148,4 +139,4 @@ def test_renew(test_server: TestClient, mock_member, mock_application, mock_prov
 
     response = test_server.get("/membership")
     assert response.status_code == 200
-    assert response.json()["membership_expires"] > current_membership_duration
+    assert response.json()["due_date"] > current_membership_duration

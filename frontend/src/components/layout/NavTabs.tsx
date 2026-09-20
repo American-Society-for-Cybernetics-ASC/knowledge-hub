@@ -1,35 +1,39 @@
 "Use Client";
 
-import { Link, Tab, Tabs } from "@mui/material";
+import { Link, Tab, TabProps, Tabs } from "@mui/material";
 import { usePathname } from "next/navigation";
 import { JSX } from "react";
 
+export type LinkProps = {
+  label: string;
+  href: string;
+} & TabProps;
+
 export interface NavTabsProps {
-    links: {
-        label: string;
-        href: string;
-    }[];
+  links: LinkProps[];
 }
 
-function LinkTab(props: { label: string; href: string }): JSX.Element {
-    return (
-        <Tab
-            value={props.href}
-            component={Link}
-            label={props.label}
-            href={props.href}
-            aria-current={usePathname() === props.href && "page"}
-        />
-    );
+function LinkTab({ label, href, ...props }: LinkProps): JSX.Element {
+  return (
+    <Tab
+      value={href}
+      component={Link}
+      label={label}
+      href={href}
+      aria-current={usePathname() === href && "page"}
+      style={{ pointerEvents: "auto" }} // Show "title" on disabled links
+      {...props}
+    />
+  );
 }
 
 export function NavTabs({ links }: NavTabsProps) {
-    //Prerendering the children is necessary: if the <Tabs> component renders first, it will get confused because its value doesn't match any of its children yet.
-    const tabs = links.map((link) => LinkTab(link));
+  //Prerendering the children is necessary: if the <Tabs> component renders first, it will get confused because its value doesn't match any of its children yet.
+  const tabs = links.map((link) => LinkTab(link));
 
-    return (
-        <Tabs value={usePathname()} role="navigation">
-            {tabs}
-        </Tabs>
-    );
+  return (
+    <Tabs value={usePathname()} role="navigation">
+      {tabs}
+    </Tabs>
+  );
 }

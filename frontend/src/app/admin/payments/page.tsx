@@ -11,7 +11,8 @@ import {
   TableHead,
   TableRow,
   Typography,
-  Box,
+  Skeleton,
+  Alert,
 } from "@mui/material";
 import { useState } from "react";
 import useSWR from "swr";
@@ -20,33 +21,34 @@ import { Add, Settings } from "@mui/icons-material";
 import PaymentLog from "@/components/features/billing/PaymentLog";
 
 export default function Page() {
+  return (
+    <>
+      <Typography variant={"h4"}>Payments</Typography>
+
+      <Typography variant={"h5"}>Config</Typography>
+      <FormSection />
+
+      <Typography variant={"h5"}>Payment Log</Typography>
+      <PaymentLog />
+    </>
+  );
+}
+
+function FormSection() {
   const { data, error, isLoading } = useSWR<PaymentsConfig>(
     "/payments/config",
     backendFetch,
   );
 
-  let body;
   if (isLoading) {
-    body = <p>Loading</p>;
+    return <Skeleton sx={{ minHeight: 100 }} />;
   } else if (error) {
-    body = <p>Error: {error.toString()}</p>;
+    return <Alert severity="error">{error.message}</Alert>;
   } else if (!data) {
-    body = <p>Error: No Data</p>;
+    return <Alert severity="error">Error: No Data</Alert>;
   } else {
-    body = <ConfigForm config={data} />;
+    return <ConfigForm config={data} />;
   }
-
-  return (
-    <>
-      <Typography variant={"h5"}>Payments</Typography>
-      {body}
-      <Box
-        sx={{ maxWidth: 700, display: "flex", flexDirection: "column", gap: 4 }}
-      >
-        <PaymentLog />
-      </Box>
-    </>
-  );
 }
 
 function ConfigForm(props: { config: PaymentsConfig }) {
@@ -87,7 +89,6 @@ function ConfigForm(props: { config: PaymentsConfig }) {
           onClose={() => setProviderModalKey(undefined)}
         />
       )}
-      <Typography variant={"h5"}>Config</Typography>
       <form action={submitEvent}>
         <Grid container sx={{ width: "50%" }}>
           <Grid container direction={"row"} size={12} spacing={5}>
@@ -119,7 +120,10 @@ function ConfigForm(props: { config: PaymentsConfig }) {
                       <TableCell>{option.description}</TableCell>
                       <TableCell>{option.provider.service_name}</TableCell>
                       <TableCell>
-                        <Button onClick={() => setProviderModalKey(key)}>
+                        <Button
+                          title={`Edit payment option: ${option.name}`}
+                          onClick={() => setProviderModalKey(key)}
+                        >
                           <Settings />
                         </Button>
                       </TableCell>
@@ -139,6 +143,7 @@ function ConfigForm(props: { config: PaymentsConfig }) {
             spacing={5}
           >
             <Button
+              title="Reset unsaved changes"
               color="error"
               variant="contained"
               disabled={Object.keys(dirtyConfig).length === 0}
@@ -147,6 +152,7 @@ function ConfigForm(props: { config: PaymentsConfig }) {
               Reset
             </Button>
             <Button
+              title="Submit saved changes"
               variant="contained"
               disabled={Object.keys(dirtyConfig).length === 0}
               type="submit"

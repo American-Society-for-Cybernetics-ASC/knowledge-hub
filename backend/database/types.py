@@ -16,13 +16,21 @@ class PaymentStatus(str, Enum):
     FAILED = "failed"
 
 
-class AuditPermissionCategory(str, Enum):
-    mail = "mail"
-    payments = "payments"
-    auth = "auth"
+class PermissionCategory(str, Enum):
+    MAIL = "mail"
+    PAYMENT = "payment"
+    AUTH = "auth"
+    MEMBERSHIP = "membership"
+    MAILING_LISTS = "mailing_lists"
 
 
-# From
+class ApplicationStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    DENIED = "denied"
+    REVISION_REQUIRED = "revision_required"
+
+
 class TZDateTime(TypeDecorator):
     impl = DateTime
     cache_ok = True

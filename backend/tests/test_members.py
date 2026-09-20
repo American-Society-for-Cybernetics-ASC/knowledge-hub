@@ -27,7 +27,7 @@ def create_member(
 
         member = model.Member(
             auth_user=auth_user,
-            membership_expires=datetime.datetime.now(datetime.timezone.utc)
+            due_date=datetime.datetime.now(datetime.timezone.utc)
             + datetime.timedelta(days=100),
             cancelled=False,
         )
@@ -206,7 +206,7 @@ def test_get_member_profile_returns_expired_status(
 
     with mock_get_session() as session:
         expired_member = session.get(model.Member, expired_member_id)
-        expired_member.membership_expires = (
+        expired_member.due_date = (
             datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)
         )
         session.commit()

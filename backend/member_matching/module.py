@@ -159,7 +159,7 @@ class MemberMatchingModule:
                 .where(
                     model.Member.auth_user_id != member_id,
                     model.Profile.matching_opt_out.is_(False),
-                    model.Member.membership_expires > datetime.now(timezone.utc),
+                    model.Member.due_date > datetime.now(timezone.utc),
                 )
             ).all()
 

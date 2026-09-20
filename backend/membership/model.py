@@ -7,7 +7,9 @@ from database import model as dbmodel
 
 
 class MemberStatus(str, Enum):
+    PENDING = "Pending"
     CURRENT = "Current"
+    OVERDUE = "Overdue"
     EXPIRED = "Expired"
 
     @staticmethod
@@ -21,19 +23,19 @@ class MemberStatus(str, Enum):
 
 class Member(BaseModel):
     auth_user_id: int
-    membership_expires: datetime
+    due_date: datetime
     member_type: MemberType | None
     cancelled: bool
 
     @property
     def status(self) -> MemberStatus:
-        return MemberStatus.calc_expiry(self.membership_expires)
+        return MemberStatus.calc_expiry(self.due_date)
 
     @staticmethod
     def from_db_model(model: dbmodel.Member) -> Member:
         return Member(
             auth_user_id=model.auth_user_id,
-            membership_expires=model.membership_expires,
+            due_date=model.due_date,
             member_type=MemberType.from_db_model(model.member_type)
             if model.member_type is not None
             else None,
@@ -43,7 +45,7 @@ class Member(BaseModel):
 
 class ReadMember(BaseModel):
     user_id: int
-    membership_expires: datetime
+    due_date: datetime
     member_type: str | None
     status: MemberStatus
     cancelled: bool
@@ -52,7 +54,7 @@ class ReadMember(BaseModel):
     def from_member(member: Member) -> ReadMember:
         return ReadMember(
             user_id=member.auth_user_id,
-            membership_expires=member.membership_expires,
+            due_date=member.due_date,
             member_type=member.member_type.name
             if member.member_type is not None
             else None,

@@ -11,11 +11,12 @@ from sqlalchemy import (
     CheckConstraint,
     UniqueConstraint,
 )
-from sqlalchemy.orm import Mapped, Relationship, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from .types import (
-    AuditPermissionCategory,
+    ApplicationStatus,
+    PermissionCategory,
     PaymentStatus,
     TransactionStatus,
     TZDateTime,
@@ -30,12 +31,12 @@ class Member(Base):
     auth_user_id = mapped_column(
         Integer, ForeignKey("auth_users.user_id"), primary_key=True
     )
-    membership_expires: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)
+    due_date: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)
     member_type_id = mapped_column(UUID, ForeignKey("member_types.id"), nullable=True)
     cancelled = mapped_column(Boolean, nullable=False, default=False)
 
     profile = relationship("Profile", back_populates="member", uselist=False)
-    member_type: Relationship[MemberType | None] = relationship(
+    member_type: Mapped[MemberType | None] = relationship(
         "MemberType", uselist=False, lazy="joined"
     )
     mailing_list_memberships = relationship(
@@ -52,7 +53,7 @@ class Member(Base):
         back_populates="suggested_member",
     )
 
-    auth_user = relationship("AuthUser")
+    auth_user: Mapped[AuthUser] = relationship("AuthUser")
 
 
 class MailingList(Base):
@@ -74,7 +75,7 @@ class Profile(Base):
         Integer, ForeignKey("members.auth_user_id"), primary_key=True
     )
 
-    tags: Mapped[dict | None] = mapped_column(JSON)
+    tags: Mapped[list | None] = mapped_column(JSON)
     content: Mapped[dict | None] = mapped_column(JSON)
 
     # Members can opt out of matching
@@ -87,7 +88,7 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id = mapped_column(UUID, primary_key=True, index=True, default=uuid.uuid4)
-    user_id = mapped_column(Integer, ForeignKey(Member.auth_user_id), nullable=False)
+    user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"), nullable=False)
     time = mapped_column(TZDateTime, nullable=False, server_default=func.now())
     amount = mapped_column(Integer, nullable=False)
     currency = mapped_column(String, nullable=False)
@@ -181,7 +182,7 @@ class AuditLog(Base):
     __tablename__ = "auth_logs"
 
     auth_log_id = mapped_column(Integer, primary_key=True, index=True)
-    permission_category: Mapped[AuditPermissionCategory] = mapped_column(
+    permission_category: Mapped[PermissionCategory] = mapped_column(
         String, nullable=False
     )
     log = mapped_column(String, nullable=False)
@@ -244,14 +245,15 @@ class MembershipApplication(Base):
         UUID, ForeignKey("member_types.id"), nullable=True
     )
     """None for out-of-date membership types"""
-    status = mapped_column(
+    status: Mapped[ApplicationStatus] = mapped_column(
         String, nullable=False
     )  # pending, approved, denied, revision_requested
     submitted_at = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
+    last_edited = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
     content = mapped_column(String, nullable=False)  # the application form's fields
 
-    member_type: Relationship[MemberType | None] = relationship(
-        "MemberType", foreign_keys=[member_type_id]
+    member_type: Mapped[MemberType | None] = relationship(
+        "MemberType", foreign_keys=[member_type_id], lazy="joined"
     )
 
 
@@ -283,4 +285,4 @@ class EmailTemplate(Base):
     name = mapped_column(String, primary_key=True, index=True)
     subject = mapped_column(String, nullable=False)
     body = mapped_column(String, nullable=False)
-    variables: Mapped[dict] = mapped_column(JSON, nullable=False)
+    variables: Mapped[list[str]] = mapped_column(JSON, nullable=False)

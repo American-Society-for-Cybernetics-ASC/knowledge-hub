@@ -1,28 +1,32 @@
-from enum import Enum
-from uuid import UUID
-from utils import BaseModel
 from datetime import datetime
 
-
-class ApplicationStatus(str, Enum):
-    PENDING = "pending"
-    APPROVED = "approved"
-    DENIED = "denied"
-    REVISION_REQUIRED = "revision_required"
+from membership.model import MemberType
+from database.types import ApplicationStatus
+from database import model as dbmodel
+from utils import BaseModel
 
 
-class MemberApplication(BaseModel):
+class MembershipApplication(BaseModel):
     application_id: int
     auth_user_id: int
-    member_type_id: UUID | None
+    member_type: MemberType | None
     status: ApplicationStatus
-    submitted_at: datetime | None = None
-    content: str | None = None
-
-
-class SubmitApplication(BaseModel):
+    submitted_at: datetime
+    last_edited: datetime
     content: str
 
-
-class ReviseApplication(BaseModel):
-    content: str
+    @staticmethod
+    def from_db_model(
+        model: dbmodel.MembershipApplication,
+    ) -> MembershipApplication:
+        return MembershipApplication(
+            application_id=model.application_id,
+            auth_user_id=model.auth_user_id,
+            member_type=MemberType.from_db_model(model.member_type)
+            if model.member_type is not None
+            else None,
+            status=model.status,
+            submitted_at=model.submitted_at,
+            last_edited=model.last_edited,
+            content=model.content,
+        )

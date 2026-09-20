@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives import serialization
 import pyotp
 
 from audit_log.module import AuditLogModule
-from database.types import AuditPermissionCategory
+from database.types import PermissionCategory
 import database
 from database import model
 from settings import SETTINGS
@@ -85,7 +85,7 @@ class AuthModule:
             session.refresh(new_user)
 
             AuditLogModule().post_audit(
-                AuditPermissionCategory.auth, f"An account was registered for {email}"
+                PermissionCategory.AUTH, f"An account was registered for {email}"
             )
 
             # Generate QR code URI for authenticator app
@@ -276,7 +276,9 @@ class AuthModule:
 
             return token
 
-    def change_password(self, user_id: int, current_password: str, new_password: str) -> None:
+    def change_password(
+        self, user_id: int, current_password: str, new_password: str
+    ) -> None:
         """
         Changes the user's password.
 

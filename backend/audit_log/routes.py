@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from audit_log.module import AuditLogModule
-from audit_log.model import AuditLog, AuditPermissionCategory
+from audit_log.model import AuditLog, PermissionCategory
 from auth_module import PermissionTier, Permissions, permissions
 
 
@@ -17,7 +17,7 @@ def get_logs(
     permissions: Annotated[Permissions, Depends(permissions)],
     after: datetime | None = None,
     before: datetime | None = None,
-    categories: list[AuditPermissionCategory] | None = Query(None, alias="category"),
+    categories: list[PermissionCategory] | None = Query(None, alias="category"),
 ) -> list[AuditLog]:
     """
     Get all logs, filtered by

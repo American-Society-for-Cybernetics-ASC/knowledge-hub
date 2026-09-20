@@ -157,3 +157,13 @@ def mock_provider(mock_get_session) -> uuid.UUID:
         )
     )
     return id
+
+
+@pytest.fixture()
+def mock_member_type(mock_get_session) -> uuid.UUID:
+    with mock_get_session() as session:
+        member_type = model.MemberType(name="ExampleType", price=10_000)
+        session.add(member_type)
+        session.commit()
+        session.refresh(member_type)
+        return member_type.id

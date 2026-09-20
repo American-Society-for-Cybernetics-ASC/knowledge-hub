@@ -30,7 +30,7 @@ def user_id(request: Request) -> int | None:
         payload = jwt.decode(token, public_key_pem, algorithms=["RS256"])
         return int(payload["sub"])
     except Exception:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+        return None
 
 
 def permissions(user_id: Annotated[int | None, Depends(user_id)]) -> Permissions:
@@ -62,7 +62,7 @@ def authorized(heirarchy: list[str], tier: PermissionTier) -> Callable:
     Usage example:
     ```python
     @app.get("")
-    def my_route(_ = Depends(authorized(["module", "subpermission"], PermissionTier.manager))):
+    def my_route(_ = Depends(authorized([PermissionCategory.<module>, "subpermission"], PermissionTier.manager))):
         ...
     ```
     """
