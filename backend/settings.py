@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # These are overridden by environment variables and the .env file.
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=(".env", "../.env.local"))
 
     local_deployment: bool = True
     """Set to True if this deployment is a local deployment.
@@ -15,6 +15,17 @@ class Settings(BaseSettings):
 
     google_username: Optional[str] = None
     google_password: Optional[str] = None
+
+    # google workspace
+    google_workspace_admin_email: Optional[str] = None
+
+    # google cloud
+    google_cloud_project_number: Optional[str] = None
+    google_workload_identity_pool: Optional[str] = None
+    google_workload_identity_provider: Optional[str] = None
+    service_account_email: Optional[str] = None
+
+    vercel_oidc_token: Optional[str] = None
 
     stripe_api_key: Optional[str] = None
     stripe_publishable_key: Optional[str] = None
