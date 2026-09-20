@@ -104,7 +104,7 @@ export default function PaymentLog() {
                 )}
                 {payments.map((p) => (
                   <TableRow key={p.id} hover>
-                    <TableCell>{formatDate(p.time)}</TableCell>
+                    <TableCell>{formatDate(p.timestamp)}</TableCell>
                     <TableCell>{productDescription(p.product)}</TableCell>
                     <TableCell align="right">
                       {formatAmount(p.amount)}

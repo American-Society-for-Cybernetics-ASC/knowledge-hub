@@ -157,7 +157,7 @@ class MemberMatchingModule:
                 select(model.Member)
                 .join(model.Profile)
                 .where(
-                    model.Member.auth_user_id != member_id,
+                    model.Member.user_id != member_id,
                     model.Profile.matching_opt_out.is_(False),
                     model.Member.due_date > datetime.now(timezone.utc),
                 )
@@ -169,12 +169,12 @@ class MemberMatchingModule:
 
             for candidate in candidates:
                 # Prevent duplicate candidates
-                if candidate.auth_user_id in processed_member_ids:
+                if candidate.user_id in processed_member_ids:
                     continue
-                processed_member_ids.add(candidate.auth_user_id)
+                processed_member_ids.add(candidate.user_id)
 
                 # Prevent dismissed candidates
-                if candidate.auth_user_id in suppressed_member_ids:
+                if candidate.user_id in suppressed_member_ids:
                     continue
 
                 if candidate.profile is None:
@@ -198,7 +198,7 @@ class MemberMatchingModule:
                 # Create the suggestion
                 suggestions.append(
                     MemberMatchingSuggestion(
-                        member_id=candidate.auth_user_id,
+                        member_id=candidate.user_id,
                         display_name=self._display_name(candidate.profile),
                         shared_tags=shared_tags,
                         score=len(shared_tags),

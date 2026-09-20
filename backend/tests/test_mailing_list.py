@@ -48,7 +48,7 @@ def create_member(get_session: Callable[[], Session]) -> int:
         session.add(member)
         session.commit()
         session.refresh(member)
-        return member.auth_user_id
+        return member.user_id
 
 
 def create_mailing_list_member(

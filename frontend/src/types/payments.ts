@@ -55,7 +55,7 @@ export type ProductTypes =
 export interface ReadPayment {
   id: string;
   user_id: number;
-  time: string;
+  timestamp: string;
   amount: number;
   currency: string;
   status: PaymentStatus;

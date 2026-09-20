@@ -38,7 +38,7 @@ class MembersModule:
         tags = ProfileUpdate.model_validate({"tags": profile.tags or []}).tags or []
 
         return MemberProfile(
-            member_id=member.auth_user_id,
+            member_id=member.user_id,
             status=MemberStatus.calc_expiry(member.due_date),
             content=content,
             tags=tags,
@@ -130,7 +130,7 @@ class MembersModule:
                     (
                         result_priority,
                         MemberSearchResult(
-                            member_id=member.auth_user_id,
+                            member_id=member.user_id,
                             display_name=display_name,
                             status=member_profile.status,
                             tags=member_profile.tags,
@@ -165,7 +165,7 @@ class MembersModule:
             return member.profile
 
         profile = database_model.Profile(
-            member_id=member.auth_user_id,
+            member_id=member.user_id,
             content=ProfileContent().model_dump(mode="json"),
             tags=[],
         )

@@ -50,7 +50,7 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         session.flush()
 
         member = dbmodel.Member(
-            auth_user_id=user.user_id,
+            user_id=user.user_id,
             member_type=member_type,
             due_date=datetime.now(timezone.utc) + timedelta(365),
         )
@@ -59,7 +59,7 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
 
         session.add(
             dbmodel.Profile(
-                member_id=member.auth_user_id,
+                member_id=member.user_id,
                 content=ProfileContent(
                     identity=ProfileIdentity(display_name="Test User"),
                 ).model_dump(mode="json"),

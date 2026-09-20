@@ -24,13 +24,17 @@ class AuditLogModule:
             )
 
             if before:
-                query = query.where(model.AuditLog.time < before)
+                query = query.where(model.AuditLog.timestamp < before)
 
             if after:
-                query = query.where(model.AuditLog.time > after)
+                query = query.where(model.AuditLog.timestamp > after)
 
             return [
-                AuditLog(category=log.permission_category, log=log.log, time=log.time)
+                AuditLog(
+                    category=log.permission_category,
+                    log=log.log,
+                    timestamp=log.timestamp,
+                )
                 for log in query
             ]
 

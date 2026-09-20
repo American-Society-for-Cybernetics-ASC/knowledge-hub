@@ -35,7 +35,7 @@ def create_member(
         session.commit()
         session.refresh(member)
 
-        return member.auth_user_id
+        return member.user_id
 
 
 def test_get_profile_creates_empty_profile(mock_get_session):

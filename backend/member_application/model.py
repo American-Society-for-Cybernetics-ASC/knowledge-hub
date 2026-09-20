@@ -8,7 +8,7 @@ from utils import BaseModel
 
 class MembershipApplication(BaseModel):
     application_id: int
-    auth_user_id: int
+    user_id: int
     member_type: MemberType | None
     status: ApplicationStatus
     submitted_at: datetime
@@ -21,7 +21,7 @@ class MembershipApplication(BaseModel):
     ) -> MembershipApplication:
         return MembershipApplication(
             application_id=model.application_id,
-            auth_user_id=model.auth_user_id,
+            user_id=model.user_id,
             member_type=MemberType.from_db_model(model.member_type)
             if model.member_type is not None
             else None,
