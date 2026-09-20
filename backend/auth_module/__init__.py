@@ -52,7 +52,7 @@ def permissions(user_id: Annotated[int | None, Depends(user_id)]) -> Permissions
     if not user or not user.permissions:
         return Permissions()
 
-    return Permissions.model_validate_json(user.permissions)
+    return Permissions.model_validate(user.permissions)
 
 
 def authorized(heirarchy: list[str], tier: PermissionTier) -> Callable:

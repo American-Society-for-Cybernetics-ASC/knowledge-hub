@@ -13,6 +13,7 @@ export default function AdminNav({ children }: { children: React.ReactNode }) {
                     { label: "Audit Log", href: "/admin/audit" },
                     { label: "Mail", href: "/admin/mail" },
                     { label: "Payments", href: "/admin/payments" },
+                    { label: "Email Templates", href: "/admin/email-templates" },
                 ]}
             />
             {children}
