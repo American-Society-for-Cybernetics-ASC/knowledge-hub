@@ -23,12 +23,12 @@ export function getTransaction(transactionId: string): Promise<ReadTransaction> 
   //   id: transactionId,
   //   payment_id: "test-payment",
   //   data: { transaction_type: "mock", amount_value: 1000 },
-  // }); Manually resolve getting a transaction for testing without auth/membership flow
+  // }); // Manually resolve getting a transaction for testing without auth/membership flow
 }
 
 export function confirmTransaction(transactionId: string): Promise<void> {
   return backendFetch<void>(`/payments/transactions/${transactionId}/confirm`, {
     method: "POST",
   })
-  // return Promise.resolve(); Manually resolve transaction confirmation for testing without auth/membership flow
+  // return Promise.resolve(); // Manually resolve transaction confirmation for testing without auth/membership flow
 }
