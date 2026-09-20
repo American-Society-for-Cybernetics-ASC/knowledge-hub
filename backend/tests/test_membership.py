@@ -45,7 +45,7 @@ def test_full_cycle(
 ):
     response = test_server.get("/membership")
     assert response.status_code == 200
-    assert response.json() == None  # Not a member
+    assert response.json() is None  # Not a member
 
     response = test_server.post(
         "/membership/purchase", json={"application_id": mock_application}

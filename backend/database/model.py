@@ -75,7 +75,7 @@ class Profile(Base):
         Integer, ForeignKey("members.auth_user_id"), primary_key=True
     )
 
-    tags: Mapped[dict | None] = mapped_column(JSON)
+    tags: Mapped[list | None] = mapped_column(JSON)
     content: Mapped[dict | None] = mapped_column(JSON)
 
     # Members can opt out of matching
@@ -285,4 +285,4 @@ class EmailTemplate(Base):
     name = mapped_column(String, primary_key=True, index=True)
     subject = mapped_column(String, nullable=False)
     body = mapped_column(String, nullable=False)
-    variables: Mapped[dict] = mapped_column(JSON, nullable=False)
+    variables: Mapped[list[str]] = mapped_column(JSON, nullable=False)

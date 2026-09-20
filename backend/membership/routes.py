@@ -11,6 +11,7 @@ from database.types import PermissionCategory
 from database import get_session, model as dbmodel
 from .exceptions import (
     AlreadyAMemberError,
+    MembershipTypeNotFoundError,
     MembershipTypeOutOfDateError,
     NotAMemberError,
 )
@@ -78,7 +79,7 @@ def update_membership(
         raise HTTPException(401, "Unauthorized")
 
     try:
-        module.update_membership_type(body.application_id, user_id)
+        module.set_members_type(body.application_id, user_id)
     except NotAMemberError:
         raise HTTPException(400, "Not a member")
 
@@ -175,20 +176,12 @@ class PostMembershipType(BaseModel):
 
 
 @membership_router.post("/member_type")
-def create_membership_type(
+def create_member_type(
     body: PostMembershipType,
+    module: MembershipModule = Depends(MembershipModule),
     _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
 ) -> MemberType:
-    with get_session() as session:
-        record = dbmodel.MemberType(
-            name=body.name,
-            price=body.price,
-        )
-        session.add(record)
-        session.commit()
-        session.flush()
-
-        return MemberType.from_db_model(record)
+    return module.create_member_type(body.name, body.price)
 
 
 class PatchMembershipType(BaseModel):
@@ -200,17 +193,12 @@ class PatchMembershipType(BaseModel):
 def patch_membership_type(
     member_type_id: UUID,
     patch: PatchMembershipType,
+    module: MembershipModule = Depends(MembershipModule),
     _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
 ) -> MemberType:
-    with get_session() as session:
-        record = session.get(dbmodel.MemberType, member_type_id)
-
-        if not record:
-            raise HTTPException(404, "Member type not found")
-
-        record.name = patch.name or record.name
-        record.price = patch.price or record.price
-        session.commit()
-        session.flush()
-
-        return MemberType.from_db_model(record)
+    try:
+        return module.update_member_type(
+            member_type_id, name=patch.name, price=patch.price
+        )
+    except MembershipTypeNotFoundError:
+        raise HTTPException(404, "Member type not found")

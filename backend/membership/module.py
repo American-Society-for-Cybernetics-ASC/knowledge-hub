@@ -5,9 +5,10 @@ from uuid import UUID
 
 from member_application.module import ApplicationNotFoundError, ApplicationNotOwnedError
 
-from .model import Member, MemberStatus
+from .model import Member, MemberType
 from .exceptions import (
     AlreadyAMemberError,
+    MembershipTypeNotFoundError,
     MembershipTypeOutOfDateError,
     NotAMemberError,
 )
@@ -89,7 +90,7 @@ class MembershipModule:
             RenewMembershipProduct(user_id=user_id, duration=MEMBERSHIP_DURATION),
         )
 
-    def update_membership_type(self, application_id: int, user_id: int):
+    def set_members_type(self, application_id: int, user_id: int):
         """
         :raises NotAMemberError:
         :raises MembershipTypeOutOfDateError:
@@ -183,3 +184,34 @@ class MembershipModule:
                 raise NotAMemberError()
             member.cancelled = False
             session.commit()
+
+    def create_member_type(self, name: str, price: int) -> MemberType:
+        with database.get_session() as session:
+            record = dbmodel.MemberType(
+                name=name,
+                price=price,
+            )
+            session.add(record)
+            session.commit()
+            session.flush()
+
+            return MemberType.from_db_model(record)
+
+    def update_member_type(
+        self, member_type_id: UUID, name: str | None = None, price: int | None = None
+    ) -> MemberType:
+        """
+        :raises MembershipTypeNotFoundError:
+        """
+        with database.get_session() as session:
+            record = session.get(dbmodel.MemberType, member_type_id)
+
+            if not record:
+                raise MembershipTypeNotFoundError()
+
+            record.name = name or record.name
+            record.price = price or record.price
+            session.commit()
+            session.flush()
+
+            return MemberType.from_db_model(record)
