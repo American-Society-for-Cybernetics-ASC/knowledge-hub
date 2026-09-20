@@ -80,7 +80,7 @@ class MembersModule:
                 select(database_model.Member)
                 .join(database_model.Profile)
                 .where(
-                    database_model.Member.membership_expires 
+                    database_model.Member.due_date 
                     > datetime.now(timezone.utc)
                 )
             ).all()
