@@ -47,14 +47,14 @@ def test_time_queries(test_server: TestClient, mock_get_session: Callable[[], Se
             model.AuditLog(
                 permission_category=PermissionCategory.PAYMENT,
                 log="1",
-                time=datetime(2020, 1, 1, tzinfo=timezone.utc),
+                timestamp=datetime(2020, 1, 1, tzinfo=timezone.utc),
             )
         )
         session.add(
             model.AuditLog(
                 permission_category=PermissionCategory.MAIL,
                 log="2",
-                time=datetime(2021, 1, 1, tzinfo=timezone.utc),
+                timestamp=datetime(2021, 1, 1, tzinfo=timezone.utc),
             )
         )
         session.commit()
@@ -104,14 +104,14 @@ def test_category_queries(
             model.AuditLog(
                 permission_category=PermissionCategory.PAYMENT,
                 log="1",
-                time=datetime(2020, 1, 1, tzinfo=timezone.utc),
+                timestamp=datetime(2020, 1, 1, tzinfo=timezone.utc),
             )
         )
         session.add(
             model.AuditLog(
                 permission_category=PermissionCategory.MAIL,
                 log="2",
-                time=datetime(2021, 1, 1, tzinfo=timezone.utc),
+                timestamp=datetime(2021, 1, 1, tzinfo=timezone.utc),
             )
         )
         session.commit()

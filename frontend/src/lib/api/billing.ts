@@ -1,11 +1,5 @@
+import { ReadTransaction } from "@/types/payments";
 import { backendFetch } from "./client";
-import { TransactionData } from "@/types/billing";
-
-export interface ReadTransaction {
-  id: string;
-  payment_id: string;
-  data: TransactionData;
-}
 
 export async function createTransaction(
   paymentId: string,
@@ -17,8 +11,12 @@ export async function createTransaction(
   });
 }
 
-export function getTransaction(transactionId: string): Promise<ReadTransaction> {
-  return backendFetch<ReadTransaction>(`/payments/transactions/${transactionId}`);
+export function getTransaction(
+  transactionId: string,
+): Promise<ReadTransaction> {
+  return backendFetch<ReadTransaction>(
+    `/payments/transactions/${transactionId}`,
+  );
   // return Promise.resolve({
   //   id: transactionId,
   //   payment_id: "test-payment",
@@ -29,6 +27,6 @@ export function getTransaction(transactionId: string): Promise<ReadTransaction> 
 export function confirmTransaction(transactionId: string): Promise<void> {
   return backendFetch<void>(`/payments/transactions/${transactionId}/confirm`, {
     method: "POST",
-  })
+  });
   // return Promise.resolve(); // Manually resolve transaction confirmation for testing without auth/membership flow
 }

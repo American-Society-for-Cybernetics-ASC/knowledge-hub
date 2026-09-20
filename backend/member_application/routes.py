@@ -35,7 +35,7 @@ class ReadMembershipApplication(BaseModel):
     ) -> ReadMembershipApplication:
         return ReadMembershipApplication(
             application_id=model.application_id,
-            user_id=model.auth_user_id,
+            user_id=model.user_id,
             member_type=model.member_type.name
             if model.member_type is not None
             else None,
@@ -68,17 +68,17 @@ class SubmitApplication(BaseModel):
 @member_application_router.post("")
 def submit_application(
     application: SubmitApplication,
-    auth_user_id: Annotated[int, Depends(user_id)],
+    user_id: Annotated[int, Depends(user_id)],
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
 ) -> ReadMembershipApplication:
     """submit a new application"""
 
-    if auth_user_id is None:
+    if user_id is None:
         raise HTTPException(status_code=401, detail="authentication required")
 
     return ReadMembershipApplication.from_model(
         module.submit_application(
-            auth_user_id, application.content, application.member_type_id
+            user_id, application.content, application.member_type_id
         )
     )
 
@@ -91,17 +91,17 @@ class ReviseApplication(BaseModel):
 def revise_application(
     application_id: int,
     application: ReviseApplication,
-    auth_user_id: Annotated[int, Depends(user_id)],
+    user_id: Annotated[int, Depends(user_id)],
     module: Annotated[MemberApplicationModule, Depends(MemberApplicationModule)],
 ) -> ReadMembershipApplication:
     """revise an existing application"""
 
-    if auth_user_id is None:
+    if user_id is None:
         raise HTTPException(status_code=401, detail="Authentication required")
 
     try:
         return ReadMembershipApplication.from_model(
-            module.revise_application(application_id, auth_user_id, application.content)
+            module.revise_application(application_id, user_id, application.content)
         )
     except ApplicationNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -121,7 +121,7 @@ def get_application(
     """get a single member application"""
     try:
         application = module.get_application(application_id)
-        if application.auth_user_id != user_id:
+        if application.user_id != user_id:
             # Moderator permission required to view other's applications
             if not permissions.includes(
                 [PermissionCategory.MEMBERSHIP], PermissionTier.moderator

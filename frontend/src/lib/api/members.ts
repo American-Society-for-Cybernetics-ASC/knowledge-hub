@@ -1,5 +1,9 @@
 import { backendFetch } from "./client";
-import type { MemberProfile, MemberSearchResult, ProfileUpdate } from "@/types/member";
+import type {
+  MemberProfile,
+  MemberSearchResult,
+  ProfileUpdate,
+} from "@/types/member";
 
 /** Loads the profile belonging to the authenticated member. */
 export async function getMyProfile(): Promise<MemberProfile> {
@@ -19,9 +23,7 @@ export async function searchMembers(
 ): Promise<MemberSearchResult[]> {
   const params = new URLSearchParams({ q: query });
 
-  return backendFetch<MemberSearchResult[]>(
-    `/members?${params.toString()}`,
-  );
+  return backendFetch<MemberSearchResult[]>(`/members?${params.toString()}`);
 }
 
 /** Applies the supplied changes to the authenticated member's profile. */

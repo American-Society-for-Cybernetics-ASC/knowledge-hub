@@ -12,7 +12,7 @@ from utils import BaseModel
 class Payment(BaseModel):
     id: UUID
     user_id: int
-    time: datetime
+    timestamp: datetime
     amount: int
     currency: str
     status: PaymentStatus
@@ -23,7 +23,7 @@ class Payment(BaseModel):
         return Payment(
             id=model.id,
             user_id=model.user_id,
-            time=model.time,
+            timestamp=model.timestamp,
             amount=model.amount,
             currency=model.currency,
             status=model.status,
@@ -36,7 +36,7 @@ class Payment(BaseModel):
 class ReadPayment(BaseModel):
     id: UUID
     user_id: int
-    time: datetime
+    timestamp: datetime
     amount: int
     currency: str
     status: PaymentStatus
@@ -47,7 +47,7 @@ class ReadPayment(BaseModel):
         return ReadPayment(
             id=payment.id,
             user_id=payment.user_id,
-            time=payment.time,
+            timestamp=payment.timestamp,
             amount=payment.amount,
             currency=payment.currency,
             status=payment.status,

@@ -50,7 +50,7 @@ class MembershipModule:
             application = session.get(dbmodel.MembershipApplication, application_id)
             if not application:
                 raise ApplicationNotFoundError()
-            if application.auth_user_id != user_id:
+            if application.user_id != user_id:
                 raise ApplicationNotOwnedError()
 
             member_type = application.member_type
@@ -103,7 +103,7 @@ class MembershipModule:
             application = session.get(dbmodel.MembershipApplication, application_id)
             if not application:
                 raise ApplicationNotFoundError()
-            if application.auth_user_id != user_id:
+            if application.user_id != user_id:
                 raise ApplicationNotOwnedError()
 
             membership_type = application.member_type
@@ -131,7 +131,7 @@ class MembershipModule:
             member_type = session.get(dbmodel.MemberType, membership_type_id)
 
             member = dbmodel.Member(
-                auth_user_id=user_id,
+                user_id=user_id,
                 due_date=datetime.now(timezone.utc) + duration,
                 member_type=member_type,
                 cancelled=False,

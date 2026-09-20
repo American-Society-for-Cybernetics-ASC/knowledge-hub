@@ -77,7 +77,7 @@ class EmailTemplatesModule:
             )
 
     def update_template(
-            self, name: str, update: EmailTemplateUpdate
+        self, name: str, update: EmailTemplateUpdate
     ) -> EmailTemplateData | None:
         """Update an email template."""
         with database.get_session() as session:
@@ -96,7 +96,9 @@ class EmailTemplatesModule:
                 variables=template.variables,
             )
 
-    def render_template(self, name: str, variables: dict[str, str]) -> tuple[str, str] | None:
+    def render_template(
+        self, name: str, variables: dict[str, str]
+    ) -> tuple[str, str] | None:
         """
         Render a template by replacing variables with actual values. Returns tuple or None if template not found.
         """

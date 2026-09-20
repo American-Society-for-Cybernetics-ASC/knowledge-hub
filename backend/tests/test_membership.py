@@ -13,7 +13,7 @@ from database import model as dbmodel
 def mock_application(mock_get_session, mock_member_type) -> int:
     with mock_get_session() as session:
         application = dbmodel.MembershipApplication(
-            auth_user_id=TEST_USER_ID,
+            user_id=TEST_USER_ID,
             member_type_id=mock_member_type,
             status=ApplicationStatus.APPROVED,
             content="example application",
@@ -28,7 +28,7 @@ def mock_application(mock_get_session, mock_member_type) -> int:
 def mock_member(mock_get_session) -> int:
     with mock_get_session() as session:
         member = dbmodel.Member(
-            auth_user_id=TEST_USER_ID,
+            user_id=TEST_USER_ID,
             due_date=datetime.datetime.now(datetime.timezone.utc)
             + datetime.timedelta(days=10),
             cancelled=False,
@@ -37,7 +37,7 @@ def mock_member(mock_get_session) -> int:
         session.add(member)
         session.commit()
         session.refresh(member)
-        return member.auth_user_id
+        return member.user_id
 
 
 def test_full_cycle(

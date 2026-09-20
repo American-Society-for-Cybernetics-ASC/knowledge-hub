@@ -12,9 +12,9 @@ export default function MemberStatusChip({
     case "pending":
       return <Chip label="Pending" color="default" />;
     case "denied":
-      return <Chip label="Denied" color="error" />
+      return <Chip label="Denied" color="error" />;
     case "revision_required":
-      return <Chip label="Revision Requested" color="primary"/>
+      return <Chip label="Revision Requested" color="primary" />;
     default:
       break;
   }

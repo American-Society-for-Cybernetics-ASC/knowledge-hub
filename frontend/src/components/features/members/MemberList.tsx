@@ -37,9 +37,7 @@ export default function MemberList() {
 
       {!hasQuery ? (
         <section className="mt-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Find a member
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900">Find a member</h2>
           <p className="mt-2 text-gray-600">
             Enter a name, tag, or affiliation to find a member.
           </p>
@@ -99,15 +97,13 @@ export default function MemberList() {
 
                     <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
                       {member.status}
-                    </span> 
+                    </span>
                   </div>
 
                   {member.affiliations.length > 0 && (
                     <ul className="mt-4 space-y-1 text-sm text-gray-600">
                       {member.affiliations.map((affiliation, index) => (
-                        <li
-                          key={`${affiliation.organisation}-${index}`}
-                        >
+                        <li key={`${affiliation.organisation}-${index}`}>
                           {[affiliation.organisation, affiliation.role]
                             .filter(Boolean)
                             .join(" - ")}

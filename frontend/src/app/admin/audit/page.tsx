@@ -17,7 +17,7 @@ import useSWR from "swr";
 interface AuditLog {
   category: string;
   log: string;
-  time: string;
+  timestamp: string;
 }
 
 export default function AdminAuditPage() {
@@ -75,9 +75,9 @@ function AuditLogTable({ data }: { data: AuditLog[] }) {
       </TableHead>
       <TableBody>
         {data.map((log) => {
-          const time = new Date(log.time);
+          const time = new Date(log.timestamp);
           return (
-            <TableRow key={log.time}>
+            <TableRow key={log.timestamp}>
               <TableCell>{log.category}</TableCell>
               <TableCell>{time.toLocaleString()}</TableCell>
               <TableCell>{log.log}</TableCell>

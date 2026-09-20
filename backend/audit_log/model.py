@@ -7,4 +7,4 @@ from utils import BaseModel
 class AuditLog(BaseModel):
     category: PermissionCategory
     log: str
-    time: datetime
+    timestamp: datetime

@@ -6,9 +6,7 @@ from auth_module import PermissionTier, authorized
 from email_templates.module import EmailTemplatesModule
 from email_templates.model import EmailTemplateData, EmailTemplateUpdate
 
-email_templates_router = APIRouter(
-    prefix="/email-templates", tags=["email-templates"]
-)
+email_templates_router = APIRouter(prefix="/email-templates", tags=["email-templates"])
 
 
 @email_templates_router.get("")

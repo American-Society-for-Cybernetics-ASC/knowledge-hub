@@ -25,17 +25,15 @@ export default function YourMembership() {
     await backendFetch<ReadPayment>("/membership/renew", {
       method: "POST",
     })
-      .then((payment) => router.push(`/pay/${payment.id}`))
-      .catch((err) => {
-        addError(err.message);
-      });
+      .then((payment) => router.push(`/billing/pay/${payment.id}`))
+      .catch(addError);
   }
 
   const { data: memberData, isLoading } = useSWR<ReadMember | null>(
     "/membership",
     backendFetch,
     {
-      onError: (err) => addError(err.message),
+      onError: addError,
       onSuccess: (data) => {
         if (data === null) {
           router.push("/membership/application");

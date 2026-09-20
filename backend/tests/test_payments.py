@@ -63,7 +63,7 @@ def test_config(test_server: TestClient):
 
     response = test_server.get("/payments/providers")
     assert response.status_code == 200
-    assert response.json()["payment_options"][str(id)]["service_name"] == "mock"
+    assert response.json()[0]["service_name"] == "mock"
 
 
 def test_donation(test_server: TestClient):

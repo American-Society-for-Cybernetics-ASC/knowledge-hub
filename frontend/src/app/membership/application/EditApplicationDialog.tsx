@@ -1,7 +1,10 @@
 "use client";
 import { AddErrorContext } from "@/components/layout/ErrorContext";
 import { backendFetch } from "@/lib/api/client";
-import { ReadMembershipApplication, ReviseApplication } from "@/types/membership";
+import {
+  ReadMembershipApplication,
+  ReviseApplication,
+} from "@/types/membership";
 import {
   Button,
   Dialog,
@@ -16,9 +19,9 @@ import { useContext, useState } from "react";
 export default function EditApplicationDialog({
   application,
   onClose,
-  onSubmit
+  onSubmit,
 }: {
-  application: ReadMembershipApplication,
+  application: ReadMembershipApplication;
   onClose: () => void;
   onSubmit: () => void;
 }) {
@@ -34,14 +37,14 @@ export default function EditApplicationDialog({
     }
 
     const reviseApplication: ReviseApplication = {
-        content,
+      content,
     };
     backendFetch(`/membership/application/${application.application_id}`, {
       method: "PATCH",
       body: JSON.stringify(reviseApplication),
     })
       .then(() => onSubmit())
-      .catch((error) => addError(error.message));
+      .catch(addError);
   }
 
   return (

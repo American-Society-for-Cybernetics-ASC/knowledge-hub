@@ -35,9 +35,7 @@ function MembershipList() {
     "/membership/admin/members",
     backendFetch,
     {
-      onError: (err) => {
-        addError(err.message);
-      },
+      onError: addError,
     },
   );
 

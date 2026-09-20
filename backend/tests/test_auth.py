@@ -220,7 +220,7 @@ def test_get_current_user(test_server: TestClient, mock_get_session):
 def test_get_current_user_unauthenticated(test_server: TestClient):
     """Test that /auth/me returns None when not authenticated"""
     response = test_server.get("/auth/me")
-    assert response.json() == None
+    assert response.json() is None
 
 
 def test_change_password(test_server: TestClient):

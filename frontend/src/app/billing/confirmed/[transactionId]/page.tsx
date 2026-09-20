@@ -2,25 +2,25 @@
 
 import { confirmTransaction } from "@/lib/api/billing";
 import { Box, Typography, Alert, CircularProgress } from "@mui/material";
-import { use, useState, useEffect} from "react";
+import { use, useState, useEffect } from "react";
 
 type State =
   | { status: "verifying" }
   | { status: "success" }
-  | { status: "failed"; message: string }
+  | { status: "failed"; message: string };
 
-export default function ConfirmedPage({ 
-  params 
-}: { 
-  params: Promise<{ transactionId: string }>; 
+export default function ConfirmedPage({
+  params,
+}: {
+  params: Promise<{ transactionId: string }>;
 }) {
   const { transactionId } = use(params);
-  const [state, setState] = useState<State>({ status: "verifying"})
+  const [state, setState] = useState<State>({ status: "verifying" });
 
   useEffect(() => {
     confirmTransaction(transactionId)
       .then(() => setState({ status: "success" }))
-      .catch((e) => setState({ status: "failed", message: e.message}))
+      .catch((e) => setState({ status: "failed", message: e.message }));
   }, [transactionId]);
 
   return (
@@ -32,7 +32,7 @@ export default function ConfirmedPage({
       {state.status === "success" && (
         <>
           <Typography variant="h6">Payment Confirmed!</Typography>
-            <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary">
             You may now leave this page or close this window.
           </Typography>
         </>

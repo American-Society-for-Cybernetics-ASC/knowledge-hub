@@ -20,6 +20,7 @@ class ApplicationNotOwnedError(Exception):
 
     pass
 
+
 class ApplicationCompleteError(Exception):
     """raised when a user tries to edit a completed application"""
 
@@ -34,9 +35,8 @@ class MemberApplicationModule:
                 map(
                     MembershipApplication.from_db_model,
                     session.execute(
-                        select(dbmodel.MembershipApplication).where(
-                            dbmodel.MembershipApplication.auth_user_id == user_id
-                        )
+                        select(dbmodel.MembershipApplication)
+                        .where(dbmodel.MembershipApplication.user_id == user_id)
                         .order_by(desc(dbmodel.MembershipApplication.last_edited))
                     )
                     .scalars()
@@ -69,14 +69,14 @@ class MemberApplicationModule:
 
     def submit_application(
         self,
-        auth_user_id: int,
+        user_id: int,
         content: str,
         member_type_id: UUID,
     ) -> MembershipApplication:
         """Submit a new member application"""
         with database.get_session() as session:
             application = dbmodel.MembershipApplication(
-                auth_user_id=auth_user_id,
+                user_id=user_id,
                 status=ApplicationStatus.PENDING,
                 member_type_id=member_type_id,
                 submitted_at=datetime.now(timezone.utc),
@@ -88,7 +88,7 @@ class MemberApplicationModule:
             return MembershipApplication.from_db_model(application)
 
     def revise_application(
-        self, application_id: int, auth_user_id: int, content: str
+        self, application_id: int, user_id: int, content: str
     ) -> MembershipApplication:
         """revise an existing member application"""
         with database.get_session() as session:
@@ -99,11 +99,16 @@ class MemberApplicationModule:
                     f"Application for member {application_id} cannot be found"
                 )
 
-            if application.auth_user_id != auth_user_id:
+            if application.user_id != user_id:
                 raise ApplicationNotOwnedError("You do not own this application")
 
-            if application.status not in [ApplicationStatus.PENDING, ApplicationStatus.REVISION_REQUIRED]:
-                raise ApplicationCompleteError(f"This application is not in a state to be edited.")
+            if application.status not in [
+                ApplicationStatus.PENDING,
+                ApplicationStatus.REVISION_REQUIRED,
+            ]:
+                raise ApplicationCompleteError(
+                    "This application is not in a state to be edited."
+                )
 
             application.content = content
             application.status = ApplicationStatus.PENDING

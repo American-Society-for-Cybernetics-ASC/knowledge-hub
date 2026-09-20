@@ -28,9 +28,7 @@ from .base import Base
 class Member(Base):
     __tablename__ = "members"
 
-    auth_user_id = mapped_column(
-        Integer, ForeignKey("auth_users.user_id"), primary_key=True
-    )
+    user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"), primary_key=True)
     due_date: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)
     member_type_id = mapped_column(UUID, ForeignKey("member_types.id"), nullable=True)
     cancelled = mapped_column(Boolean, nullable=False, default=False)
@@ -71,9 +69,7 @@ class Profile(Base):
     __tablename__ = "profiles"
 
     # Profile is a weak entity
-    member_id = mapped_column(
-        Integer, ForeignKey("members.auth_user_id"), primary_key=True
-    )
+    member_id = mapped_column(Integer, ForeignKey("members.user_id"), primary_key=True)
 
     tags: Mapped[list | None] = mapped_column(JSON)
     content: Mapped[dict | None] = mapped_column(JSON)
@@ -89,7 +85,7 @@ class Payment(Base):
 
     id = mapped_column(UUID, primary_key=True, index=True, default=uuid.uuid4)
     user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"), nullable=False)
-    time = mapped_column(TZDateTime, nullable=False, server_default=func.now())
+    timestamp = mapped_column(TZDateTime, nullable=False, server_default=func.now())
     amount = mapped_column(Integer, nullable=False)
     currency = mapped_column(String, nullable=False)
     status: Mapped[PaymentStatus] = mapped_column(String, nullable=False)
@@ -130,12 +126,12 @@ class MemberMatching(Base):
     # Two foreign keys to Member
     active_member_id = mapped_column(
         Integer,
-        ForeignKey(Member.auth_user_id),
+        ForeignKey(Member.user_id),
         nullable=False,
     )
     suggested_member_id = mapped_column(
         Integer,
-        ForeignKey(Member.auth_user_id),
+        ForeignKey(Member.user_id),
         nullable=False,
     )
 
@@ -186,7 +182,7 @@ class AuditLog(Base):
         String, nullable=False
     )
     log = mapped_column(String, nullable=False)
-    time = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
+    timestamp = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
 
 
 class Module(Base):
@@ -207,9 +203,7 @@ class MailingListMember(Base):
 
     email = mapped_column(String, nullable=False)
     # nullable for external emails
-    member_id = mapped_column(
-        Integer, ForeignKey("members.auth_user_id"), nullable=True
-    )
+    member_id = mapped_column(Integer, ForeignKey("members.user_id"), nullable=True)
 
     # relationships
     mailing_list = relationship("MailingList", back_populates="members")
@@ -240,7 +234,7 @@ class MembershipApplication(Base):
     __tablename__ = "membership_applications"
 
     application_id = mapped_column(Integer, primary_key=True, index=True)
-    auth_user_id = mapped_column(Integer, ForeignKey(AuthUser.user_id), nullable=False)
+    user_id = mapped_column(Integer, ForeignKey(AuthUser.user_id), nullable=False)
     member_type_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID, ForeignKey("member_types.id"), nullable=True
     )

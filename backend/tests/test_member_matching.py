@@ -28,7 +28,7 @@ def create_member(
         session.flush()
 
         member = model.Member(
-            auth_user_id=auth_user.user_id,
+            user_id=auth_user.user_id,
             due_date=datetime.now(timezone.utc)
             + (timedelta(10) if has_current_membership else timedelta(-10)),
             member_type_id=None,
@@ -38,7 +38,7 @@ def create_member(
 
         session.add(
             model.Profile(
-                member_id=member.auth_user_id,
+                member_id=member.user_id,
                 tags=tags or [],
                 content={
                     "identity": {
@@ -50,7 +50,7 @@ def create_member(
         )
 
         session.commit()
-        return member.auth_user_id
+        return member.user_id
 
 
 @pytest.fixture

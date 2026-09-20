@@ -174,30 +174,26 @@ def confirm_transaction(
 
 
 class ReadPaymentOption(BaseModel):
+    id: UUID
     name: str
     description: str
     service_name: ServiceName
 
     @staticmethod
-    def from_payment_option(option: PaymentOption) -> ReadPaymentOption:
+    def from_payment_option(uuid: UUID, option: PaymentOption) -> ReadPaymentOption:
         return ReadPaymentOption(
+            id=uuid,
             name=option.name,
             description=option.description,
             service_name=option.provider.service_name,
         )
 
 
-class PaymentOptionResponse(BaseModel):
-    payment_options: dict[UUID, ReadPaymentOption]
-
-
 @payments_router.get("/providers")
-def get_providers() -> PaymentOptionResponse:
+def get_providers() -> list[ReadPaymentOption]:
     config = get_module_config(PaymentModuleConfig)
 
-    return PaymentOptionResponse(
-        payment_options={
-            uuid: ReadPaymentOption.from_payment_option(option)
-            for uuid, option in config.payment_options.items()
-        }
-    )
+    return [
+        ReadPaymentOption.from_payment_option(uuid, option)
+        for uuid, option in config.payment_options.items()
+    ]

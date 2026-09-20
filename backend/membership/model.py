@@ -22,7 +22,7 @@ class MemberStatus(str, Enum):
 
 
 class Member(BaseModel):
-    auth_user_id: int
+    user_id: int
     due_date: datetime
     member_type: MemberType | None
     cancelled: bool
@@ -34,7 +34,7 @@ class Member(BaseModel):
     @staticmethod
     def from_db_model(model: dbmodel.Member) -> Member:
         return Member(
-            auth_user_id=model.auth_user_id,
+            user_id=model.user_id,
             due_date=model.due_date,
             member_type=MemberType.from_db_model(model.member_type)
             if model.member_type is not None
@@ -53,7 +53,7 @@ class ReadMember(BaseModel):
     @staticmethod
     def from_member(member: Member) -> ReadMember:
         return ReadMember(
-            user_id=member.auth_user_id,
+            user_id=member.user_id,
             due_date=member.due_date,
             member_type=member.member_type.name
             if member.member_type is not None

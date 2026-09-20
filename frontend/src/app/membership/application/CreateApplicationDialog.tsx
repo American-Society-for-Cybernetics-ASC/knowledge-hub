@@ -48,7 +48,7 @@ export default function CreateApplicationDialog({
       body: JSON.stringify(application),
     })
       .then(() => onSubmit())
-      .catch((error) => addError(error.message));
+      .catch(addError);
   }
 
   return (
