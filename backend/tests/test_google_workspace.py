@@ -1,19 +1,20 @@
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from google_workspace_interface.service import (GoogleWorkspaceService)
+from mailing_list.providers.google_workspace_provider import (
+    GoogleWorkspaceMailingListProvider,
+)
 from mailing_list.model import MailingList
 
-from google.auth.transport.requests import Request 
+from google.auth.transport.requests import Request
 
 from settings import SETTINGS
+
 
 def test_get_mailing_lists_mocked():
     """
     tests retrieving Google groups
     """
-    service = GoogleWorkspaceService.from_env()
+    service = GoogleWorkspaceMailingListProvider.from_env()
 
     mock_google = MagicMock()
 
@@ -22,15 +23,15 @@ def test_get_mailing_lists_mocked():
             {
                 "name": "Test Group 1",
                 "description": "testing 1",
-                "email": "group1@example.com"
+                "email": "group1@example.com",
             },
             {
                 "name": "Test Group 2",
                 "description": "testing 2",
-                "email": "group2@example.com"
+                "email": "group2@example.com",
             },
         ]
-    }   
+    }
 
     with patch.object(service, "_get_service", return_value=mock_google):
         mailing_lists = service.get()
@@ -50,18 +51,19 @@ def test_get_mailing_lists_mocked():
     )
     print("\nSuccessfully retrieved mailing lists")
 
+
 def test_add_user_mocked():
     """
     test adding a user to a Google group
     """
-    service = GoogleWorkspaceService.from_env()
+    service = GoogleWorkspaceMailingListProvider.from_env()
 
     mock_google = MagicMock()
 
     mailing_list = MailingList(
         name="Test Group",
         description="Test mailing list",
-        email="testgroup@example.com"
+        email="testgroup@example.com",
     )
     user_email = "testuser@example.com"
 
@@ -70,26 +72,24 @@ def test_add_user_mocked():
 
     mock_google.members.return_value.insert.assert_called_once_with(
         groupKey="testgroup@example.com",
-        body={
-            "email": "testuser@example.com",
-            "role": "MEMBER"
-        },
+        body={"email": "testuser@example.com", "role": "MEMBER"},
     )
     mock_google.members.return_value.insert.return_value.execute.assert_called_once()
 
     print("\nSuccessfully tested adding a user")
 
+
 def test_remove_user_mocked():
     """
-    test removing a user from a Google group 
+    test removing a user from a Google group
     """
-    service = GoogleWorkspaceService.from_env()
+    service = GoogleWorkspaceMailingListProvider.from_env()
     mock_google = MagicMock()
 
     mailing_list = MailingList(
         name="Test Group",
         description="Test mailing list",
-        email="testgroup@example.com"
+        email="testgroup@example.com",
     )
     user_email = "testuser@example.com"
 
@@ -104,6 +104,7 @@ def test_remove_user_mocked():
     mock_google.members.return_value.delete.return_value.execute.assert_called_once()
 
     print("\nSuccessfully tested removing a user")
+
 
 def test_environment_variables():
     """
@@ -124,17 +125,19 @@ def test_environment_variables():
 
     print("All environment variables are set")
 
+
 def test_credentials():
     """
     verify that Google credentials can be constructed from Vercel OIDC configuration
     """
 
-    service = GoogleWorkspaceService.from_env()
+    service = GoogleWorkspaceMailingListProvider.from_env()
     credentials = service._get_credentials()
 
     assert credentials is not None
 
     print("Google credentials created successfully")
+
 
 def test_credentials_refresh():
     """
@@ -142,7 +145,7 @@ def test_credentials_refresh():
     an access token through Workload Identity Federation and service account impersonation
     """
 
-    service = GoogleWorkspaceService.from_env()
+    service = GoogleWorkspaceMailingListProvider.from_env()
     credentials = service._get_credentials()
     credentials.refresh(Request())
 
@@ -152,16 +155,13 @@ def test_credentials_refresh():
     print("Google authentication successful")
     print(f"Credentials valid: {credentials.valid}")
 
+
 def test_google_service_builds():
     """
     verify that the Google Admin Directory API client can be constructed
     """
-    service = GoogleWorkspaceService.from_env()
+    service = GoogleWorkspaceMailingListProvider.from_env()
     google_service = service._get_service()
     assert google_service is not None
 
     print("\nGoogle Admin API Client created successfully")
-
-
-
-

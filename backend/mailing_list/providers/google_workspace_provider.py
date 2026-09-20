@@ -7,25 +7,26 @@ from googleapiclient.errors import HttpError
 
 from mailing_list.model import MailingList
 from settings import SETTINGS
-from .interface import MailingListInterface
+from .interface import MailingListProviderInterface
 
 
 SCOPES = [
     "https://www.googleapis.com/auth/admin.directory.group",
-    "https://www.googleapis.com/auth/admin.directory.group.member"
+    "https://www.googleapis.com/auth/admin.directory.group.member",
 ]
 
-SERVICE_ACCOUNT_EMAIL = "groups-admin@collabhub-2608.iam.gserviceaccount.com"
 
 class GoogleWorkspaceConfigurationError(RuntimeError):
     """Raised when Google Workspace API is called without valid configuration"""
 
-class GoogleWorkspaceService(MailingListInterface):
+
+class GoogleWorkspaceMailingListProvider(MailingListProviderInterface):
     """
     Google Workspace implementation of MailingListInterface
     """
+
     @classmethod
-    def from_env(cls) -> "GoogleWorkspaceService":
+    def from_env(cls) -> "GoogleWorkspaceMailingListProvider":
         """Create a Google Workspace service from environment variables"""
         return cls()
 
@@ -51,7 +52,9 @@ class GoogleWorkspaceService(MailingListInterface):
             missing.append("GOOGLE_WORKLOAD_IDENTITY_PROVIDER")
 
         if missing:
-            raise GoogleWorkspaceConfigurationError("Missing Google Workspace Configuration: " + ", ".join(missing))
+            raise GoogleWorkspaceConfigurationError(
+                "Missing Google Workspace Configuration: " + ", ".join(missing)
+            )
 
         audience = (
             f"//iam.googleapis.com/projects/{project_number}"
@@ -59,14 +62,12 @@ class GoogleWorkspaceService(MailingListInterface):
             f"/providers/{provider_id}"
         )
 
-        token_file = tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        )
+        token_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
 
         try:
             token_file.write(vercel_token)
             token_file.close()
-        
+
             credentials = identity_pool.Credentials.from_info(
                 {
                     "type": "external_account",
@@ -75,7 +76,7 @@ class GoogleWorkspaceService(MailingListInterface):
                     "token_url": "https://sts.googleapis.com/v1/token",
                     "service_account_impersonation_url": (
                         f"https://iamcredentials.googleapis.com/v1/projects/-"
-                        f"/serviceAccounts/{SERVICE_ACCOUNT_EMAIL}:generateAccessToken"
+                        f"/serviceAccounts/{SETTINGS.service_account_email}:generateAccessToken"
                     ),
                     "credential_source": {
                         "file": token_file.name,
@@ -90,14 +91,15 @@ class GoogleWorkspaceService(MailingListInterface):
                 os.unlink(token_file.name)
             raise
 
-
     def _get_service(self):
         """Return an authenticated Google Admin Directory API client"""
 
         credentials = self._get_credentials()
 
-        return build("admin", "directory_v1", credentials=credentials, cache_discovery=False)
-        
+        return build(
+            "admin", "directory_v1", credentials=credentials, cache_discovery=False
+        )
+
     def get(self) -> list[MailingList]:
         """Get all Google Workspace Groups as MailingLists"""
         try:
@@ -107,16 +109,22 @@ class GoogleWorkspaceService(MailingListInterface):
             page_token = None
 
             while True:
-                response=(service.groups().list(customer="my_customer", pageToken=page_token).execute())
+                response = (
+                    service.groups()
+                    .list(customer="my_customer", pageToken=page_token)
+                    .execute()
+                )
 
                 for group in response.get("groups", []):
                     email = group["email"]
-                    mailing_lists.append(MailingList(
-                        name=group.get("name") or email,
-                        description=group.get("description"),
-                        email=email,
-                    ))
-                   
+                    mailing_lists.append(
+                        MailingList(
+                            name=group.get("name") or email,
+                            description=group.get("description"),
+                            email=email,
+                        )
+                    )
+
                 page_token = response.get("nextPageToken")
 
                 if page_token is None:
@@ -128,8 +136,8 @@ class GoogleWorkspaceService(MailingListInterface):
             raise GoogleWorkspaceConfigurationError(
                 f"Failed to retrieve Google Workspace Groups: {e}"
             ) from e
-    
-    def add_user(self, user: str, mailing_list: MailingList) -> None:
+
+    def add_user(self, email: str, mailing_list: MailingList) -> None:
         """Add a user to a Google Workspace Group"""
         if mailing_list.email is None:
             raise ValueError("Mailing list does not have an email address")
@@ -139,17 +147,17 @@ class GoogleWorkspaceService(MailingListInterface):
             service.members().insert(
                 groupKey=mailing_list.email,
                 body={
-                    "email":user,
+                    "email": email,
                     "role": "MEMBER",
                 },
             ).execute()
 
         except HttpError as e:
             raise GoogleWorkspaceConfigurationError(
-                f"Failed to add {user} to {mailing_list.email}: {e}"
+                f"Failed to add {email} to {mailing_list.email}: {e}"
             ) from e
-        
-    def remove_user(self, user: str, mailing_list: MailingList) -> None:
+
+    def remove_user(self, email: str, mailing_list: MailingList) -> None:
         """Remove a user from a Google Workspace Group"""
         if mailing_list.email is None:
             raise ValueError("Mailing list does not have an email address")
@@ -157,9 +165,11 @@ class GoogleWorkspaceService(MailingListInterface):
         try:
             service = self._get_service()
 
-            service.members().delete(groupKey=mailing_list.email, memberKey=user).execute()
+            service.members().delete(
+                groupKey=mailing_list.email, memberKey=email
+            ).execute()
 
         except HttpError as e:
             raise GoogleWorkspaceConfigurationError(
-                f"Failed to remove {user} from {mailing_list.email}: {e}"
-            ) from e          
+                f"Failed to remove {email} from {mailing_list.email}: {e}"
+            ) from e
