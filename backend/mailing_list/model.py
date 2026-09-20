@@ -3,7 +3,7 @@ from utils import BaseModel
 
 
 class MailingList(BaseModel):
-    mailing_list_id: int
+    mailing_list_id: Optional[int] = None
     name: str
     description: Optional[str] = None
     email: Optional[str] = None

@@ -16,6 +16,9 @@ dependencies = [
     "pyotp>=2.10.0",
     "python-jose>=3.5.0",
     "stripe>=15.4.0",
+    "google-api-python-client",
+    "google-auth",
+    "google-auth-httplib2",
 ]
 
 [dependency-groups]
