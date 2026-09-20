@@ -122,7 +122,7 @@ def default_database(mock_get_session: Callable[[], Session]):
                 totp_enabled=False,
                 permissions=auth_module.Permissions(
                     tier=auth_module.PermissionTier.adminstrator, children={}
-                ).model_dump_json(),
+                ).model_dump(mode="json"),
             )
         )
         session.commit()

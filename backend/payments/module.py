@@ -40,7 +40,7 @@ class PaymentsModule:
                 amount=amount,
                 currency=currency,
                 status=PaymentStatus.PENDING,
-                product=product.model_dump_json(),
+                product=product.model_dump(mode="json"),
             )
             session.add(record)
             session.commit()
@@ -88,7 +88,7 @@ class PaymentsModule:
             data = payment_option.provider.create(payment)
 
             record = model.Transaction(
-                payment_id=payment_id, data=data.model_dump_json()
+                payment_id=payment_id, data=data.model_dump(mode="json")
             )
             session.add(record)
             session.commit()

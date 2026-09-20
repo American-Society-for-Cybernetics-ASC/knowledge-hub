@@ -41,9 +41,9 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
             .one()
         )
 
-        user.permissions = Permissions(
-            tier=PermissionTier.adminstrator
-        ).model_dump_json()
+        user.permissions = Permissions(tier=PermissionTier.adminstrator).model_dump(
+            mode="json"
+        )
 
         member_type = dbmodel.MemberType(name="Test Member Type", price=10_00)
 
