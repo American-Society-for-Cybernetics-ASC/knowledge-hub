@@ -8,6 +8,7 @@ import type {
   Affiliation,
   ProfilePublication,
 } from "@/types/member";
+import { useRouter } from "next/navigation";
 
 // Convert list fields from API into CSV
 function toCSV(values: string[] | null): string {
@@ -127,6 +128,7 @@ function parseDoi(value: string): string | null {
 }
 
 export default function EditMyProfilePage() {
+  const router = useRouter();
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [pronouns, setPronouns] = useState("");
@@ -352,6 +354,7 @@ export default function EditMyProfilePage() {
       const updatedProfile = await updateMyProfile(update);
       setProfile(updatedProfile);
       setSuccess("Your profile has been saved.");
+      router.push("/members/me");
     } catch (err: unknown) {
       setError(
         err instanceof Error

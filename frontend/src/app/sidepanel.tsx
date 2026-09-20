@@ -20,6 +20,9 @@ const links = [
   { label: "Your Membership", href: "/membership" },
   { label: "Notifications", href: "/notifications" },
   { label: "Admin", href: "/admin" },
+  { label: "Settings", href: "/settings" },
+  { label: "Member Matching", href: "/member-matching" },
+  { label: "Profile", href: "/members/me" },
 ];
 
 export default function SidePanel() {
