@@ -27,7 +27,7 @@ class Payment(BaseModel):
             amount=model.amount,
             currency=model.currency,
             status=model.status,
-            product=TypeAdapter[ProductTypes](ProductTypes).validate_json(
+            product=TypeAdapter[ProductTypes](ProductTypes).validate_python(
                 model.product
             ),
         )

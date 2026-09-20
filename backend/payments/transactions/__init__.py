@@ -31,7 +31,7 @@ class Transaction(BaseModel):
         return Transaction(
             id=model.id,
             payment_id=model.payment_id,
-            data=TypeAdapter[TransactionTypes](TransactionTypes).validate_json(
+            data=TypeAdapter[TransactionTypes](TransactionTypes).validate_python(
                 model.data
             ),
             last_known_status=model.last_known_status,

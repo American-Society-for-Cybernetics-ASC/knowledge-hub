@@ -60,7 +60,7 @@ class MemberMatchingModule:
                 config = MemberMatchingConfig()
                 config_record = model.Module(
                     module_name=self.MODULE_NAME,
-                    config=config.model_dump(),
+                    config=config.model_dump(mode="json"),
                 )
                 session.add(config_record)
                 session.commit()
