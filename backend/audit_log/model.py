@@ -1,10 +1,10 @@
 from datetime import datetime
 
-from .enums import AuditPermissionCategory
+from database.types import PermissionCategory
 from utils import BaseModel
 
 
 class AuditLog(BaseModel):
-    category: AuditPermissionCategory
+    category: PermissionCategory
     log: str
-    time: datetime
+    timestamp: datetime

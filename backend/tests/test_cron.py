@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Callable
 
 from sqlalchemy.orm import Session
@@ -37,7 +37,7 @@ def test_conversion():
     job = model.CronJobTable(
         id=1,
         enabled=False,
-        last_executed=datetime(2026, 1, 1),
+        last_executed=datetime(2026, 1, 1, tzinfo=timezone.utc),
         period=60 * 60 * 24,
         job={"job_type": "example_job"},
     )
@@ -57,7 +57,7 @@ def test_queued(test_server, mock_get_session: Callable[[], Session]):
             model.CronJobTable(
                 id=1,
                 enabled=False,
-                last_executed=datetime(2026, 1, 1),
+                last_executed=datetime(2026, 1, 1, tzinfo=timezone.utc),
                 period=60 * 60 * 24,
                 job={"job_type": "example_job"},
             )
@@ -71,7 +71,7 @@ def test_queued(test_server, mock_get_session: Callable[[], Session]):
         {
             "id": 1,
             "enabled": False,
-            "last_executed": "2026-01-01T00:00:00",
+            "last_executed": "2026-01-01T00:00:00Z",
             "period": 86400,
             "job": {"job_type": "example_job"},
         }
@@ -84,7 +84,7 @@ def test_execute_cron(test_server, mock_get_session: Callable[[], Session]):
             model.CronJobTable(
                 id=1,
                 enabled=True,
-                last_executed=datetime(2026, 1, 1),
+                last_executed=datetime(2026, 1, 1, tzinfo=timezone.utc),
                 period=60 * 60 * 24,
                 job={"job_type": "example_job"},
             )

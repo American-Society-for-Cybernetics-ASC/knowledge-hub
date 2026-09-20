@@ -1,5 +1,8 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from auth_module import PermissionTier, Permissions, AuthModule
 from settings import SETTINGS
 import database
@@ -13,10 +16,13 @@ from mailing_list.routes import mailing_list_router
 from members.routes import members_router
 from membership.routes import membership_router
 from notifications.routes import notifications_router
+from member_matching.routes import member_matching_router
 from member_application.routes import member_application_router
 from payments.routes import payments_router
 from audit_log.routes import audit_router
 from members.model import ProfileContent, ProfileIdentity
+from email_templates.routes import email_templates_router
+from email_templates.module import EmailTemplatesModule
 
 if SETTINGS.local_deployment and not SETTINGS.testing:
     with database.get_session() as session:
@@ -35,20 +41,25 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
             .one()
         )
 
-        user.permissions = Permissions(
-            tier=PermissionTier.adminstrator
-        ).model_dump_json()
+        user.permissions = Permissions(tier=PermissionTier.adminstrator).model_dump(
+            mode="json"
+        )
+
+        member_type = dbmodel.MemberType(name="Test Member Type", price=10_00)
+
+        session.flush()
 
         member = dbmodel.Member(
-            status="active",
-            auth_user_id=user.user_id,
+            user_id=user.user_id,
+            member_type=member_type,
+            due_date=datetime.now(timezone.utc) + timedelta(365),
         )
         session.add(member)
         session.flush()
 
         session.add(
             dbmodel.Profile(
-                member_id=member.member_id,
+                member_id=member.user_id,
                 content=ProfileContent(
                     identity=ProfileIdentity(display_name="Test User"),
                 ).model_dump(mode="json"),
@@ -57,6 +68,10 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         )
 
         session.commit()
+
+# Seed default email templates
+if not SETTINGS.testing:
+    EmailTemplatesModule().seed_defaults()
 
 app = FastAPI()
 
@@ -70,12 +85,15 @@ app.add_middleware(
 
 app.include_router(cron_router)
 app.include_router(mail_router)
+app.include_router(payments_router)
 app.include_router(members_router)
 app.include_router(example_router)
 app.include_router(auth_router)
 app.include_router(mailing_list_router)
 app.include_router(membership_router)
 app.include_router(notifications_router)
+app.include_router(member_matching_router)
 app.include_router(member_application_router)
 app.include_router(payments_router)
 app.include_router(audit_router)
+app.include_router(email_templates_router)

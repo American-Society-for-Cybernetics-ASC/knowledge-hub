@@ -11,42 +11,51 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Skeleton,
+  Alert,
 } from "@mui/material";
-import React, { useState } from "react";
+import { useState } from "react";
 import useSWR from "swr";
 import PaymentOptionDialog from "./paymentOptionDialog";
 import { Add, Settings } from "@mui/icons-material";
+import PaymentLog from "@/components/features/billing/PaymentLog";
 
 export default function Page() {
+  return (
+    <>
+      <Typography variant={"h4"}>Payments</Typography>
+
+      <Typography variant={"h5"}>Config</Typography>
+      <FormSection />
+
+      <Typography variant={"h5"}>Payment Log</Typography>
+      <PaymentLog />
+    </>
+  );
+}
+
+function FormSection() {
   const { data, error, isLoading } = useSWR<PaymentsConfig>(
     "/payments/config",
     backendFetch,
   );
 
-  let body;
   if (isLoading) {
-    body = <p>Loading</p>;
+    return <Skeleton sx={{ minHeight: 100 }} />;
   } else if (error) {
-    body = <p>Error: {error.toString()}</p>;
+    return <Alert severity="error">{error.message}</Alert>;
   } else if (!data) {
-    body = <p>Error: No Data</p>;
+    return <Alert severity="error">Error: No Data</Alert>;
   } else {
-    body = <ConfigForm config={data} />;
+    return <ConfigForm config={data} />;
   }
-
-  return (
-    <>
-      <Typography variant={"h5"}>Payments</Typography>
-      {body}
-    </>
-  );
 }
 
 function ConfigForm(props: { config: PaymentsConfig }) {
   const [config, setConfig] = useState(props.config);
   const [dirtyConfig, setDirtyConfig] = useState<Partial<PaymentsConfig>>({});
-  const [providerModalIndex, setProviderModalIndex] = useState<
-    number | undefined
+  const [providerModalKey, setProviderModalKey] = useState<
+    string | "new" | undefined
   >(undefined);
 
   const submitEvent = () => {
@@ -60,28 +69,26 @@ function ConfigForm(props: { config: PaymentsConfig }) {
   };
 
   const currentConfig = { ...config, ...dirtyConfig };
+
   return (
     <>
-      {providerModalIndex !== undefined && (
+      {providerModalKey !== undefined && (
         <PaymentOptionDialog
-          option={currentConfig.payment_options[providerModalIndex]}
+          option={currentConfig.payment_options[providerModalKey]}
           onSubmit={(provider) => {
-            const newPaymentOptions = currentConfig.payment_options.toSpliced(
-              providerModalIndex,
-              1,
-              provider,
-            );
             setDirtyConfig({
               ...dirtyConfig,
-              payment_options: newPaymentOptions,
+              payment_options: {
+                ...currentConfig.payment_options,
+                [providerModalKey]: provider,
+              },
             });
-            setProviderModalIndex(undefined);
+            setProviderModalKey(undefined);
           }}
           isOpen
-          onClose={() => setProviderModalIndex(undefined)}
+          onClose={() => setProviderModalKey(undefined)}
         />
       )}
-      <Typography variant={"h5"}>Config</Typography>
       <form action={submitEvent}>
         <Grid container sx={{ width: "50%" }}>
           <Grid container direction={"row"} size={12} spacing={5}>
@@ -89,9 +96,7 @@ function ConfigForm(props: { config: PaymentsConfig }) {
             <Button
               variant="contained"
               size="small"
-              onClick={() =>
-                setProviderModalIndex(currentConfig.payment_options.length)
-              }
+              onClick={() => setProviderModalKey("new")}
             >
               <Add />
             </Button>
@@ -108,18 +113,23 @@ function ConfigForm(props: { config: PaymentsConfig }) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {currentConfig.payment_options.map((option, i) => (
-                  <TableRow key={`payment-option-${i}`}>
-                    <TableCell>{option.name}</TableCell>
-                    <TableCell>{option.description}</TableCell>
-                    <TableCell>{option.provider.provider_type}</TableCell>
-                    <TableCell>
-                      <Button onClick={() => setProviderModalIndex(i)}>
-                        <Settings />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {Object.entries(currentConfig.payment_options).map(
+                  ([key, option]) => (
+                    <TableRow key={`payment-option-${key}`}>
+                      <TableCell>{option.name}</TableCell>
+                      <TableCell>{option.description}</TableCell>
+                      <TableCell>{option.provider.service_name}</TableCell>
+                      <TableCell>
+                        <Button
+                          title={`Edit payment option: ${option.name}`}
+                          onClick={() => setProviderModalKey(key)}
+                        >
+                          <Settings />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ),
+                )}
               </TableBody>
             </Table>
           </Grid>
@@ -133,6 +143,7 @@ function ConfigForm(props: { config: PaymentsConfig }) {
             spacing={5}
           >
             <Button
+              title="Reset unsaved changes"
               color="error"
               variant="contained"
               disabled={Object.keys(dirtyConfig).length === 0}
@@ -141,6 +152,7 @@ function ConfigForm(props: { config: PaymentsConfig }) {
               Reset
             </Button>
             <Button
+              title="Submit saved changes"
               variant="contained"
               disabled={Object.keys(dirtyConfig).length === 0}
               type="submit"

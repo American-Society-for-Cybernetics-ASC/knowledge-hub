@@ -1,6 +1,6 @@
 from sqlalchemy import select
 
-from utils import ModuleConfig, get_module_config
+from utils.module_config import ModuleConfig, get_module_config
 from mail.model import Email, FailedEmail
 import database
 from database import model
@@ -37,7 +37,9 @@ class MailModule:
 
         # Failed to send: add it to the failed email table.
         with database.get_session() as session:
-            session.add(model.FailedEmailTable(email=mail.model_dump(), error=error))
+            session.add(
+                model.FailedEmailTable(email=mail.model_dump(mode="json"), error=error)
+            )
             session.commit()
 
 

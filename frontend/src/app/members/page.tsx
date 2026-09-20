@@ -1,7 +1,5 @@
-// TODO: Implement members list page
-// GET /members
-// POST /members - submit membership application
+import MemberList from "@/components/features/members/MemberList";
 
 export default function MembersPage() {
-  return <div>Members</div>;
+  return <MemberList />;
 }

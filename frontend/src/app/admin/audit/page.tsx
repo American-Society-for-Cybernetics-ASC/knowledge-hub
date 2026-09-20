@@ -2,13 +2,12 @@
 
 import { backendFetch } from "@/lib/api/client";
 import {
-  Input,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TableSortLabel,
   TextField,
   Typography,
 } from "@mui/material";
@@ -18,22 +17,24 @@ import useSWR from "swr";
 interface AuditLog {
   category: string;
   log: string;
-  time: string;
+  timestamp: string;
 }
 
 export default function AdminAuditPage() {
   const [before, setBefore] = useState<string | undefined>();
   const [after, setAfter] = useState<string | undefined>();
-  // TODO: handle errors and loading nicer
-  const { data, error, isLoading } = useSWR<AuditLog[]>(
+
+  const { data, error } = useSWR<AuditLog[]>(
     ["/audit_log", before, after],
     ([url, before, after]) => {
       const params = new URLSearchParams();
       if (before) {
-        params.append("before", before as string);
+        const beforeDate = new Date(before as string);
+        params.append("before", beforeDate.toISOString());
       }
       if (after) {
-        params.append("after", after as string);
+        const afterDate = new Date(before as string);
+        params.append("after", afterDate.toISOString());
       }
       return backendFetch(`${url}?${params}`);
     },
@@ -41,7 +42,7 @@ export default function AdminAuditPage() {
 
   return (
     <>
-      <Typography variant={"h5"}>Audit Logs</Typography>
+      <Typography variant={"h4"}>Audit Log</Typography>
       <form>
         {/* These text fields must not rerender every time we refetch */}
         <TextField
@@ -57,12 +58,12 @@ export default function AdminAuditPage() {
           slotProps={{ inputLabel: { shrink: true } }}
         ></TextField>
       </form>
-      <Inner data={data || []} />
+      {data ? <AuditLogTable data={data} /> : <Skeleton />}
     </>
   );
 }
 
-function Inner({ data }: { data: AuditLog[] }) {
+function AuditLogTable({ data }: { data: AuditLog[] }) {
   return (
     <Table>
       <TableHead>
@@ -74,10 +75,11 @@ function Inner({ data }: { data: AuditLog[] }) {
       </TableHead>
       <TableBody>
         {data.map((log) => {
+          const time = new Date(log.timestamp);
           return (
-            <TableRow key={log.time}>
+            <TableRow key={log.timestamp}>
               <TableCell>{log.category}</TableCell>
-              <TableCell>{log.time}</TableCell>
+              <TableCell>{time.toLocaleString()}</TableCell>
               <TableCell>{log.log}</TableCell>
             </TableRow>
           );

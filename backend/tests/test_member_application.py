@@ -1,15 +1,16 @@
 from typing import Callable
 from sqlalchemy.orm import Session
 from database import model
+
+from database.types import ApplicationStatus
 from member_application.module import MemberApplicationModule
-from member_application.model import ApplicationStatus
 from fastapi.testclient import TestClient
 
 
-def create_auth_user(get_session: Callable[[], Session], auth_user_id: int) -> int:
+def create_auth_user(get_session: Callable[[], Session], user_id: int) -> int:
     with get_session() as session:
         auth_user = model.AuthUser(
-            user_id=auth_user_id,
+            user_id=user_id,
             name="User",
             email="member@gmail.com",
             permissions={"role": "member"},
@@ -24,12 +25,12 @@ def create_auth_user(get_session: Callable[[], Session], auth_user_id: int) -> i
 
 def create_application(
     get_session: Callable[[], Session],
-    auth_user_id: int,
+    user_id: int,
     content: str = "Test application",
 ) -> int:
     with get_session() as session:
         application = model.MembershipApplication(
-            auth_user_id=auth_user_id,
+            user_id=user_id,
             status=ApplicationStatus.PENDING,
             content=content,
         )
@@ -40,37 +41,36 @@ def create_application(
         return application.application_id
 
 
-def test_submit_application(mock_get_session):
-    auth_user_id = 0
+def test_submit_application(mock_get_session, mock_member_type):
+    user_id = 0
 
     application = MemberApplicationModule().submit_application(
-        auth_user_id,
-        "I want to join please",
+        user_id, "I want to join please", mock_member_type
     )
 
     assert application.application_id is not None
-    assert application.auth_user_id == auth_user_id
+    assert application.user_id == user_id
     assert application.status == ApplicationStatus.PENDING
-    assert application.submitted_at is not None
+    assert application.last_edited is not None
     assert application.content == "I want to join please"
 
 
 def test_get_applications(mock_get_session):
-    auth_user_id = create_auth_user(mock_get_session, 1)
+    user_id = create_auth_user(mock_get_session, 1)
 
     create_application(
         mock_get_session,
-        auth_user_id,
+        user_id,
         "user one",
     )
 
     create_application(
         mock_get_session,
-        auth_user_id,
+        user_id,
         "user two",
     )
 
-    applications = MemberApplicationModule().get_applications()
+    applications = MemberApplicationModule().get_all_applications()
 
     assert len(applications) == 2
     assert applications[0].content == "user one"
@@ -78,28 +78,24 @@ def test_get_applications(mock_get_session):
 
 
 def test_get_application(mock_get_session):
-    auth_user_id = create_auth_user(mock_get_session, 1)
+    user_id = create_auth_user(mock_get_session, 1)
 
-    application_id = create_application(
-        mock_get_session, auth_user_id, "Test application"
-    )
+    application_id = create_application(mock_get_session, user_id, "Test application")
 
     application = MemberApplicationModule().get_application(application_id)
 
     assert application.application_id == application_id
-    assert application.auth_user_id == auth_user_id
+    assert application.user_id == user_id
     assert application.status == ApplicationStatus.PENDING
     assert application.content == "Test application"
 
 
 def test_revise_application(mock_get_session):
-    auth_user_id = create_auth_user(mock_get_session, 1)
+    user_id = create_auth_user(mock_get_session, 1)
 
-    application_id = create_application(
-        mock_get_session, auth_user_id, "old application"
-    )
+    application_id = create_application(mock_get_session, user_id, "old application")
     application = MemberApplicationModule().revise_application(
-        application_id, auth_user_id, "new application"
+        application_id, user_id, "new application"
     )
 
     assert application.application_id == application_id
@@ -108,11 +104,9 @@ def test_revise_application(mock_get_session):
 
 
 def test_approve_application(mock_get_session):
-    auth_user_id = create_auth_user(mock_get_session, 1)
+    user_id = create_auth_user(mock_get_session, 1)
 
-    application_id = create_application(
-        mock_get_session, auth_user_id, "Test application"
-    )
+    application_id = create_application(mock_get_session, user_id, "Test application")
 
     application = MemberApplicationModule().approve_application(application_id)
 
@@ -121,11 +115,9 @@ def test_approve_application(mock_get_session):
 
 
 def test_deny_application(mock_get_session):
-    auth_user_id = create_auth_user(mock_get_session, 1)
+    user_id = create_auth_user(mock_get_session, 1)
 
-    application_id = create_application(
-        mock_get_session, auth_user_id, "Test application"
-    )
+    application_id = create_application(mock_get_session, user_id, "Test application")
 
     application = MemberApplicationModule().deny_application(application_id)
 
@@ -134,10 +126,8 @@ def test_deny_application(mock_get_session):
 
 
 def test_request_revision(mock_get_session):
-    auth_user_id = create_auth_user(mock_get_session, 1)
-    application_id = create_application(
-        mock_get_session, auth_user_id, "Test application"
-    )
+    user_id = create_auth_user(mock_get_session, 1)
+    application_id = create_application(mock_get_session, user_id, "Test application")
 
     application = MemberApplicationModule().request_revision(application_id)
 
@@ -145,17 +135,23 @@ def test_request_revision(mock_get_session):
     assert application.status == ApplicationStatus.REVISION_REQUIRED
 
 
-def test_submit_application_api(test_server: TestClient, mock_get_session):
+def test_submit_application_api(
+    test_server: TestClient, mock_get_session, mock_member_type
+):
     """test submitting an application through the api"""
-    auth_user_id = 0
+    user_id = 0
     response = test_server.post(
-        "/member-applications/", json={"content": "I want to join please"}
+        "/membership/application/",
+        json={
+            "content": "I want to join please",
+            "member_type_id": str(mock_member_type),
+        },
     )
 
     assert response.status_code == 200
     data = response.json()
     assert data["application_id"] is not None
-    assert data["auth_user_id"] == auth_user_id
+    assert data["user_id"] == user_id
     assert data["status"] == "pending"
     assert data["content"] == ("I want to join please")
     assert data["submitted_at"] is not None
@@ -163,12 +159,12 @@ def test_submit_application_api(test_server: TestClient, mock_get_session):
 
 def test_get_applications_api(test_server: TestClient, mock_get_session):
     """test getting all applications through the api"""
-    auth_user_id = create_auth_user(mock_get_session, 1)
+    user_id = create_auth_user(mock_get_session, 1)
 
-    create_application(mock_get_session, auth_user_id, "application one")
-    create_application(mock_get_session, auth_user_id, "application two")
+    create_application(mock_get_session, user_id, "application one")
+    create_application(mock_get_session, user_id, "application two")
 
-    response = test_server.get("/member-applications/")
+    response = test_server.get("/membership/application/admin/all")
     assert response.status_code == 200
     data = response.json()
 
@@ -179,32 +175,28 @@ def test_get_applications_api(test_server: TestClient, mock_get_session):
 
 def test_get_application_api(test_server: TestClient, mock_get_session):
     """Test getting one application through the api"""
-    auth_user_id = create_auth_user(mock_get_session, 1)
+    user_id = create_auth_user(mock_get_session, 1)
 
-    application_id = create_application(
-        mock_get_session, auth_user_id, "Test application"
-    )
+    application_id = create_application(mock_get_session, user_id, "Test application")
 
-    response = test_server.get(f"/member-applications/{application_id}")
+    response = test_server.get(f"/membership/application/{application_id}")
 
     assert response.status_code == 200
 
     data = response.json()
 
     assert data["application_id"] == application_id
-    assert data["auth_user_id"] == auth_user_id
+    assert data["user_id"] == user_id
     assert data["status"] == "pending"
     assert data["content"] == "Test application"
 
 
 def test_revise_application_api(test_server: TestClient, mock_get_session):
     """Test revising an application through the api"""
-    auth_user_id = 0
-    application_id = create_application(
-        mock_get_session, auth_user_id, "old application"
-    )
+    user_id = 0
+    application_id = create_application(mock_get_session, user_id, "old application")
     response = test_server.patch(
-        f"/member-applications/{application_id}", json={"content": "new application"}
+        f"/membership/application/{application_id}", json={"content": "new application"}
     )
     assert response.status_code == 200
 
@@ -217,12 +209,10 @@ def test_revise_application_api(test_server: TestClient, mock_get_session):
 
 def test_approve_application_api(test_server: TestClient, mock_get_session):
     """Test approving an application through the api"""
-    auth_user_id = create_auth_user(mock_get_session, 1)
-    application_id = create_application(
-        mock_get_session, auth_user_id, "Test application"
-    )
+    user_id = create_auth_user(mock_get_session, 1)
+    application_id = create_application(mock_get_session, user_id, "Test application")
 
-    response = test_server.post(f"/member-applications/{application_id}/approve")
+    response = test_server.post(f"/membership/application/{application_id}/approve")
 
     assert response.status_code == 200
     data = response.json()
@@ -233,11 +223,9 @@ def test_approve_application_api(test_server: TestClient, mock_get_session):
 
 def test_deny_application_api(test_server: TestClient, mock_get_session):
     """Test denying an application through the api"""
-    auth_user_id = create_auth_user(mock_get_session, 1)
-    application_id = create_application(
-        mock_get_session, auth_user_id, "Test application"
-    )
-    response = test_server.post(f"/member-applications/{application_id}/deny")
+    user_id = create_auth_user(mock_get_session, 1)
+    application_id = create_application(mock_get_session, user_id, "Test application")
+    response = test_server.post(f"/membership/application/{application_id}/deny")
     assert response.status_code == 200
     data = response.json()
 
@@ -247,13 +235,11 @@ def test_deny_application_api(test_server: TestClient, mock_get_session):
 
 def test_request_revision_api(test_server: TestClient, mock_get_session):
     """Test requesting a revision through the api"""
-    auth_user_id = create_auth_user(mock_get_session, 1)
-    application_id = create_application(
-        mock_get_session, auth_user_id, "Test application"
-    )
+    user_id = create_auth_user(mock_get_session, 1)
+    application_id = create_application(mock_get_session, user_id, "Test application")
 
     response = test_server.post(
-        f"/member-applications/{application_id}/request-revision"
+        f"/membership/application/{application_id}/request-revision"
     )
 
     assert response.status_code == 200
@@ -265,6 +251,6 @@ def test_request_revision_api(test_server: TestClient, mock_get_session):
 
 def test_get_application_not_found_api(test_server: TestClient):
     """Test an application cannot be found and returns 404"""
-    response = test_server.get("/member-applications/99999")
+    response = test_server.get("/membership/application/99999")
 
     assert response.status_code == 404

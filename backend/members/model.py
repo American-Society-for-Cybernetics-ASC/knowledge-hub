@@ -228,3 +228,13 @@ class MemberProfile(BaseModel):
     status: str
     content: ProfileContent
     tags: list[Tag] = Field(default_factory=list)
+
+
+class MemberSearchResult(BaseModel):
+    """A compact member representation for search results."""
+
+    member_id: int
+    display_name: str | None = None
+    status: str
+    tags: list[Tag] = Field(default_factory=list)
+    affiliations: list[Affiliation] = Field(default_factory=list)

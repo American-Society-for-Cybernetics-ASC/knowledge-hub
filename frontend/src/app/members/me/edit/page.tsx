@@ -2,7 +2,13 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { getMyProfile, updateMyProfile } from "@/lib/api/members";
-import type { MemberProfile, ProfileUpdate } from "@/types/member";
+import type {
+  MemberProfile,
+  ProfileUpdate,
+  Affiliation,
+  ProfilePublication,
+} from "@/types/member";
+import { useRouter } from "next/navigation";
 
 // Convert list fields from API into CSV
 function toCSV(values: string[] | null): string {
@@ -21,7 +27,108 @@ function toStringList(value: string): string[] {
   ];
 }
 
+interface AffiliationForm {
+  organisation: string;
+  role: string;
+  start_year: string;
+  end_year: string;
+}
+
+interface PublicationForm {
+  title: string;
+  year: string;
+  doi: string;
+  url: string;
+}
+
+function emptyAffiliation(): AffiliationForm {
+  return {
+    organisation: "",
+    role: "",
+    start_year: "",
+    end_year: "",
+  };
+}
+
+function emptyPublication(): PublicationForm {
+  return {
+    title: "",
+    year: "",
+    doi: "",
+    url: "",
+  };
+}
+
+function affiliationToForm(affiliation: Affiliation): AffiliationForm {
+  return {
+    organisation: affiliation.organisation,
+    role: affiliation.role ?? "",
+    start_year: affiliation.start_year?.toString() ?? "",
+    end_year: affiliation.end_year?.toString() ?? "",
+  };
+}
+
+function publicationToForm(publication: ProfilePublication): PublicationForm {
+  return {
+    title: publication.title,
+    year: publication.year?.toString() ?? "",
+    doi: publication.doi ?? "",
+    url: publication.url ?? "",
+  };
+}
+
+function parseYear(value: string, label: string): number | null {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return null;
+  }
+
+  const year = Number(trimmedValue);
+
+  if (!Number.isInteger(year) || year < 1000 || year > 2100) {
+    throw new Error(`${label} must be a year between 1000 and 2100`);
+  }
+
+  return year;
+}
+
+function parseUrl(value: string, label: string): string | null {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return null;
+  }
+
+  try {
+    const url = new URL(trimmedValue);
+
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      throw new Error();
+    }
+
+    return trimmedValue;
+  } catch {
+    throw new Error(`${label} must be a valid HTTP or HTTPS URL.`);
+  }
+}
+
+function parseDoi(value: string): string | null {
+  const doi = value.trim();
+
+  if (!doi) {
+    return null;
+  }
+
+  if (!/^10\.\d{4,9}\/\S+$/.test(doi)) {
+    throw new Error("DOI must start with 10. followed by a valid DOI value.");
+  }
+
+  return doi;
+}
+
 export default function EditMyProfilePage() {
+  const router = useRouter();
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [pronouns, setPronouns] = useState("");
@@ -32,6 +139,8 @@ export default function EditMyProfilePage() {
   const [researchInterests, setResearchInterests] = useState("");
   const [expertise, setExpertise] = useState("");
   const [tags, setTags] = useState("");
+  const [affiliations, setAffiliations] = useState<AffiliationForm[]>([]);
+  const [publications, setPublications] = useState<PublicationForm[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -54,6 +163,20 @@ export default function EditMyProfilePage() {
         setResearchInterests(toCSV(data.content.research_interests));
         setExpertise(toCSV(data.content.expertise));
         setTags(toCSV(data.tags));
+
+        const affiliationsMetadata = data.content.metadata.affiliations;
+        setAffiliations(
+          affiliationsMetadata?.type === "affiliations"
+            ? affiliationsMetadata.value.map(affiliationToForm)
+            : [],
+        );
+
+        const publicationsMetadata = data.content.metadata.publications;
+        setPublications(
+          publicationsMetadata?.type === "publications"
+            ? publicationsMetadata.value.map(publicationToForm)
+            : [],
+        );
       } catch (err: unknown) {
         setError(
           err instanceof Error ? err.message : "Unable to load your profile",
@@ -65,6 +188,46 @@ export default function EditMyProfilePage() {
 
     void loadProfile();
   }, []);
+
+  function updateAffiliation(
+    index: number,
+    field: keyof AffiliationForm,
+    value: string,
+  ) {
+    setAffiliations((currentAffiliations) =>
+      currentAffiliations.map((affiliation, currentIndex) =>
+        currentIndex === index
+          ? { ...affiliation, [field]: value }
+          : affiliation,
+      ),
+    );
+  }
+
+  function removeAffiliation(index: number) {
+    setAffiliations((currentAffiliations) =>
+      currentAffiliations.filter((_, currentIndex) => currentIndex !== index),
+    );
+  }
+
+  function updatePublication(
+    index: number,
+    field: keyof PublicationForm,
+    value: string,
+  ) {
+    setPublications((currentPublications) =>
+      currentPublications.map((publication, currentIndex) =>
+        currentIndex === index
+          ? { ...publication, [field]: value }
+          : publication,
+      ),
+    );
+  }
+
+  function removePublication(index: number) {
+    setPublications((currentPublications) =>
+      currentPublications.filter((_, currentIndex) => currentIndex !== index),
+    );
+  }
 
   // Handle form submission
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -91,6 +254,73 @@ export default function EditMyProfilePage() {
       return;
     }
 
+    if (affiliations.length > 20) {
+      setError("You can only enter up to 20 affiliations.");
+      return;
+    }
+
+    if (publications.length > 50) {
+      setError("You can only enter up to 50 publications.");
+      return;
+    }
+
+    let affiliationValues: Affiliation[];
+    let publicationValues: ProfilePublication[];
+
+    try {
+      affiliationValues = affiliations.map((affiliation, index) => {
+        const organisation = affiliation.organisation.trim();
+
+        if (!organisation) {
+          throw new Error(`Affiliation ${index + 1} needs an organisation.`);
+        }
+
+        const startYear = parseYear(
+          affiliation.start_year,
+          `Affiliation ${index + 1} start year`,
+        );
+        const endYear = parseYear(
+          affiliation.end_year,
+          `Affiliation ${index + 1} end year`,
+        );
+
+        if (startYear && endYear && endYear < startYear) {
+          throw new Error(
+            `Affiliation ${index + 1} end year cannot be before the start year.`,
+          );
+        }
+
+        return {
+          organisation,
+          role: affiliation.role.trim() || null,
+          start_year: startYear,
+          end_year: endYear,
+        };
+      });
+
+      publicationValues = publications.map((publication, index) => {
+        const title = publication.title.trim();
+
+        if (!title) {
+          throw new Error(`Publication ${index + 1} needs a title.`);
+        }
+
+        return {
+          title,
+          year: parseYear(publication.year, `Publication ${index + 1} year`),
+          doi: parseDoi(publication.doi),
+          url: parseUrl(publication.url, `Publication ${index + 1} URL`),
+        };
+      });
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Please check your affiliations and publications.",
+      );
+      return;
+    }
+
     // Start saving process
     setSaving(true);
 
@@ -107,6 +337,16 @@ export default function EditMyProfilePage() {
       research_interests: toStringList(researchInterests),
       expertise: toStringList(expertise),
       tags: toStringList(tags),
+      metadata: {
+        affiliations: {
+          type: "affiliations",
+          value: affiliationValues,
+        },
+        publications: {
+          type: "publications",
+          value: publicationValues,
+        },
+      },
     };
 
     // Send the update to backend
@@ -114,6 +354,7 @@ export default function EditMyProfilePage() {
       const updatedProfile = await updateMyProfile(update);
       setProfile(updatedProfile);
       setSuccess("Your profile has been saved.");
+      router.push("/members/me");
     } catch (err: unknown) {
       setError(
         err instanceof Error
@@ -322,6 +563,191 @@ export default function EditMyProfilePage() {
               Separate tags with commas
             </p>
           </div>
+
+          <section className="border-t border-gray-200 pt-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Affiliations
+                </h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  Add organisations you are currently or previously affiliated
+                  with.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setAffiliations((current) => [...current, emptyAffiliation()])
+                }
+                disabled={affiliations.length >= 20}
+                className="rounded border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Add affiliation
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              {affiliations.map((affiliation, index) => (
+                <div
+                  key={index}
+                  className="rounded-lg border border-gray-200 p-4"
+                >
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <input
+                      type="text"
+                      value={affiliation.organisation}
+                      onChange={(event) =>
+                        updateAffiliation(
+                          index,
+                          "organisation",
+                          event.target.value,
+                        )
+                      }
+                      maxLength={200}
+                      placeholder="Organisation *"
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                    />
+
+                    <input
+                      type="text"
+                      value={affiliation.role}
+                      onChange={(event) =>
+                        updateAffiliation(index, "role", event.target.value)
+                      }
+                      maxLength={150}
+                      placeholder="Role"
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                    />
+
+                    <input
+                      type="number"
+                      value={affiliation.start_year}
+                      onChange={(event) =>
+                        updateAffiliation(
+                          index,
+                          "start_year",
+                          event.target.value,
+                        )
+                      }
+                      min={1000}
+                      max={2100}
+                      placeholder="Start year *"
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                    />
+
+                    <input
+                      type="number"
+                      value={affiliation.end_year}
+                      onChange={(event) =>
+                        updateAffiliation(index, "end_year", event.target.value)
+                      }
+                      min={1000}
+                      max={2100}
+                      placeholder="End year"
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removeAffiliation(index)}
+                    className="mt-4 text-sm font-medium text-red-700 hover:underline"
+                  >
+                    Remove affiliation
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="border-t border-gray-200 pt-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Publications
+                </h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  Add publications you like displayed on your profile.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setPublications((current) => [...current, emptyPublication()])
+                }
+                disabled={publications.length >= 50}
+                className="rounded border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Add publication
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              {publications.map((publication, index) => (
+                <div
+                  key={index}
+                  className="rounded-lg border border-gray-200 p-4"
+                >
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <input
+                      type="text"
+                      value={publication.title}
+                      onChange={(event) =>
+                        updatePublication(index, "title", event.target.value)
+                      }
+                      maxLength={500}
+                      placeholder="Publication title *"
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm sm:col-span-2"
+                    />
+
+                    <input
+                      type="number"
+                      value={publication.year}
+                      onChange={(event) =>
+                        updatePublication(index, "year", event.target.value)
+                      }
+                      min={1000}
+                      max={2100}
+                      placeholder="Publication year *"
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                    />
+
+                    <input
+                      type="text"
+                      value={publication.doi}
+                      onChange={(event) =>
+                        updatePublication(index, "doi", event.target.value)
+                      }
+                      maxLength={255}
+                      placeholder="DOI, e.g. 10.1234/example"
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                    />
+
+                    <input
+                      type="url"
+                      value={publication.url}
+                      onChange={(event) =>
+                        updatePublication(index, "url", event.target.value)
+                      }
+                      placeholder="https://example.com/publication"
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm sm:col-span-2"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removePublication(index)}
+                    className="mt-4 text-sm font-medium text-red-700 hover:underline"
+                  >
+                    Remove publication
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
 
           <button
             type="submit"

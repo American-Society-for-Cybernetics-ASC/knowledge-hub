@@ -1,157 +1,142 @@
-from typing import Callable
+import datetime
+from uuid import UUID
 
+from fastapi.testclient import TestClient
 import pytest
-import database
-from sqlalchemy.orm import Session
 
-from database.model import Member, MembershipApplication, AuthUser
-from membership.module import MembershipModule
-from membership.schema import MembershipCreate, MembershipListParams
+from database.types import ApplicationStatus
+from .conftest import TEST_USER_ID
+from database import model as dbmodel
 
 
-@pytest.fixture
-def auth_user(mock_get_session: Callable[[], Session]) -> int:
+@pytest.fixture()
+def mock_application(mock_get_session, mock_member_type) -> int:
     with mock_get_session() as session:
-        auth_user = AuthUser(
-            name="User",
-            email="member@gmail.com",
-            permissions={"role": "member"},
+        application = dbmodel.MembershipApplication(
+            user_id=TEST_USER_ID,
+            member_type_id=mock_member_type,
+            status=ApplicationStatus.APPROVED,
+            content="example application",
         )
-
-        session.add(auth_user)
+        session.add(application)
         session.commit()
-        session.refresh(auth_user)
+        session.refresh(application)
+        return application.application_id
 
-        return auth_user.user_id
 
-
-@pytest.fixture
-def approved_member(mock_get_session: Callable[[], Session], auth_user):
-    """Creates a Member with an approved MembershipApplication"""
-    with mock_get_session() as db:
-        member = Member(status="Applied", auth_user_id=auth_user)
-        db.add(member)
-        db.flush()
-
-        application = MembershipApplication(
-            auth_user_id=member.auth_user_id,
-            status="approved",
+@pytest.fixture()
+def mock_member(mock_get_session) -> int:
+    with mock_get_session() as session:
+        member = dbmodel.Member(
+            user_id=TEST_USER_ID,
+            due_date=datetime.datetime.now(datetime.timezone.utc)
+            + datetime.timedelta(days=10),
+            cancelled=False,
+            member_type_id=None,
         )
-        db.add(application)
-        db.commit()
-
-        return auth_user
-
-
-def test_start_membership_succeeds_for_approved_member(approved_member):
-    """An approved member should be able to start a membership successfully"""
-    module = MembershipModule()
-    data = MembershipCreate(member_id=approved_member, tier="Standard")
-
-    membership = module.start_membership(data)
-
-    assert membership.member_id == approved_member
-    assert membership.tier == "Standard"
-    assert membership.status == "Current"
+        session.add(member)
+        session.commit()
+        session.refresh(member)
+        return member.user_id
 
 
-def test_start_membership_rejects_unapproved_member():
-    """A member with no approved application should be rejected"""
-    with database.get_session() as db:
-        member = Member(status="Applied")
-        db.add(member)
-        db.commit()
-        member_id = member.member_id
+def test_full_cycle(
+    mock_provider: UUID, mock_application: int, test_server: TestClient
+):
+    response = test_server.get("/membership")
+    assert response.status_code == 200
+    assert response.json() is None  # Not a member
 
-    module = MembershipModule()
-    data = MembershipCreate(member_id=member_id, tier="Standard")
-
-    with pytest.raises(Exception) as exc_info:
-        module.start_membership(data)
-
-    assert getattr(exc_info.value, "status_code", None) == 403
-
-
-def test_start_membership_rejects_duplicate_active_membership(approved_member):
-    """A member who already has a Current membership can't start a second one"""
-    module = MembershipModule()
-    data = MembershipCreate(member_id=approved_member, tier="Standard")
-
-    module.start_membership(data)
-
-    with pytest.raises(Exception) as exc_info:
-        module.start_membership(data)
-
-    assert getattr(exc_info.value, "status_code", None) == 409
-
-
-def test_get_membership_returns_correct_record(approved_member):
-    """Fetching a membership by ID should return the exact record created"""
-    module = MembershipModule()
-    created = module.start_membership(
-        MembershipCreate(member_id=approved_member, tier="Standard")
+    response = test_server.post(
+        "/membership/purchase", json={"application_id": mock_application}
     )
+    assert response.status_code == 200, f"{response.content.decode()}"
+    payment = response.json()
 
-    fetched = module.get_membership(created.membership_id)
-
-    assert fetched.membership_id == created.membership_id
-    assert fetched.tier == "Standard"
-
-
-def test_get_membership_missing_raises_404():
-    """Fetching a membership that doesn't exist should raise 404"""
-    module = MembershipModule()
-
-    with pytest.raises(Exception) as exc_info:
-        module.get_membership(9999)
-
-    assert getattr(exc_info.value, "status_code", None) == 404
-
-
-def test_cancel_then_uncancel_membership(approved_member):
-    """A membership can be cancelled and then reinstated via uncancel"""
-    module = MembershipModule()
-    membership = module.start_membership(
-        MembershipCreate(member_id=approved_member, tier="Standard")
+    response = test_server.post(
+        "/payments/transactions",
+        json={"provider_id": str(mock_provider), "payment_id": payment["id"]},
     )
+    assert response.status_code == 200
+    transaction = response.json()
 
-    cancelled = module.cancel_membership(membership.membership_id)
-    assert cancelled.status == "Cancelled"
-
-    reinstated = module.uncancel_membership(membership.membership_id)
-    assert reinstated.status == "Current"
-
-
-def test_cancel_already_cancelled_membership_raises_409(approved_member):
-    """Cancelling an already-cancelled membership should raise 409"""
-    module = MembershipModule()
-    membership = module.start_membership(
-        MembershipCreate(member_id=approved_member, tier="Standard")
+    response = test_server.post(
+        f"/payments/transactions/{transaction['id']}/confirm",
     )
-    module.cancel_membership(membership.membership_id)
+    assert response.status_code == 200
 
-    with pytest.raises(Exception) as exc_info:
-        module.cancel_membership(membership.membership_id)
-
-    assert getattr(exc_info.value, "status_code", None) == 409
+    response = test_server.get("/membership")
+    assert response.status_code == 200  # Now a member
 
 
-def test_list_memberships_filters_by_status(approved_member):
-    """Listing memberships with a status filter should only return matches"""
-    module = MembershipModule()
-    membership = module.start_membership(
-        MembershipCreate(member_id=approved_member, tier="Standard")
+def test_cancel(test_server: TestClient, mock_member):
+    response = test_server.get("/membership")
+    assert response.status_code == 200
+    assert not response.json()["cancelled"]
+
+    test_server.post("/membership/cancel")
+    assert response.status_code == 200
+
+    response = test_server.get("/membership")
+    assert response.status_code == 200
+    assert response.json()["cancelled"]
+
+    test_server.post("/membership/uncancel")
+    assert response.status_code == 200
+
+    response = test_server.get("/membership")
+    assert response.status_code == 200
+    assert not response.json()["cancelled"]
+
+
+def test_update(test_server: TestClient, mock_member, mock_application):
+    response = test_server.get("/membership")
+    assert response.status_code == 200
+    assert response.json()["member_type"] is None
+
+    response = test_server.post(
+        "/membership/update", json={"application_id": mock_application}
     )
+    assert response.status_code == 200
 
-    current_results, current_total = module.list_memberships(
-        MembershipListParams(status="Current")
+    response = test_server.get("/membership")
+    assert response.status_code == 200
+    assert response.json()["member_type"] is not None
+
+
+def test_renew(test_server: TestClient, mock_member, mock_application, mock_provider):
+    response = test_server.get("/membership")
+    assert response.status_code == 200
+    assert response.json()["member_type"] is None
+    current_membership_duration = response.json()["due_date"]
+
+    # Not currently renewable
+    response = test_server.post("/membership/renew")
+    assert response.status_code == 400
+
+    # Update member_type
+    response = test_server.post(
+        "/membership/update", json={"application_id": mock_application}
     )
-    assert current_total == 1
-    assert current_results[0].membership_id == membership.membership_id
+    assert response.status_code == 200
 
-    module.cancel_membership(membership.membership_id)
+    # Successfully create the payment
+    response = test_server.post("/membership/renew")
+    assert response.status_code == 200
+    payment = response.json()
 
-    current_results, current_total = module.list_memberships(
-        MembershipListParams(status="Current")
+    response = test_server.post(
+        "/payments/transactions",
+        json={"provider_id": str(mock_provider), "payment_id": payment["id"]},
     )
-    assert current_total == 0
+    assert response.status_code == 200
+    transaction = response.json()
+
+    response = test_server.post(
+        f"/payments/transactions/{transaction['id']}/confirm",
+    )
+    assert response.status_code == 200
+
+    response = test_server.get("/membership")
+    assert response.status_code == 200
+    assert response.json()["due_date"] > current_membership_duration

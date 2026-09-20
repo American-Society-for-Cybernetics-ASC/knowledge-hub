@@ -16,6 +16,9 @@ dependencies = [
     "pyotp>=2.10.0",
     "python-jose>=3.5.0",
     "stripe>=15.4.0",
+    "google-api-python-client",
+    "google-auth",
+    "google-auth-httplib2",
 ]
 
 [dependency-groups]
@@ -27,8 +30,11 @@ dev = [
 ]
 
 [tool.mypy]
-disable_error_code = "empty-body" # This allows our dummy methods
 explicit_package_bases=true
+
+[[tool.mypy.overrides]]
+module = ["googleapiclient.*"]
+follow_untyped_imports = true
 
 [tool.pytest]
 markers = [

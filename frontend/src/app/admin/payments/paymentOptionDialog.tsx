@@ -30,8 +30,8 @@ export default function PaymentOptionDialog({
   onSubmit: (value: PaymentOption) => void;
 }) {
   const [providerType, setProviderType] = useState<
-    PaymentProvider["provider_type"]
-  >(option?.provider.provider_type || "stripe");
+    PaymentProvider["service_name"]
+  >(option?.provider.service_name || "stripe");
   const [provider, setProvider] = useState<PaymentProvider | undefined>(
     option?.provider,
   );
@@ -57,6 +57,9 @@ export default function PaymentOptionDialog({
     case "stripe":
       form = <StripeForm provider={provider} setProvider={setProvider} />;
       break;
+    case "mock":
+      form = <MockForm setProvider={setProvider} />;
+      break;
     default:
       form = <></>;
       break;
@@ -76,11 +79,12 @@ export default function PaymentOptionDialog({
                 value={providerType}
                 onChange={(e) =>
                   setProviderType(
-                    e.target.value as PaymentProvider["provider_type"],
+                    e.target.value as PaymentProvider["service_name"],
                   )
                 }
               >
                 <MenuItem value={"stripe"}>Stripe</MenuItem>
+                <MenuItem value={"mock"}>Mock</MenuItem>
               </Select>
             </FormControl>
             <TextField
@@ -135,7 +139,7 @@ function StripeForm({
   setProvider: (value?: PaymentProvider) => void;
 }) {
   const asStripeProvider = (
-    provider && provider.provider_type === "stripe" ? provider : {}
+    provider && provider.service_name === "stripe" ? provider : {}
   ) as Partial<StripePaymentProvider>;
 
   const [api_key, setApiKey] = useState(asStripeProvider.api_key || "");
@@ -151,7 +155,7 @@ function StripeForm({
       (api_key &&
         publishable_key &&
         webhook_secret && {
-          provider_type: "stripe",
+          service_name: "stripe",
           api_key,
           publishable_key,
           webhook_secret,
@@ -194,4 +198,17 @@ function StripeForm({
       />
     </>
   );
+}
+
+function MockForm({
+  setProvider,
+}: {
+  setProvider: (value?: PaymentProvider) => void;
+}) {
+  useEffect(() => {
+    setProvider({
+      service_name: "mock",
+    });
+  }, [setProvider]);
+  return <></>;
 }

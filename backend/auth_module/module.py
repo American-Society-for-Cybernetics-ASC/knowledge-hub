@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives import serialization
 import pyotp
 
 from audit_log.module import AuditLogModule
-from audit_log.enums import AuditPermissionCategory
+from database.types import PermissionCategory
 import database
 from database import model
 from settings import SETTINGS
@@ -85,7 +85,7 @@ class AuthModule:
             session.refresh(new_user)
 
             AuditLogModule().post_audit(
-                AuditPermissionCategory.auth, f"An account was registered for {email}"
+                PermissionCategory.AUTH, f"An account was registered for {email}"
             )
 
             # Generate QR code URI for authenticator app
@@ -179,7 +179,7 @@ class AuthModule:
                 raise ValueError("Account locked. Please contact an administrator.")
 
             # Check temporary lockout
-            if user.locked_until and user.locked_until > datetime.now():
+            if user.locked_until and user.locked_until > datetime.now(timezone.utc):
                 raise ValueError("Account temporarily locked. Please try again later.")
 
             # Verify password
@@ -191,7 +191,9 @@ class AuthModule:
 
                 # After 3 failures - temporary lockout
                 if user.failed_attempt >= 3:
-                    user.locked_until = datetime.now() + timedelta(minutes=10)
+                    user.locked_until = datetime.now(timezone.utc) + timedelta(
+                        minutes=10
+                    )
 
                 # After 6 total failures - permanent lock
                 if user.failed_attempt >= 6:
@@ -220,7 +222,7 @@ class AuthModule:
             # Return challenge token
             return {"challenge_token": f"challenge:{user.user_id}", "token": None}
 
-    def verify_otp(self, email: str, code: str) -> str:
+    def verify_otp(self, email: str, code: str, challenge_token: str) -> str:
         """
         Second step of login - verifies TOTP code and issues JWT.
 
@@ -241,6 +243,11 @@ class AuthModule:
 
             if not user:
                 raise ValueError("User not found")
+
+            # Validate the challenge token
+            expected_token = f"challenge:{user.user_id}"
+            if challenge_token != expected_token:
+                raise ValueError("Invalid challenge token")
 
             # Decrypt TOTP secret
             f = self._get_fernet()
@@ -268,3 +275,66 @@ class AuthModule:
             token = jwt.encode(payload, self._get_private_key(), algorithm="RS256")
 
             return token
+
+    def change_password(
+        self, user_id: int, current_password: str, new_password: str
+    ) -> None:
+        """
+        Changes the user's password.
+
+        1. Find user by user_id
+        2. Verifies current password
+        3. Hashes and saves new password
+        """
+
+        with database.get_session() as session:
+            user = session.get(model.AuthUser, user_id)
+
+            if not user or not user.hash_password:
+                raise ValueError("User not found")
+
+            try:
+                ph.verify(user.hash_password, current_password)
+            except VerifyMismatchError:
+                raise ValueError("Current password is incorrect")
+
+            user.hash_password = ph.hash(new_password)
+            session.commit()
+
+    def change_email(self, user_id: int, new_email: str) -> None:
+        """
+        Changes the user's email address.
+
+        1. Checks new email is not already taken
+        2. Updates the email
+        """
+
+        with database.get_session() as session:
+            existing = (
+                session.query(model.AuthUser)
+                .filter(model.AuthUser.email == new_email)
+                .first()
+            )
+
+            if existing:
+                raise ValueError("Email already in use")
+
+            user = session.get(model.AuthUser, user_id)
+            if not user:
+                raise ValueError("User not found")
+
+            user.email = new_email
+            session.commit()
+
+    def disable_totp(self, user_id: int) -> None:
+        """
+        Disables two-factor authentication for the user.
+        """
+        with database.get_session() as session:
+            user = session.get(model.AuthUser, user_id)
+
+            if not user:
+                raise ValueError("User not found")
+
+            user.totp_enabled = False
+            session.commit()
