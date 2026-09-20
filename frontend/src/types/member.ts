@@ -50,6 +50,14 @@ export interface MemberProfile {
   tags: string[];
 }
 
+export interface MemberSearchResult {
+  member_id: number;
+  display_name: string | null;
+  status: MemberStatus;
+  tags: string[];
+  affiliations: Affiliation[];
+}
+
 /**
  * Request body for PATCH /members/me
  * All properties are optional because of partial updates.

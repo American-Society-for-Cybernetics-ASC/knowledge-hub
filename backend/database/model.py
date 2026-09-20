@@ -275,3 +275,12 @@ class MemberType(Base):
     id = mapped_column(UUID, primary_key=True, index=True, default=uuid.uuid4)
     name = mapped_column(String, nullable=False)
     price = mapped_column(Integer, nullable=False)
+
+
+class EmailTemplate(Base):
+    __tablename__ = "email_templates"
+
+    name = mapped_column(String, primary_key=True, index=True)
+    subject = mapped_column(String, nullable=False)
+    body = mapped_column(String, nullable=False)
+    variables = mapped_column(JSON, nullable=False)

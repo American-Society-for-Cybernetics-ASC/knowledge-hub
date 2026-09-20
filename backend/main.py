@@ -21,6 +21,8 @@ from member_application.routes import member_application_router
 from payments.routes import payments_router
 from audit_log.routes import audit_router
 from members.model import ProfileContent, ProfileIdentity
+from email_templates.routes import email_templates_router
+from email_templates.module import EmailTemplatesModule
 
 if SETTINGS.local_deployment and not SETTINGS.testing:
     with database.get_session() as session:
@@ -67,6 +69,10 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
 
         session.commit()
 
+# Seed default email templates
+if not SETTINGS.testing:
+    EmailTemplatesModule().seed_defaults()
+
 app = FastAPI()
 
 app.add_middleware(
@@ -90,3 +96,4 @@ app.include_router(member_matching_router)
 app.include_router(member_application_router)
 app.include_router(payments_router)
 app.include_router(audit_router)
+app.include_router(email_templates_router)
