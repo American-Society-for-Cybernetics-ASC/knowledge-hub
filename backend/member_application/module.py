@@ -20,6 +20,7 @@ class ApplicationNotOwnedError(Exception):
 
     pass
 
+
 class ApplicationCompleteError(Exception):
     """raised when a user tries to edit a completed application"""
 
@@ -34,9 +35,8 @@ class MemberApplicationModule:
                 map(
                     MembershipApplication.from_db_model,
                     session.execute(
-                        select(dbmodel.MembershipApplication).where(
-                            dbmodel.MembershipApplication.auth_user_id == user_id
-                        )
+                        select(dbmodel.MembershipApplication)
+                        .where(dbmodel.MembershipApplication.auth_user_id == user_id)
                         .order_by(desc(dbmodel.MembershipApplication.last_edited))
                     )
                     .scalars()
@@ -102,8 +102,13 @@ class MemberApplicationModule:
             if application.auth_user_id != auth_user_id:
                 raise ApplicationNotOwnedError("You do not own this application")
 
-            if application.status not in [ApplicationStatus.PENDING, ApplicationStatus.REVISION_REQUIRED]:
-                raise ApplicationCompleteError(f"This application is not in a state to be edited.")
+            if application.status not in [
+                ApplicationStatus.PENDING,
+                ApplicationStatus.REVISION_REQUIRED,
+            ]:
+                raise ApplicationCompleteError(
+                    "This application is not in a state to be edited."
+                )
 
             application.content = content
             application.status = ApplicationStatus.PENDING

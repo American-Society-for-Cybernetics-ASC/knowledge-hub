@@ -11,7 +11,9 @@ interface PayPageProps {
 }
 
 const formatAmount = (cents: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "usd" }).format(cents / 100);
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "usd" }).format(
+    cents / 100,
+  );
 
 export default function PayPage({ params }: PayPageProps) {
   const { transactionId } = use(params);
@@ -19,7 +21,9 @@ export default function PayPage({ params }: PayPageProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getTransaction(transactionId).then(setTransaction).catch((e) => setError(e.message));
+    getTransaction(transactionId)
+      .then(setTransaction)
+      .catch((e) => setError(e.message));
   }, [transactionId]);
 
   if (error) {
@@ -33,12 +37,21 @@ export default function PayPage({ params }: PayPageProps) {
   return (
     <Box sx={{ p: 4, maxWidth: 480 }}>
       <Typography variant="h5">Pay for your Membership</Typography>
-      <Typography variant="h6">Collaborative Knowledge Hub Membership</Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3}}>
-        Amount: {transaction ? formatAmount(transaction.data.amount_value) : "Invalid amount"}
+      <Typography variant="h6">
+        Collaborative Knowledge Hub Membership
+      </Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+        Amount:{" "}
+        {transaction
+          ? formatAmount(transaction.data.amount_value)
+          : "Invalid amount"}
       </Typography>
 
-      <Button variant="contained" component={Link} href={`/billing/confirmed/${transactionId}`}>
+      <Button
+        variant="contained"
+        component={Link}
+        href={`/billing/confirmed/${transactionId}`}
+      >
         Confirm
       </Button>
     </Box>

@@ -6,7 +6,13 @@ from sqlalchemy import select
 from membership.model import MemberStatus
 import database
 from database import model as database_model
-from members.model import Affiliation, MemberProfile, MemberSearchResult, ProfileContent, ProfileUpdate
+from members.model import (
+    Affiliation,
+    MemberProfile,
+    MemberSearchResult,
+    ProfileContent,
+    ProfileUpdate,
+)
 
 
 class MemberNotFoundError(LookupError):
@@ -79,10 +85,7 @@ class MembersModule:
             current_members = session.scalars(
                 select(database_model.Member)
                 .join(database_model.Profile)
-                .where(
-                    database_model.Member.due_date 
-                    > datetime.now(timezone.utc)
-                )
+                .where(database_model.Member.due_date > datetime.now(timezone.utc))
             ).all()
 
             results: list[tuple[int, MemberSearchResult]] = []
@@ -92,17 +95,17 @@ class MembersModule:
 
                 if profile is None:
                     continue
-                
+
                 member_profile = self._serialize_profile(member, profile)
                 display_name = member_profile.content.identity.display_name
                 affiliations = self._get_affiliations(member_profile.content)
 
                 name_matches = self._matches_query(
-                    display_name, 
+                    display_name,
                     normalized_query,
                 )
                 tag_matches = any(
-                    self._matches_query(tag, normalized_query) 
+                    self._matches_query(tag, normalized_query)
                     for tag in member_profile.tags
                 )
                 affiliation_matches = any(
@@ -116,10 +119,10 @@ class MembersModule:
                     )
                     for affiliation in affiliations
                 )
-                
+
                 if not (name_matches or tag_matches or affiliation_matches):
                     continue
-                
+
                 # Prefer name matches, remaining results sort by name and member ID.
                 result_priority = 0 if name_matches else 1
 

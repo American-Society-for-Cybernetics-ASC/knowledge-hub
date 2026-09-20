@@ -108,13 +108,15 @@ function ApplicationTable({
                 <ApplicationStatusChip status={application.status} />
               </TableCell>
               <TableCell>
-                {(application.status === "pending" || application.status === "revision_required") && (<Button
-                  title="Revise application"
-                  onClick={() => edit(application)}
-                >
-                  <Settings />
-                </Button>)
-                }
+                {(application.status === "pending" ||
+                  application.status === "revision_required") && (
+                  <Button
+                    title="Revise application"
+                    onClick={() => edit(application)}
+                  >
+                    <Settings />
+                  </Button>
+                )}
               </TableCell>
               <TableCell>
                 {memberData !== undefined &&
@@ -141,7 +143,7 @@ function ActionButton({
   member: ReadMember | null;
 }) {
   const router = useRouter();
-    const { mutate } = useSWRConfig()
+  const { mutate } = useSWRConfig();
   const addError = useContext(AddErrorContext);
 
   if (member === null) {
@@ -177,7 +179,7 @@ function ActionButton({
       .then(() => {
         mutate("/membership");
         router.push(`/membership`);
-  })
+      })
       .catch((error) => {
         addError(error.message);
       });

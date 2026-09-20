@@ -169,7 +169,7 @@ def authenticate_member():
         app.dependency_overrides[get_current_member_id] = lambda: member_id
 
     yield authenticate
-    
+
     app.dependency_overrides.pop(get_current_member_id, None)
 
 
@@ -197,7 +197,7 @@ def test_get_member_profile_by_id(mock_get_session, authenticate_member):
 
 
 def test_get_member_profile_returns_expired_status(
-    mock_get_session, 
+    mock_get_session,
     authenticate_member,
 ):
     """A profile's status is calculated from membership expiration."""
@@ -206,11 +206,11 @@ def test_get_member_profile_returns_expired_status(
 
     with mock_get_session() as session:
         expired_member = session.get(model.Member, expired_member_id)
-        expired_member.due_date = (
-            datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)
-        )
+        expired_member.due_date = datetime.datetime.now(
+            datetime.timezone.utc
+        ) - datetime.timedelta(days=1)
         session.commit()
-    
+
     authenticate_member(requesting_member_id)
     response = TestClient(app).get(f"/members/{expired_member_id}")
 
@@ -280,6 +280,7 @@ def test_get_member_profile_requires_authentication(mock_get_session):
     assert response.status_code == 401
     assert response.json()["detail"] == "Authentication required"
 
+
 def test_search_members_matches_name_tag_and_affiliation(
     mock_get_session,
     authenticate_member,
@@ -328,15 +329,11 @@ def test_search_members_matches_name_tag_and_affiliation(
 
     name_response = client.get("/members", params={"q": "SONION"})
     assert name_response.status_code == 200
-    assert [result["member_id"] for result in name_response.json()] == [
-        name_member_id
-    ]
+    assert [result["member_id"] for result in name_response.json()] == [name_member_id]
 
     tag_response = client.get("/members", params={"q": "cyber"})
     assert tag_response.status_code == 200
-    assert [result["member_id"] for result in tag_response.json()] == [
-        tag_member_id
-    ]
+    assert [result["member_id"] for result in tag_response.json()] == [tag_member_id]
 
     organisation_response = client.get("/members", params={"q": "curtin"})
     assert organisation_response.status_code == 200
@@ -372,6 +369,6 @@ def test_search_members_rejects_missing_or_empty_query(
 def test_search_members_requires_authentication():
     """Unauthenticated requests cannot search for members."""
     response = TestClient(app).get("/members", params={"q": "cybernetics"})
-    
+
     assert response.status_code == 401
     assert response.json()["detail"] == "Authentication required"

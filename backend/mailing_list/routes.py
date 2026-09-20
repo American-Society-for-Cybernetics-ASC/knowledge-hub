@@ -2,7 +2,6 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
 from database.types import PermissionCategory
-from .module import MailingListModule, MemberNotFoundError
 from .module import MailingListModule, MemberNotFoundError, MailingListNotFoundError
 from google.auth.exceptions import GoogleAuthError
 from .model import MailingList, MailingListMember

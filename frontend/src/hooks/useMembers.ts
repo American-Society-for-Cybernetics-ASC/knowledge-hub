@@ -26,9 +26,7 @@ export function useMembers(target: ProfileTarget = "me") {
 
     try {
       const result =
-        target === "me"
-          ? await getMyProfile()
-          : await getMemberProfile(target);
+        target === "me" ? await getMyProfile() : await getMemberProfile(target);
 
       setProfile(result);
     } catch (error) {

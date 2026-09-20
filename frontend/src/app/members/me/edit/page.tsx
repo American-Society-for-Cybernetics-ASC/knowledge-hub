@@ -2,7 +2,12 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { getMyProfile, updateMyProfile } from "@/lib/api/members";
-import type { MemberProfile, ProfileUpdate, Affiliation, ProfilePublication } from "@/types/member";
+import type {
+  MemberProfile,
+  ProfileUpdate,
+  Affiliation,
+  ProfilePublication,
+} from "@/types/member";
 
 // Convert list fields from API into CSV
 function toCSV(values: string[] | null): string {
@@ -41,7 +46,7 @@ function emptyAffiliation(): AffiliationForm {
     role: "",
     start_year: "",
     end_year: "",
-  }
+  };
 }
 
 function emptyPublication(): PublicationForm {
@@ -50,7 +55,7 @@ function emptyPublication(): PublicationForm {
     year: "",
     doi: "",
     url: "",
-  }
+  };
 }
 
 function affiliationToForm(affiliation: Affiliation): AffiliationForm {
@@ -59,7 +64,7 @@ function affiliationToForm(affiliation: Affiliation): AffiliationForm {
     role: affiliation.role ?? "",
     start_year: affiliation.start_year?.toString() ?? "",
     end_year: affiliation.end_year?.toString() ?? "",
-  }
+  };
 }
 
 function publicationToForm(publication: ProfilePublication): PublicationForm {
@@ -68,7 +73,7 @@ function publicationToForm(publication: ProfilePublication): PublicationForm {
     year: publication.year?.toString() ?? "",
     doi: publication.doi ?? "",
     url: publication.url ?? "",
-  }
+  };
 }
 
 function parseYear(value: string, label: string): number | null {
@@ -170,7 +175,6 @@ export default function EditMyProfilePage() {
             ? publicationsMetadata.value.map(publicationToForm)
             : [],
         );
-        
       } catch (err: unknown) {
         setError(
           err instanceof Error ? err.message : "Unable to load your profile",
@@ -199,9 +203,7 @@ export default function EditMyProfilePage() {
 
   function removeAffiliation(index: number) {
     setAffiliations((currentAffiliations) =>
-      currentAffiliations.filter(
-        (_, currentIndex) => currentIndex !== index,
-      ),
+      currentAffiliations.filter((_, currentIndex) => currentIndex !== index),
     );
   }
 
@@ -221,9 +223,7 @@ export default function EditMyProfilePage() {
 
   function removePublication(index: number) {
     setPublications((currentPublications) =>
-      currentPublications.filter(
-        (_, currentIndex) => currentIndex !== index,
-      ),
+      currentPublications.filter((_, currentIndex) => currentIndex !== index),
     );
   }
 
@@ -304,11 +304,8 @@ export default function EditMyProfilePage() {
         }
 
         return {
-          title, 
-          year: parseYear(
-            publication.year,
-            `Publication ${index + 1} year`,
-          ),
+          title,
+          year: parseYear(publication.year, `Publication ${index + 1} year`),
           doi: parseDoi(publication.doi),
           url: parseUrl(publication.url, `Publication ${index + 1} URL`),
         };
@@ -347,7 +344,7 @@ export default function EditMyProfilePage() {
           type: "publications",
           value: publicationValues,
         },
-      }
+      },
     };
 
     // Send the update to backend
@@ -567,15 +564,20 @@ export default function EditMyProfilePage() {
           <section className="border-t border-gray-200 pt-6">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Affiliations</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Affiliations
+                </h2>
                 <p className="mt-1 text-sm text-gray-600">
-                  Add organisations you are currently or previously affiliated with.
+                  Add organisations you are currently or previously affiliated
+                  with.
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={() => setAffiliations((current) => [...current, emptyAffiliation()])}
+                onClick={() =>
+                  setAffiliations((current) => [...current, emptyAffiliation()])
+                }
                 disabled={affiliations.length >= 20}
                 className="rounded border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
@@ -585,7 +587,7 @@ export default function EditMyProfilePage() {
 
             <div className="mt-4 space-y-4">
               {affiliations.map((affiliation, index) => (
-                <div 
+                <div
                   key={index}
                   className="rounded-lg border border-gray-200 p-4"
                 >
@@ -594,7 +596,11 @@ export default function EditMyProfilePage() {
                       type="text"
                       value={affiliation.organisation}
                       onChange={(event) =>
-                        updateAffiliation(index, "organisation", event.target.value)
+                        updateAffiliation(
+                          index,
+                          "organisation",
+                          event.target.value,
+                        )
                       }
                       maxLength={200}
                       placeholder="Organisation *"
@@ -616,7 +622,11 @@ export default function EditMyProfilePage() {
                       type="number"
                       value={affiliation.start_year}
                       onChange={(event) =>
-                        updateAffiliation(index, "start_year", event.target.value)
+                        updateAffiliation(
+                          index,
+                          "start_year",
+                          event.target.value,
+                        )
                       }
                       min={1000}
                       max={2100}
@@ -652,7 +662,9 @@ export default function EditMyProfilePage() {
           <section className="border-t border-gray-200 pt-6">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Publications</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Publications
+                </h2>
                 <p className="mt-1 text-sm text-gray-600">
                   Add publications you like displayed on your profile.
                 </p>
@@ -660,7 +672,9 @@ export default function EditMyProfilePage() {
 
               <button
                 type="button"
-                onClick={() => setPublications((current) => [...current, emptyPublication()])}
+                onClick={() =>
+                  setPublications((current) => [...current, emptyPublication()])
+                }
                 disabled={publications.length >= 50}
                 className="rounded border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >

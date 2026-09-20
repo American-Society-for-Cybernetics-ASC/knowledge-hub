@@ -19,9 +19,9 @@ function displayName(profile: MemberProfileData): string {
 }
 
 function formatMetadataLabel(key: string): string {
-  return key.replace(/[_-]+/g, " ").replace(/\b\w/g, (letter) =>
-    letter.toUpperCase(),
-  );
+  return key
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function TagList({ tags }: { tags: string[] }) {
@@ -119,7 +119,9 @@ function MetadataValue({ metadata }: { metadata: ProfileMetadata }) {
   switch (metadata.type) {
     case "str":
     case "int":
-      return <p className="whitespace-pre-wrap text-gray-700">{metadata.value}</p>;
+      return (
+        <p className="whitespace-pre-wrap text-gray-700">{metadata.value}</p>
+      );
 
     case "tag_list":
       return <TagList tags={metadata.value} />;
@@ -221,10 +223,7 @@ export default function MemberProfile({
 
   if (loading) {
     return (
-      <main
-        className="min-h-screen bg-gray-50 px-4 py-8"
-        aria-busy="true"
-      >
+      <main className="min-h-screen bg-gray-50 px-4 py-8" aria-busy="true">
         <p className="mx-auto max-w-3xl text-gray-600">Loading profile...</p>
       </main>
     );
@@ -295,69 +294,71 @@ export default function MemberProfile({
           {(profile.content.personal_statement ||
             identity.website ||
             identity.orcid) && (
-              <section>
-                <h2 className="text-xl font-semibold text-gray-900">About</h2>
+            <section>
+              <h2 className="text-xl font-semibold text-gray-900">About</h2>
 
-                {profile.content.personal_statement && (
-                  <p className="mt-3 whitespace-pre-wrap text-gray-700">
-                    {profile.content.personal_statement}
-                  </p>
-                )}
+              {profile.content.personal_statement && (
+                <p className="mt-3 whitespace-pre-wrap text-gray-700">
+                  {profile.content.personal_statement}
+                </p>
+              )}
 
-                {(identity.website || identity.orcid) && (
-                  <ul className="mt-4 space-y-2 text-sm">
-                    {identity.website && (
-                      <li>
-                        <a
-                          href={identity.website}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-600 hover:underline"
-                        >
-                          Website
-                        </a>
-                      </li>
-                    )}
+              {(identity.website || identity.orcid) && (
+                <ul className="mt-4 space-y-2 text-sm">
+                  {identity.website && (
+                    <li>
+                      <a
+                        href={identity.website}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        Website
+                      </a>
+                    </li>
+                  )}
 
-                    {identity.orcid && (
-                      <li>
-                        <a
-                          href={`https://orcid.org/${identity.orcid}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-600 hover:underline"
-                        >
-                          ORCID: {identity.orcid}
-                        </a>
-                      </li>
-                    )}
-                  </ul>
-                )}
-              </section>
-            )}
-
-            <section className="border-t border-gray-200 pt-6">
-              <h2 className="text-xl font-semibold text-gray-900">Research interests</h2>
-              <div className="mt-4">
-                <TagList tags={profile.content.research_interests} />
-              </div>
+                  {identity.orcid && (
+                    <li>
+                      <a
+                        href={`https://orcid.org/${identity.orcid}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        ORCID: {identity.orcid}
+                      </a>
+                    </li>
+                  )}
+                </ul>
+              )}
             </section>
+          )}
 
-            <section className="border-t border-gray-200 pt-6">
-              <h2 className="text-xl font-semibold text-gray-900">Expertise</h2>
-              <div className="mt-4">
-                <TagList tags={profile.content.expertise} />
-              </div>
-            </section>
+          <section className="border-t border-gray-200 pt-6">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Research interests
+            </h2>
+            <div className="mt-4">
+              <TagList tags={profile.content.research_interests} />
+            </div>
+          </section>
 
-            <section className="border-t border-gray-200 pt-6">
-              <h2 className="text-xl font-semibold text-gray-900">Tags</h2>
-              <div className="mt-4">
-                <TagList tags={profile.tags} />
-              </div>
-            </section>
+          <section className="border-t border-gray-200 pt-6">
+            <h2 className="text-xl font-semibold text-gray-900">Expertise</h2>
+            <div className="mt-4">
+              <TagList tags={profile.content.expertise} />
+            </div>
+          </section>
 
-            <MetadataSection metadata={profile.content.metadata} />
+          <section className="border-t border-gray-200 pt-6">
+            <h2 className="text-xl font-semibold text-gray-900">Tags</h2>
+            <div className="mt-4">
+              <TagList tags={profile.tags} />
+            </div>
+          </section>
+
+          <MetadataSection metadata={profile.content.metadata} />
         </div>
       </article>
     </main>
