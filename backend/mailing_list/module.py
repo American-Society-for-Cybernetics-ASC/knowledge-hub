@@ -1,13 +1,16 @@
-
 from sqlalchemy import select
 from mailing_list.model import MailingListMember, MailingList
 import database
 from database import model
-from google_workspace_interface.interface import MailingListInterface
-from google_workspace_interface.service import GoogleWorkspaceService
+from mailing_list.providers.interface import MailingListProviderInterface
+from mailing_list.providers.google_workspace_provider import (
+    GoogleWorkspaceMailingListProvider,
+)
+
 
 class MemberNotFoundError(Exception):
     """raised when a member cannot be found"""
+
     pass
 
 
@@ -16,30 +19,33 @@ class MailingListNotFoundError(Exception):
 
 
 class MailingListModule:
-
-    def __init__(self, workspace: MailingListInterface | None = None):
+    def __init__(self, workspace: MailingListProviderInterface | None = None):
         if workspace is None:
-            self.workspace = GoogleWorkspaceService.from_env()
+            self.workspace: MailingListProviderInterface = (
+                GoogleWorkspaceMailingListProvider.from_env()
+            )
         else:
             self.workspace = workspace
-
 
     def get_mailing_list(self, session, mailing_list_id: int):
         """retrieve a mailing list from the database"""
         mailing_list = session.get(model.MailingList, mailing_list_id)
 
         if mailing_list is None:
-            raise MailingListNotFoundError(f"Mailing list {mailing_list_id} cannot be found")
+            raise MailingListNotFoundError(
+                f"Mailing list {mailing_list_id} cannot be found"
+            )
 
         if not mailing_list.email:
             raise ValueError("Mailing list does not have an email")
 
         return mailing_list
 
-
-    def add_membership(self, session, mailing_list, email: str, member_id: int | None = None) -> None:
+    def add_membership(
+        self, session, mailing_list, email: str, member_id: int | None = None
+    ) -> None:
         """add an email to Google Worksapce"""
-        #check if the email is already registered
+        # check if the email is already registered
         existing_membership = session.execute(
             select(model.MailingListMember).where(
                 model.MailingListMember.mailing_list_id == mailing_list.mailing_list_id,
@@ -48,14 +54,13 @@ class MailingListModule:
         ).scalar_one_or_none()
 
         if existing_membership is not None:
-
-            if(member_id is not None and existing_membership.member_id is None):
+            if member_id is not None and existing_membership.member_id is None:
                 existing_membership.member_id = member_id
                 session.commit()
 
             return
 
-        #convert database object into mailing list model
+        # convert database object into mailing list model
         google_mailing_list = MailingList.model_validate_sqlalchemy(mailing_list)
         self.workspace.add_user(email, google_mailing_list)
 
@@ -68,14 +73,12 @@ class MailingListModule:
         session.add(membership)
         session.commit()
 
-
     def remove_membership(self, session, mailing_list, membership) -> None:
         """remove an email from Google Workspace"""
-        google_mailing_list =  MailingList.model_validate_sqlalchemy(mailing_list)
+        google_mailing_list = MailingList.model_validate_sqlalchemy(mailing_list)
         self.workspace.remove_user(membership.email, google_mailing_list)
         session.delete(membership)
         session.commit()
-
 
     def get_mailing_lists(self) -> list[MailingList]:
         """Returns a list of all mailing lists"""
@@ -86,10 +89,8 @@ class MailingListModule:
                 for mailing_list in mailing_lists
             ]
 
-
     def join_mailing_list(self, mailing_list_id: int, member_id: int) -> None:
-        """Add a member to a mailing list and syncs with Google Workspace mailing list
-        """
+        """Add a member to a mailing list and syncs with Google Workspace mailing list"""
         with database.get_session() as session:
             member = session.get(model.Member, member_id)
 
@@ -98,7 +99,9 @@ class MailingListModule:
             mailing_list = session.get(model.MailingList, mailing_list_id)
 
             if member.auth_user is None:
-                raise MemberNotFoundError(f"Member {member_id} has no associated auth user")
+                raise MemberNotFoundError(
+                    f"Member {member_id} has no associated auth user"
+                )
             mailing_list = self.get_mailing_list(session, mailing_list_id)
 
             self.add_membership(
@@ -108,10 +111,8 @@ class MailingListModule:
                 member_id=member_id,
             )
 
-
     def leave_mailing_list(self, mailing_list_id: int, member_id: int) -> None:
-        """Remove a member from a mailing list
-        """
+        """Remove a member from a mailing list"""
         with database.get_session() as session:
             mailing_list = self.get_mailing_list(session, mailing_list_id)
             membership = session.execute(
@@ -130,7 +131,6 @@ class MailingListModule:
                 membership=membership,
             )
 
-
     def get_mailing_list_members(self, mailing_list_id: int) -> list[MailingListMember]:
         """Return all members of a mailing list"""
         with database.get_session() as session:
@@ -145,7 +145,6 @@ class MailingListModule:
             )
             return [MailingListMember.model_validate_sqlalchemy(m) for m in members]
 
-
     def add_member(self, mailing_list_id: int, email: str) -> None:
         """Assign a member to a mailing list by a manager"""
         with database.get_session() as session:
@@ -156,11 +155,7 @@ class MailingListModule:
                 .where(model.AuthUser.email == email)
             ).scalar_one_or_none()
 
-            member_id = (
-                member.auth_user_id
-                if member is not None
-                else None
-            )
+            member_id = member.auth_user_id if member is not None else None
 
             self.add_membership(
                 session=session,
@@ -168,7 +163,6 @@ class MailingListModule:
                 email=email,
                 member_id=member_id,
             )
-
 
     def kick_member(self, mailing_list_id: int, email: str) -> None:
         """Allows manager to remove a member from a mailing list"""
@@ -193,7 +187,6 @@ class MailingListModule:
                 membership=membership,
             )
 
-            
     def register_mailing_list(self, mailing_list_email: str) -> MailingList:
         """Allows a manager to manually register an existing mailing list. Doesn't automatically import all Google Workspace Groups"""
         with database.get_session() as session:
@@ -204,7 +197,6 @@ class MailingListModule:
             session.add(mailing_list)
             session.commit()
             return MailingList.model_validate_sqlalchemy(mailing_list)
-
 
     def add_email(
         self, mailing_list_id: int, email: str, member_id: int | None = None
@@ -218,7 +210,6 @@ class MailingListModule:
                 email=email,
                 member_id=member_id,
             )
-
 
     def sync(self) -> None:
         """sync membership that have been explicitly registered. Doesn't automatically import unregistered groups."""

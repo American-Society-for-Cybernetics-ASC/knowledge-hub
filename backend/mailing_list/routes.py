@@ -1,17 +1,16 @@
-
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from .module import MailingListModule, MemberNotFoundError, MailingListNotFoundError
 from google.auth.exceptions import GoogleAuthError
-from sqlalchemy import select
-import database
-from database import model
 from .model import MailingList, MailingListMember
-from google_workspace_interface.service import (GoogleWorkspaceConfigurationError)
+from mailing_list.providers.google_workspace_provider import (
+    GoogleWorkspaceConfigurationError,
+)
 from auth_module import authorized, user_id, PermissionTier
 
 
 mailing_list_router = APIRouter(prefix="/mailing-lists", tags=["mailing-lists"])
+
 
 def get_mailing_list_module() -> MailingListModule:
     return MailingListModule()
@@ -33,6 +32,7 @@ def register_mailing_list(
     """Manager register an existing Google Workspace Group"""
     return module.register_mailing_list(mailing_list_email)
 
+
 @mailing_list_router.post("/{mailing_list_id}/join")
 def join_mailing_list(
     mailing_list_id: int,
@@ -47,11 +47,12 @@ def join_mailing_list(
             status_code=404,
             detail=str(e),
         ) from e
-    except(GoogleWorkspaceConfigurationError, GoogleAuthError) as e:
+    except (GoogleWorkspaceConfigurationError, GoogleAuthError) as e:
         raise HTTPException(
             status_code=503,
             detail="unable to update Google workspace mailing list",
         ) from e
+
 
 @mailing_list_router.get("/{mailing_list_id}/members")
 def get_mailing_list_members(
@@ -60,6 +61,8 @@ def get_mailing_list_members(
 ) -> list[MailingListMember]:
     """get a list of all members from a mailing list"""
     return module.get_mailing_list_members(mailing_list_id)
+
+
 @mailing_list_router.post("/{mailing_list_id}/members/add")
 def add_member(
     mailing_list_id: int,
@@ -75,13 +78,14 @@ def add_member(
             status_code=404,
             detail=str(e),
         ) from e
-    
-    except(GoogleWorkspaceConfigurationError, GoogleAuthError) as e:
+
+    except (GoogleWorkspaceConfigurationError, GoogleAuthError) as e:
         raise HTTPException(
             status_code=503,
             detail="unable to update Google workspace mailing list",
         ) from e
-    
+
+
 @mailing_list_router.post("/{mailing_list_id}/leave")
 def leave_mailing_list(
     mailing_list_id: int,
@@ -96,13 +100,14 @@ def leave_mailing_list(
             status_code=404,
             detail=str(e),
         ) from e
-    
-    except(GoogleWorkspaceConfigurationError, GoogleAuthError) as e:
+
+    except (GoogleWorkspaceConfigurationError, GoogleAuthError) as e:
         raise HTTPException(
             status_code=503,
             detail="unable to update Google workspace mailing list",
         ) from e
-    
+
+
 @mailing_list_router.post("/{mailing_list_id}/members/kick")
 def kick_member(
     mailing_list_id: int,
@@ -118,7 +123,7 @@ def kick_member(
             status_code=404,
             detail=str(e),
         ) from e
-    except(GoogleWorkspaceConfigurationError, GoogleAuthError) as e:
+    except (GoogleWorkspaceConfigurationError, GoogleAuthError) as e:
         raise HTTPException(
             status_code=503,
             detail="unable to update Google workspace mailing list",

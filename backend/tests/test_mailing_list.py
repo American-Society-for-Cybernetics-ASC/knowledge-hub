@@ -1,4 +1,3 @@
-
 import datetime
 import pytest
 from typing import Callable
@@ -7,6 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from database import model
 from mailing_list.module import MailingListModule
+
 
 @pytest.fixture
 def mailing_list_module() -> MailingListModule:
@@ -28,7 +28,7 @@ def create_mailing_list(
         session.refresh(mailing_list)
         return mailing_list.mailing_list_id
 
-    
+
 def create_member(get_session: Callable[[], Session]) -> int:
     with get_session() as session:
         auth_user = model.AuthUser(
@@ -50,7 +50,7 @@ def create_member(get_session: Callable[[], Session]) -> int:
         session.refresh(member)
         return member.auth_user_id
 
-    
+
 def create_mailing_list_member(
     get_session: Callable[[], Session],
     mailing_list_id: int,
@@ -68,14 +68,14 @@ def create_mailing_list_member(
         session.refresh(mailing_list_member)
         return mailing_list_member.mailing_list_member_id
 
-    
-def test_register_mailing_list(mock_get_session, mailing_list_module: MailingListModule):
+
+def test_register_mailing_list(mock_get_session, mailing_list_module):
     mailing_list = mailing_list_module.register_mailing_list("test@gmail.com")
     assert mailing_list.email == "test@gmail.com"
     assert mailing_list.name == "test@gmail.com"
 
 
-def test_get_mailing_lists(mock_get_session, mailing_list_module: MailingListModule):
+def test_get_mailing_lists(mock_get_session, mailing_list_module):
     create_mailing_list(mock_get_session, "test@gmail.com")
     create_mailing_list(mock_get_session, "123@gmail.com")
 
@@ -85,8 +85,8 @@ def test_get_mailing_lists(mock_get_session, mailing_list_module: MailingListMod
     assert mailing_lists[0].email == "test@gmail.com"
     assert mailing_lists[1].email == "123@gmail.com"
 
-    
-def test_join_mailing_list(mock_get_session, mailing_list_module: MailingListModule):
+
+def test_join_mailing_list(mock_get_session, mailing_list_module):
     mailing_list_id = create_mailing_list(mock_get_session)
     member_id = create_member(mock_get_session)
 
@@ -98,13 +98,15 @@ def test_join_mailing_list(mock_get_session, mailing_list_module: MailingListMod
     assert members[0].email == "member@gmail.com"
 
     mailing_list_module.workspace.add_user.assert_called_once()
-    user_email, google_mailing_list = (mailing_list_module.workspace.add_user.call_args.args)
+    user_email, google_mailing_list = (
+        mailing_list_module.workspace.add_user.call_args.args
+    )
 
     assert user_email == "member@gmail.com"
     assert google_mailing_list.email == "test@gmail.com"
 
 
-def test_leave_mailing_list(mock_get_session, mailing_list_module: MailingListModule):
+def test_leave_mailing_list(mock_get_session, mailing_list_module):
     mailing_list_id = create_mailing_list(mock_get_session)
     member_id = create_member(mock_get_session)
 
@@ -122,11 +124,14 @@ def test_leave_mailing_list(mock_get_session, mailing_list_module: MailingListMo
 
     mailing_list_module.workspace.remove_user.assert_called_once()
 
-    user_email, google_mailing_list = (mailing_list_module.workspace.remove_user.call_args.args)
+    user_email, google_mailing_list = (
+        mailing_list_module.workspace.remove_user.call_args.args
+    )
     assert user_email == "member@gmail.com"
     assert google_mailing_list.email == "test@gmail.com"
 
-def test_add_member(mock_get_session, mailing_list_module: MailingListModule):
+
+def test_add_member(mock_get_session, mailing_list_module):
     mailing_list_id = create_mailing_list(mock_get_session)
     member_id = create_member(mock_get_session)
     email = "member@gmail.com"
@@ -145,13 +150,15 @@ def test_add_member(mock_get_session, mailing_list_module: MailingListModule):
         assert membership.mailing_list_id == mailing_list_id
 
     mailing_list_module.workspace.add_user.assert_called_once()
-    user_email, google_mailing_list = (mailing_list_module.workspace.add_user.call_args.args)
+    user_email, google_mailing_list = (
+        mailing_list_module.workspace.add_user.call_args.args
+    )
 
     assert user_email == email
     assert google_mailing_list.email == "test@gmail.com"
 
 
-def test_kick_member(mock_get_session, mailing_list_module: MailingListModule):
+def test_kick_member(mock_get_session, mailing_list_module):
     mailing_list_id = create_mailing_list(mock_get_session)
     member_id = create_member(mock_get_session)
     email = "member@gmail.com"
@@ -183,7 +190,7 @@ def test_kick_member(mock_get_session, mailing_list_module: MailingListModule):
     assert google_mailing_list.email == "test@gmail.com"
 
 
-def test_add_email(mock_get_session, mailing_list_module: MailingListModule):
+def test_add_email(mock_get_session, mailing_list_module):
     mailing_list_id = create_mailing_list(mock_get_session)
     mailing_list_module.add_email(mailing_list_id, "external@gmail.com")
 
@@ -202,6 +209,6 @@ def test_add_email(mock_get_session, mailing_list_module: MailingListModule):
     user_email, google_mailing_list = (
         mailing_list_module.workspace.add_user.call_args.args
     )
-    
+
     assert user_email == "external@gmail.com"
     assert google_mailing_list.email == "test@gmail.com"
