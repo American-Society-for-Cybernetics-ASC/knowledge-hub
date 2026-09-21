@@ -9,7 +9,7 @@ from payments.payment import Payment
 STATUS_MAP = {
     "requires_payment_method": TransactionStatus.PENDING,
     "requires_confirmation": TransactionStatus.PENDING,
-    "required_action": TransactionStatus.PENDING,
+    "requires_action": TransactionStatus.PENDING,
     "processing": TransactionStatus.PENDING,
     "requires_capture": TransactionStatus.PENDING,
     "succeeded": TransactionStatus.SUCCEEDED,
