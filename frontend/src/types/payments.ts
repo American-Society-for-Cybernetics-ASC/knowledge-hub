@@ -65,6 +65,7 @@ export interface ReadPayment {
 export interface StripeTransaction {
   transaction_type: "stripe";
   payment_id: string;
+  client_secret: string;
 }
 export interface MockTransaction {
   transaction_type: "mock";

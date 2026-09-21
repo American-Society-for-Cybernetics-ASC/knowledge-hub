@@ -20,7 +20,8 @@ import useSWR from "swr";
 import { backendFetch } from "@/lib/api/client";
 import { AddErrorContext } from "@/components/layout/ErrorContext";
 import { useRouter } from "next/navigation";
-// import { createTransaction } from "@/lib/api/payments";
+import { createTransaction } from "@/lib/api/billing";
+import StripeCheckout from "@/components/features/billing/StripeCheckout";
 
 interface PayPageProps {
   params: Promise<{ paymentId: string }>;
@@ -34,7 +35,12 @@ const formatAmount = (cents: number) =>
 export default function PayPage({ params }: PayPageProps) {
   const { paymentId } = use(params);
   const [payment, setPayment] = useState<ReadPayment | null>(null);
-  const [providerID, setProviderID] = useState<string>("");
+  const [providerId, setProviderId] = useState<string>("");
+  const [stripeSession, setStripeSession] = useState<{
+    providerId: string;
+    transactionId: string;
+    clientSecret: string;
+  } | null>(null)
   const addError = useContext(AddErrorContext);
   const router = useRouter();
 
@@ -49,13 +55,36 @@ export default function PayPage({ params }: PayPageProps) {
     onError: addError,
   });
 
-  async function handleMockPayment() {
+  const selectedProvider = providers?.find((p) => p.id === providerId)
+
+  function handleProviderChange(id: string) {
+    setProviderId(id);
+
+    const provider = providers?.find((p) => p.id === id);
+    if (provider?.service_name !== "stripe") return;
+
+    createTransaction(paymentId, provider.id)
+      .then((transaction) => {
+        if (transaction.data.transaction_type !== "stripe") {
+          addError("Unexpected transaction type for a Stripe provider");
+          return;
+        }
+        setStripeSession({
+          providerId: provider.id,
+          transactionId: transaction.id,
+          clientSecret: transaction.data.client_secret,
+        });
+      })
+      .catch(addError);
+  }
+
+  function handleMockPayment() {
     if (!providers) {
       addError("Select a payment provider");
       return;
     }
 
-    const provider = providers.find((p) => p.id === providerID);
+    const provider = providers.find((p) => p.id === providerId);
 
     if (!provider) {
       addError("Select a payment provider");
@@ -96,9 +125,9 @@ export default function PayPage({ params }: PayPageProps) {
       ) : (
         <FormControl fullWidth required>
           <Select
-            value={providerID}
+            value={providerId}
             displayEmpty
-            onChange={(e) => setProviderID(e.target.value)}
+            onChange={(e) => handleProviderChange(e.target.value)}
           >
             <MenuItem value="">
               <em>Select a payment provider</em>
@@ -115,9 +144,20 @@ export default function PayPage({ params }: PayPageProps) {
         </FormControl>
       )}
 
-      <Button variant="contained" onClick={handleMockPayment}>
-        Pay
-      </Button>
+      {selectedProvider?.service_name === "mock" && (
+        <Button variant="contained" onClick={handleMockPayment}>
+          Pay
+        </Button>
+      )}
+
+      {stripeSession && stripeSession.providerId === providerId && (
+        <Box sx={{ mt: 3 }}>
+          <StripeCheckout
+            clientSecret={stripeSession.clientSecret}
+            transactionId={stripeSession.transactionId}
+          />
+        </Box>
+      )}
     </Box>
   );
 }
