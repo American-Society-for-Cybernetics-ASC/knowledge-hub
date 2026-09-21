@@ -5,6 +5,7 @@ from stripe import PaymentIntent
 from database.types import TransactionStatus
 from ._interface import TransactionInterface
 from payments.payment import Payment
+from payments.exceptions import PaymentError
 
 STATUS_MAP = {
     "requires_payment_method": TransactionStatus.PENDING,
@@ -22,7 +23,8 @@ class StripeTransaction(TransactionInterface):
 
     transaction_type: Literal["stripe"] = Field(default="stripe")
 
-    payment_id: str
+    payment_id: str # Stripe PaymentIntent id
+    client_secret: str # Allows frontend Stripe elements to complete PaymentIntent
 
     @staticmethod
     def create_one_off(payment: Payment) -> StripeTransaction:
@@ -32,7 +34,11 @@ class StripeTransaction(TransactionInterface):
             automatic_payment_methods={"enabled": True},
         )
 
-        return StripeTransaction(payment_id=intent.id)
+        # Must validate client_secret as it is a nullable value
+        if intent.client_secret is None:
+            raise PaymentError("Payment Intent did not return a valid client secret")
+
+        return StripeTransaction(payment_id=intent.id, client_secret=intent.client_secret)
 
     def check_status(self) -> TransactionStatus:
         intent = PaymentIntent.retrieve(self.payment_id)
