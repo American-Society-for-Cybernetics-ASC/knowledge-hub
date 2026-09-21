@@ -164,6 +164,8 @@ def confirm_transaction(
 
     try:
         payments.confirm_transaction(transaction_id)
+    except PaymentAlreadyComplete:
+        return # Treat an already completed payment as a success
     except TransactionNotFoundError:
         raise HTTPException(404, "Transaction not found")
     except TransactionNotSuccessful:
