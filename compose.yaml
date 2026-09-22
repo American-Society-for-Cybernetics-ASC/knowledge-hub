@@ -3,12 +3,7 @@ services:
     build: backend
     command: ["uv", "run", "fastapi", "dev", "main.py", "--host", "0.0.0.0", "--port", "80"]
     env_file:
-      - backend/.env
-    environment:
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-sonnet-4-6}
-      CLAUDE_MAX_TOKENS: ${CLAUDE_MAX_TOKENS:-1024}
-      CLAUDE_SYSTEM_PROMPT_PATH: ${CLAUDE_SYSTEM_PROMPT_PATH:-server/claude_interface/prompts/synthesis_system.txt}
+      - backend/.env     
     ports:
       - 8000:80
     links: # Allows the server to reach the database at host:port=db:5432

@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=(".env", "../.env.local"))
 
-    local_deployment: bool = True
+    local_deployment: bool = False
     """Set to True if this deployment is a local deployment.
     Set to False if this deployment is a production deployment."""
     testing: bool = False
