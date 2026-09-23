@@ -11,7 +11,7 @@ sudo apt-get install docker-compose-v2 # Note the v2!
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
-Then, update `backend/.env`
+Then, update `backend/.env` according to the comments in that file.
 
 ## Launch our application
 ```bash
@@ -19,7 +19,7 @@ sudo docker compose up --build -d
 ```
 - This will incorporate any changes since you last launched.
 
-# Error checking
+# Troubleshooting
 ## Inspect the Backend
 ```bash
 sudo docker container logs bentley-sem-1-02-server-1

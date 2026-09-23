@@ -44,5 +44,5 @@ vercel deploy --prod --archive=tgz
 ```
 
 # FAQ
-## Vercel services are in beta
+## Vercel Services are in beta
 This feature simplifies our deployment massively, and solves a domain issue very neatly. However, if the feature breaks, the same setup can be recreated with a [proxy project](https://vercel.com/kb/guide/how-can-i-serve-multiple-projects-under-a-single-domain#with-a-proxy-project).
