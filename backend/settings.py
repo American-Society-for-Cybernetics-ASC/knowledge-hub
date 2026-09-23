@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     jwt_expiry_minutes: int = 10
     """JWT token expiry in minutes"""
 
-    supabase_database_url: str = ""
+    database_url: str = ""
     """Connection string for the production Supabase database"""
 
 

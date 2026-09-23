@@ -4,6 +4,8 @@ services:
     command: ["uv", "run", "fastapi", "dev", "main.py", "--host", "0.0.0.0", "--port", "80"]
     env_file:
       - backend/.env     
+    environment:
+      DATABASE_URL: postgresql+psycopg2://username:password@db:5432/database
     ports:
       - 8000:80
     links: # Allows the server to reach the database at host:port=db:5432

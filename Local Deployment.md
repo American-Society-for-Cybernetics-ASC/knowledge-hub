@@ -1,12 +1,12 @@
 # Setup
-## 1. Install Docker
+## Install Docker
 For WSL2
 ```bash
 sudo apt-get install docker.io
 sudo apt-get install docker-compose-v2 # Note the v2!
 ```
 
-## 2. Set environment variables
+## Set environment variables
 ```bash
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
