@@ -73,7 +73,7 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
 if not SETTINGS.testing:
     EmailTemplatesModule().seed_defaults()
 
-app = FastAPI()
+app = FastAPI(title="CKH API", version="0.1.0", root_path=SETTINGS.backend_root_path)
 
 app.add_middleware(
     CORSMiddleware,

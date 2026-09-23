@@ -47,5 +47,8 @@ class Settings(BaseSettings):
     database_url: str = ""
     """Connection string for the production Supabase database"""
 
+    backend_root_path: str = ""
+    """Root path for if served behind a proxy"""
+
 
 SETTINGS = Settings()

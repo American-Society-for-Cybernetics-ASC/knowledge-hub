@@ -29,8 +29,11 @@ uv run generate_keys.py
 Add **secret** environment variables SECRET_KEY and FERNET_KEY appropriately.
 - SECRET_KEY does not include the "-----BEGIN RSA PRIVATE KEY-----" or "-----END RSA PRIVATE KEY-----" sections.
 
-### NEXT_PUBLIC_API_URL
+### BACKEND_ROOT_PATH and NEXT_PUBLIC_API_URL
 Add a **config** variable NEXT_PUBLIC_API_URL, with its value set to `/api`.
+
+Add a **config** variable BACKEND_ROOT_PATH, with its value *also* set to `/api`.
+- These being separate variables is necessary for local delpoyment to work.
 
 # Production Deploy
 Preview with 

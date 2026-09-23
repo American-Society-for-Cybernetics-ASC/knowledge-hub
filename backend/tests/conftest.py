@@ -1,5 +1,12 @@
 # Define global fixtures
 
+# Stops us from running startup scripts
+from pytest import MonkeyPatch
+from settings import SETTINGS
+
+with MonkeyPatch().context() as m:
+    m.setattr(SETTINGS, "testing", True)
+    from main import app
 
 from typing import Callable
 import uuid
@@ -16,14 +23,6 @@ from database import model
 from database.base import Base
 import auth_module
 
-from settings import SETTINGS
-
-from pytest import MonkeyPatch
-
-# Stops us from running startup scripts
-with MonkeyPatch().context() as m:
-    m.setattr(SETTINGS, "testing", True)
-    from main import app
 
 import pytest
 from fastapi.testclient import TestClient
