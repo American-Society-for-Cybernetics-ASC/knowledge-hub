@@ -21,7 +21,6 @@ from payments.products import (
     CreateMembershipProduct,
     RenewMembershipProduct,
 )
-import database
 
 MEMBERSHIP_DURATION = timedelta(days=365)
 RENEWAL_WINDOW = timedelta(days=182)
@@ -184,7 +183,6 @@ def renew_membership(session: Session, user_id: int, duration: timedelta) -> Mem
     )
     with session.begin_nested():
         member.due_date = new_expiry
-    session.commit()
 
     return member
 
@@ -233,15 +231,14 @@ def update_member_type(
     """
     :raises MembershipTypeNotFoundError:
     """
-    with database.get_session() as session:
-        record = session.get(MemberType, member_type_id)
+    record = session.get(MemberType, member_type_id)
 
-        if not record:
-            raise MembershipTypeNotFoundError()
+    if not record:
+        raise MembershipTypeNotFoundError()
 
+    with session.begin_nested():
         record.name = name or record.name
         record.price = price or record.price
-        session.commit()
-        session.flush()
+    session.flush()
 
-        return record
+    return record

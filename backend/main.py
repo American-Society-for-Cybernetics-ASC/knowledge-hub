@@ -31,7 +31,7 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         database.base.Base.metadata.create_all(conn)
         conn.commit()
 
-    AuthModule().register("test@test.com", "test", "Test User")
+    AuthModule().register("test@test.com", "test", "Test Admin")
 
     with database.get_session() as session:
         user = (

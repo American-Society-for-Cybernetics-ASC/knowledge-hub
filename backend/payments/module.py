@@ -125,10 +125,9 @@ class PaymentsModule:
             else:
                 raise TransactionNotSuccessful()
 
-            session.commit()
-
             if product:
                 handle_successful_payment(session, product)
+            session.commit()
 
     def get_payment(self, payment_id: UUID) -> Payment:
         """:raises PaymentNotFoundError:"""
