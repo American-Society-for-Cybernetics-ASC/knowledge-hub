@@ -174,6 +174,8 @@ class AuthUser(Base):
     last_login = mapped_column(TZDateTime)
     hash_password = mapped_column(String)
 
+    applications: Mapped[list[MembershipApplication]] = relationship()
+
 
 class AuditLog(Base):
     __tablename__ = "auth_logs"
@@ -244,11 +246,16 @@ class MembershipApplication(Base):
         String, nullable=False
     )  # pending, approved, denied, revision_requested
     submitted_at = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
-    last_edited = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
+    last_edited: Mapped[datetime] = mapped_column(
+        TZDateTime, server_default=func.now(), nullable=False
+    )
     content = mapped_column(String, nullable=False)  # the application form's fields
 
     member_type: Mapped[MemberType | None] = relationship(
         "MemberType", foreign_keys=[member_type_id], lazy="joined"
+    )
+    user: Mapped[AuthUser] = relationship(
+        AuthUser, foreign_keys=[user_id], back_populates="applications"
     )
 
 

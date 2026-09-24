@@ -137,35 +137,6 @@ def uncancel_membership(
         raise HTTPException(400, "Not a member")
 
 
-class MembershipSummary(BaseModel):
-    email: str
-    display_name: str
-    due_date: datetime
-    member_type: str | None
-    active: bool
-    cancelling: bool
-
-
-@membership_router.get("/admin/members")
-def get_memberships(
-    _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
-) -> list[MembershipSummary]:
-    with get_session() as session:
-        return [
-            MembershipSummary(
-                email=db_member.auth_user.email,
-                display_name=db_member.auth_user.name or db_member.auth_user.email,
-                due_date=db_member.due_date,
-                member_type=db_member.member_type.name
-                if db_member.member_type is not None
-                else None,
-                active=db_member.active,
-                cancelling=db_member.cancelling,
-            )
-            for db_member in session.query(dbmodel.Member)
-        ]
-
-
 @membership_router.get("/member_type")
 def membership_types() -> list[ReadMemberType]:
     with get_session() as session:
@@ -211,3 +182,33 @@ def patch_membership_type(
             )
     except MembershipTypeNotFoundError:
         raise HTTPException(404, "Member type not found")
+
+
+# --- admin ---
+class MembershipSummary(BaseModel):
+    email: str
+    display_name: str
+    due_date: datetime
+    member_type: str | None
+    active: bool
+    cancelling: bool
+
+
+@membership_router.get("/admin/members")
+def get_memberships(
+    _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
+) -> list[MembershipSummary]:
+    with get_session() as session:
+        return [
+            MembershipSummary(
+                email=db_member.auth_user.email,
+                display_name=db_member.auth_user.name or db_member.auth_user.email,
+                due_date=db_member.due_date,
+                member_type=db_member.member_type.name
+                if db_member.member_type is not None
+                else None,
+                active=db_member.active,
+                cancelling=db_member.cancelling,
+            )
+            for db_member in session.query(dbmodel.Member)
+        ]

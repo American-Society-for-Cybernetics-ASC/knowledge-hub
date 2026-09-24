@@ -5,7 +5,10 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from database.model import Member, MemberType, MembershipApplication
-from member_application.module import ApplicationNotFoundError, ApplicationNotOwnedError
+from member_application.application_module import (
+    ApplicationNotFoundError,
+    ApplicationNotOwnedError,
+)
 from .exceptions import (
     AlreadyAMemberError,
     MembershipTypeNotFoundError,
