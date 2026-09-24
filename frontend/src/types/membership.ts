@@ -50,3 +50,10 @@ export interface PurchaseMembership {
 export interface UpdateMembership {
   application_id: number;
 }
+
+export interface ApplicationSummary {
+  user_id: number;
+  email: string;
+  name: string;
+  last_application: string;
+}

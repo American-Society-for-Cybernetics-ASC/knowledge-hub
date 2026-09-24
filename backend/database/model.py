@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 import uuid
 
 from sqlalchemy import (
@@ -157,7 +158,7 @@ class AuthUser(Base):
 
     user_id = mapped_column(Integer, primary_key=True, index=True)
 
-    name = mapped_column(String)
+    name: Mapped[Optional[str]] = mapped_column(String)
     email = mapped_column(String, unique=True, index=True, nullable=False)
     permissions: Mapped[dict | None] = mapped_column(JSON)
 

@@ -37,7 +37,7 @@ def purchase_membership(
         raise HTTPException(401, "Unauthorized")
 
     try:
-        with database.get_session() as session:
+        with database.with_transaction() as session:
             return ReadPayment.from_payment(
                 membership_module.purchase_create_membership(
                     session, body.application_id, user_id
@@ -55,7 +55,7 @@ def renew_membership(
         raise HTTPException(401, "Unauthorized")
 
     try:
-        with database.get_session() as session:
+        with database.with_transaction() as session:
             return ReadPayment.from_payment(
                 membership_module.purchase_renew_membership(session, user_id)
             )
@@ -83,7 +83,7 @@ def update_membership(
         raise HTTPException(401, "Unauthorized")
 
     try:
-        with database.get_session() as session:
+        with database.with_transaction() as session:
             membership_module.set_members_type(session, body.application_id, user_id)
     except NotACurrentMemberError:
         raise HTTPException(400, "Not a member")
@@ -116,7 +116,7 @@ def cancel_membership(
         raise HTTPException(401, "Unauthorized")
 
     try:
-        with database.get_session() as session:
+        with database.with_transaction() as session:
             membership_module.cancel_membership(session, user_id)
     except NotACurrentMemberError:
         raise HTTPException(400, "Not a member")
@@ -131,7 +131,7 @@ def uncancel_membership(
         raise HTTPException(401, "Unauthorized")
 
     try:
-        with database.get_session() as session:
+        with database.with_transaction() as session:
             membership_module.uncancel_membership(session, user_id)
     except NotACurrentMemberError:
         raise HTTPException(400, "Not a member")
@@ -156,7 +156,7 @@ def create_member_type(
     body: PostMembershipType,
     _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
 ) -> ReadMemberType:
-    with database.get_session() as session:
+    with database.with_transaction() as session:
         return ReadMemberType.from_db_model(
             membership_module.create_member_type(session, body.name, body.price)
         )
@@ -174,7 +174,7 @@ def patch_membership_type(
     _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
 ) -> ReadMemberType:
     try:
-        with database.get_session() as session:
+        with database.with_transaction() as session:
             return ReadMemberType.from_db_model(
                 membership_module.update_member_type(
                     session, member_type_id, name=patch.name, price=patch.price

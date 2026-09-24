@@ -30,7 +30,6 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         database.base.Base.metadata.drop_all(conn)
         database.base.Base.metadata.create_all(conn)
         conn.commit()
-        session.close()
 
     AuthModule().register("test@test.com", "test", "Test User")
 

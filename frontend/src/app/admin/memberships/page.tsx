@@ -16,6 +16,7 @@ import useSWR from "swr";
 import MemberTypes from "./MembershipTypeConfig";
 import MemberStatusChip from "@/components/features/membership/MemberStatusChip";
 import { AddErrorContext } from "@/components/layout/ErrorContext";
+import ApplicationManagement from "./ApplicationManagement";
 
 export default function Page() {
   return (
@@ -23,6 +24,8 @@ export default function Page() {
       <Typography variant={"h4"}>Memberships</Typography>
       <Typography variant={"h5"}>Member Types</Typography>
       <MemberTypes />
+      <Typography variant={"h5"}>Pending Applications</Typography>
+      <ApplicationManagement />
       <Typography variant={"h5"}>Members</Typography>
       <MembershipList />
     </>
@@ -64,7 +67,10 @@ function MembershipTable({ data }: { data: MembershipSummary[] }) {
               <TableCell>{due_date.toLocaleString()}</TableCell>
               <TableCell>{member.member_type || "<None Selected>"}</TableCell>
               <TableCell>
-                <MemberStatusChip active={member.active} cancelling={member.cancelling} />
+                <MemberStatusChip
+                  active={member.active}
+                  cancelling={member.cancelling}
+                />
               </TableCell>
             </TableRow>
           );

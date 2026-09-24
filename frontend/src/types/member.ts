@@ -2,7 +2,6 @@
  * Types for the authenticated member profile API.
  */
 
-
 export interface ProfileIdentity {
   display_name: string | null;
   pronouns: string | null;

@@ -83,7 +83,7 @@ def submit_application(
     if user_id is None:
         raise HTTPException(status_code=401, detail="authentication required")
 
-    with database.get_session() as session:
+    with database.with_transaction() as session:
         return ReadMembershipApplication.from_db_model(
             application_module.submit_application(
                 session, user_id, application.content, application.member_type_id
@@ -106,19 +106,19 @@ def revise_application(
     if user_id is None:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    with database.get_session() as session:
-        try:
+    try:
+        with database.with_transaction() as session:
             return ReadMembershipApplication.from_db_model(
                 application_module.revise_application(
                     session, application_id, user_id, application.content
                 )
             )
-        except ApplicationNotFoundError as e:
-            raise HTTPException(status_code=404, detail=str(e))
-        except ApplicationNotOwnedError as e:
-            raise HTTPException(status_code=403, detail=str(e))
-        except ApplicationCompleteError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+    except ApplicationNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ApplicationNotOwnedError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except ApplicationCompleteError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @member_application_router.get("/{application_id}")
@@ -148,13 +148,13 @@ def approve_application(
     _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
 ) -> ReadMembershipApplication:
     """approve a member application"""
-    with database.get_session() as session:
-        try:
+    try:
+        with database.with_transaction() as session:
             return ReadMembershipApplication.from_db_model(
                 application_module.approve_application(session, application_id)
             )
-        except ApplicationNotFoundError as e:
-            raise HTTPException(status_code=404, detail=str(e))
+    except ApplicationNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @member_application_router.post("/{application_id}/deny")
@@ -163,13 +163,13 @@ def deny_application(
     _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
 ) -> ReadMembershipApplication:
     """deny a member application"""
-    with database.get_session() as session:
-        try:
+    try:
+        with database.with_transaction() as session:
             return ReadMembershipApplication.from_db_model(
                 application_module.deny_application(session, application_id)
             )
-        except ApplicationNotFoundError as e:
-            raise HTTPException(status_code=404, detail=str(e))
+    except ApplicationNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @member_application_router.post("/{application_id}/request-revision")
@@ -178,13 +178,13 @@ def request_revision(
     _=Depends(authorized([PermissionCategory.MEMBERSHIP], PermissionTier.manager)),
 ) -> ReadMembershipApplication:
     """ "requets a revision for an application"""
-    with database.get_session() as session:
-        try:
+    try:
+        with database.with_transaction() as session:
             return ReadMembershipApplication.from_db_model(
                 application_module.request_revision(session, application_id)
             )
-        except ApplicationNotFoundError as e:
-            raise HTTPException(status_code=404, detail=str(e))
+    except ApplicationNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @member_application_router.get("/admin/all")
@@ -211,7 +211,7 @@ def get_applications_summary(
             ApplicationSummary(
                 user_id=user.user_id,
                 email=user.email,
-                name=user.name,
+                name=user.name or user.email,
                 last_application=max(map(lambda x: x.last_edited, user.applications)),
             )
             for user in session.query(AuthUser).join(
