@@ -46,6 +46,18 @@ Deploy with
 vercel deploy --prod --archive=tgz
 ```
 
-# FAQ
+# Troubleshooting
 ## Vercel Services are in beta
 This feature simplifies our deployment massively, and solves a domain issue very neatly. However, if the feature breaks, the same setup can be recreated with a [proxy project](https://vercel.com/kb/guide/how-can-i-serve-multiple-projects-under-a-single-domain#with-a-proxy-project).
+
+## Deployed from wrong folder
+If you ran `vercel deploy` from anywhere other than the root folder, you may have deployed one of the projects without the other.
+
+This would look like the following symptoms:
+- A successful deployment
+- One of the services is innacessible
+- On the deployment inspection page there is no "Services Graph"
+
+To fix this:
+- Check Vercel's Settings -> Build and Deployment -> Root Directory, and make sure it is unset.
+- redeploy from the root folder. Make sure that `Running "npm run build"` and `Using Python` show up in the build logs.
