@@ -2,7 +2,6 @@
  * Types for the authenticated member profile API.
  */
 
-import { MemberStatus } from "./membership";
 
 export interface ProfileIdentity {
   display_name: string | null;
@@ -45,7 +44,7 @@ export interface ProfileContent {
 
 export interface MemberProfile {
   member_id: number;
-  status: MemberStatus;
+  active: boolean;
   content: ProfileContent;
   tags: string[];
 }
@@ -53,7 +52,7 @@ export interface MemberProfile {
 export interface MemberSearchResult {
   member_id: number;
   display_name: string | null;
-  status: MemberStatus;
+  active: boolean;
   tags: string[];
   affiliations: Affiliation[];
 }

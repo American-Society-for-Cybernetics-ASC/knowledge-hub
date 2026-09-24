@@ -31,7 +31,6 @@ def mock_member(mock_get_session) -> int:
             user_id=TEST_USER_ID,
             due_date=datetime.datetime.now(datetime.timezone.utc)
             + datetime.timedelta(days=10),
-            cancelled=False,
             member_type_id=None,
         )
         session.add(member)
@@ -72,21 +71,21 @@ def test_full_cycle(
 def test_cancel(test_server: TestClient, mock_member):
     response = test_server.get("/membership")
     assert response.status_code == 200
-    assert not response.json()["cancelled"]
+    assert not response.json()["cancelling"]
 
     test_server.post("/membership/cancel")
     assert response.status_code == 200
 
     response = test_server.get("/membership")
     assert response.status_code == 200
-    assert response.json()["cancelled"]
+    assert response.json()["cancelling"]
 
     test_server.post("/membership/uncancel")
     assert response.status_code == 200
 
     response = test_server.get("/membership")
     assert response.status_code == 200
-    assert not response.json()["cancelled"]
+    assert not response.json()["cancelling"]
 
 
 def test_update(test_server: TestClient, mock_member, mock_application):

@@ -96,7 +96,7 @@ export default function MemberList() {
                     </h2>
 
                     <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      {member.status}
+                      {member.active ? "Active" : "Inactive"}
                     </span>
                   </div>
 

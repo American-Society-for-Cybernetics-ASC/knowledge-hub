@@ -276,7 +276,7 @@ export default function MemberProfile({
             </div>
 
             <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
-              Membership: {profile.status}
+              Membership: {profile.active ? "Active" : "Inactive"}
             </span>
           </div>
 

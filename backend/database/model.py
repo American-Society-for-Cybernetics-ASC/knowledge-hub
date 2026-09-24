@@ -31,7 +31,8 @@ class Member(Base):
     user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"), primary_key=True)
     due_date: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)
     member_type_id = mapped_column(UUID, ForeignKey("member_types.id"), nullable=True)
-    cancelled = mapped_column(Boolean, nullable=False, default=False)
+    cancelling = mapped_column(Boolean, nullable=False, default=False)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     profile = relationship("Profile", back_populates="member", uselist=False)
     member_type: Mapped[MemberType | None] = relationship(

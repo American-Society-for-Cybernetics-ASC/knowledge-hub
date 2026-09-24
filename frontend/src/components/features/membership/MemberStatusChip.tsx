@@ -1,13 +1,13 @@
-import { MemberStatus } from "@/types/membership";
 import { Chip } from "@mui/material";
 
-export default function MemberStatusChip({ status }: { status: MemberStatus }) {
-  switch (status) {
-    case "Current":
-      return <Chip label="Current" color="success" />;
-    case "Expired":
-      return <Chip label="Expired" color="error" />;
-    default:
-      break;
+export default function MemberStatusChip({ active, cancelling }: { active: boolean, cancelling: boolean }) {
+  if (!active) {
+      return <Chip label="Inactive" color="error" />; 
   }
+
+  if (cancelling) {
+      return <Chip label="Cancelling" color="warning" />; 
+  }
+
+  return <Chip label="Current" color="success" />;
 }

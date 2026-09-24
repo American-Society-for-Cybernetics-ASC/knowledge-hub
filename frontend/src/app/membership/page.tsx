@@ -62,7 +62,7 @@ export default function YourMembership() {
         <DescriptionListRow>
           <DescriptionListLabel>Membership Status</DescriptionListLabel>
           <DescriptionListData>
-            {memberData && <MemberStatusChip status={memberData.status} />}
+            {memberData && <MemberStatusChip active={memberData.active} cancelling={memberData.cancelling} />}
           </DescriptionListData>
         </DescriptionListRow>
         <DescriptionListRow>

@@ -50,8 +50,8 @@ function MembershipTable({ data }: { data: MembershipSummary[] }) {
           <TableCell>Email</TableCell>
           <TableCell>Display Name</TableCell>
           <TableCell>Next Payment Due</TableCell>
+          <TableCell>Type</TableCell>
           <TableCell>Status</TableCell>
-          <TableCell>Cancelled</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -62,11 +62,9 @@ function MembershipTable({ data }: { data: MembershipSummary[] }) {
               <TableCell>{member.email}</TableCell>
               <TableCell>{member.display_name}</TableCell>
               <TableCell>{due_date.toLocaleString()}</TableCell>
+              <TableCell>{member.member_type || "<None Selected>"}</TableCell>
               <TableCell>
-                <MemberStatusChip status={member.status} />
-              </TableCell>
-              <TableCell sx={{ textTransform: "capitalize" }}>
-                {member.cancelled.toString()}
+                <MemberStatusChip active={member.active} cancelling={member.cancelling} />
               </TableCell>
             </TableRow>
           );
