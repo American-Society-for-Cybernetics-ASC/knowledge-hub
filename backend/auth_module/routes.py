@@ -269,3 +269,17 @@ def disable_totp(
         return {"message": "Two-factor authentication disabled."}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@auth_router.post("/logout")
+def logout (response: Response) -> dict:
+    """
+    logs out the current user by clearing the JWT cookie.
+    """
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=True,
+        samesite="strict",
+    )
+    return {"message": "Logged out successfully."}

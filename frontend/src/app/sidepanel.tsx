@@ -10,6 +10,8 @@ import {
   Box,
 } from "@mui/material";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { logout } from "@/lib/api/auth";
 
 export const SIDEPANEL_WIDTH = 240;
 
@@ -26,6 +28,17 @@ const links = [
 ];
 
 export default function SidePanel() {
+  const router = useRouter();
+
+  async function handleLogout() {
+    try {
+      await logout();
+    } catch {
+      //ignore errors - clear cookie regardless
+    }
+    router.push("/auth/login")
+  }
+
   return (
     <Drawer
       variant="permanent"
@@ -49,7 +62,7 @@ export default function SidePanel() {
           CKH
         </Typography>
       </Toolbar>
-      <Box sx={{ overflow: "auto" }}>
+      <Box sx={{ overflow: "auto", display: "flex", flexDirection: "column", height: "100%" }}>
         <List>
           {links.map((link) => (
             <ListItemButton key={link.href} component={Link} href={link.href}>
@@ -57,6 +70,11 @@ export default function SidePanel() {
             </ListItemButton>
           ))}
         </List>
+        <Box sx={{ mt: "auto", p: 1}}>
+          <ListItemButton onClick={handleLogout}>
+            <ListItemText primary="Logout" />
+          </ListItemButton>
+        </Box>
       </Box>
     </Drawer>
   );
