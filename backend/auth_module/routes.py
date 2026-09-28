@@ -326,6 +326,14 @@ def grant_permission(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
+        # Prevent changing permissions of a higher-tier user
+        if user.permissions:
+            target_perms = Permissions.model_validate(user.permissions)
+            if target_perms.tier == PermissionTier.adminstrator:
+                raise HTTPException(status_code=403, detail="Cannot modify an administrator's permissions")
+            if target_perms.tier == PermissionTier.manager and current_permissions.tier != PermissionTier.adminstrator:
+                raise HTTPException(status_code=403, detail="Only administrators can modify a manager's permissions")
+
         user.permissions = Permissions(tier=tier).model_dump(mode="json")
         session.commit()
 
