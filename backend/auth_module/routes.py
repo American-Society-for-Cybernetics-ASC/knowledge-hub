@@ -4,7 +4,8 @@ import database
 from database import model
 
 from utils import BaseModel
-from . import AuthModule, user_id
+from . import AuthModule, user_id, permissions, authorized
+from auth_module.model import Permissions, PermissionTier
 
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
@@ -42,6 +43,10 @@ class ChangePasswordRequest(BaseModel):
 
 class ChangeEmailRequest(BaseModel):
     new_email: str
+
+
+class GrantPermissionRequest(BaseModel):
+    tier: str
 
 
 # Response schemas
@@ -269,3 +274,59 @@ def disable_totp(
         return {"message": "Two-factor authentication disabled."}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@auth_router.get("/users")
+def list_users(
+    _=Depends(authorized(["auth"], PermissionTier.manager)),
+) -> list[dict]:
+    """List all users with their permission tiers. Requires manager or above."""
+    with database.get_session() as session:
+        users = session.query(model.AuthUser).all()
+        return [
+            {
+                "user_id": u.user_id,
+                "email": u.email,
+                "name": u.name,
+                "tier": Permissions.model_validate(u.permissions).tier.value
+                if u.permissions and Permissions.model_validate(u.permissions).tier
+                else None,
+            }
+            for u in users
+        ]
+
+
+@auth_router.post("/users/{target_user_id}/permissions")
+def grant_permission(
+    target_user_id: int,
+    req: GrantPermissionRequest,
+    current_user_id: Annotated[int | None, Depends(user_id)],
+    current_permissions: Annotated[Permissions, Depends(permissions)],
+) -> dict:
+    """Grant a permission tier to a user."""
+    if current_user_id is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    # Validate the tier being granted
+    try:
+        tier = PermissionTier(req.tier)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid permission tier")
+
+    # Permission granting
+    if tier == PermissionTier.manager and not current_permissions.includes(["auth"], PermissionTier.adminstrator):
+        raise HTTPException(status_code=403, detail="Only administrators can grant manager permissions")
+    if tier == PermissionTier.moderator and not current_permissions.includes(["auth"], PermissionTier.manager):
+        raise HTTPException(status_code=403, detail="Only managers can grant moderator permissions")
+    if tier == PermissionTier.adminstrator:
+        raise HTTPException(status_code=403, detail="Cannot grant administrator permissions")
+
+    with database.get_session() as session:
+        user = session.get(model.AuthUser, target_user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user.permissions = Permissions(tier=tier).model_dump(mode="json")
+        session.commit()
+
+    return {"message": f"Permission {req.tier} granted successfully."}
