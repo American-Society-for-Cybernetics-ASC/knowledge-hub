@@ -34,7 +34,7 @@ export default function SidePanel() {
     try {
       await logout();
     } catch {
-      //ignore errors - clear cookie regardless
+      //If the request fails, the page redirects to login page without clearing cookies
     }
     router.push("/auth/login")
   }
