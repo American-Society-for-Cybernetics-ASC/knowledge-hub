@@ -9,6 +9,7 @@ interface User {
     email: string;
     name: string | null;
     tier: string | null;
+    children: Record<string, { tier: string | null }>;
 }
 
 export default function PermissionPage() {
@@ -18,6 +19,7 @@ export default function PermissionPage() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [saving, setSaving] = useState<number | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<Record<number, string>>({});
 
     useEffect (() => {
         async function load() {
@@ -43,17 +45,15 @@ export default function PermissionPage() {
         setSaving(targetUserId);
         setError("");
         setSuccess("");
+        const category = selectedCategory[targetUserId] || null;
         try {
             await backendFetch(`/auth/users/${targetUserId}/permissions`, {
                 method: "POST",
-                body: JSON.stringify({ tier }),
+                body: JSON.stringify({ tier, category }),
             });
-            setUsers(prev =>
-                prev.map(u =>
-                    u.user_id === targetUserId ? { ...u, tier } : u
-                )
-            );
             setSuccess("Permission granted successfully.");
+            const usersData = await backendFetch<User[]>("/auth/users");
+            setUsers(usersData);
         } catch {
             setError("Failed to grant permission.");
         } finally {
@@ -61,6 +61,7 @@ export default function PermissionPage() {
         }
     }
 
+    if (loading) return <p className="p-4 text-gray-600">Loading...</p>;
     return (
         <div className="p-4 max-w-3xl">
             <h2 className="text-lg font-semibold mb-4">User Permissions</h2>
@@ -88,27 +89,60 @@ export default function PermissionPage() {
                                 <div className="text-gray-500 text-xs">{user.email}</div>
                             </td>
                             <td className="px-4 py-2">
-                                {user.tier ?? <span className="text-gray-400">None</span>}
+                                <div className="space-y-1">
+                                    {user.tier && (
+                                        <span className="block text-sm capitalize">{user.tier}</span>
+                                    )}
+                                    {Object.entries(user.children).map(([category, perm]) =>
+                                        perm.tier ? (
+                                            <span key={category} className="block text-sm text-gray-600">
+                                                {category}.{perm.tier.charAt(0).toUpperCase() + perm.tier.slice(1)}
+                                            </span>
+                                        ) : null
+                                    )}
+                                    {!user.tier && Object.keys(user.children).length === 0 && (
+                                        <span className="text-gray-400 text-sm">None</span>
+                                    )}
+                                </div>
                             </td>
-                            <td className="px-4 py-2 space-x-2">
-                                {currentTier === "administrator" && (
-                                    <button
-                                        onClick={() => handleGrant(user.user_id, "manager")}
-                                        disabled={saving === user.user_id || user.tier === "manager"}
-                                        className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 disabled:opacity-50"
-                                    >
-                                        Grant Manager
-                                    </button>
-                                )}
-                                {(currentTier === "administrator" || currentTier === "manager") && (
-                                    <button
-                                        onClick={() => handleGrant(user.user_id, "moderator")}
-                                        disabled={saving === user.user_id || user.tier === "moderator"}
-                                        className="bg-gray-600 text-white px-3 py-1 rounded text-xs hover:bg-gray-700 disabled:opacity-50"
-                                    >
-                                        Grant Moderator
-                                    </button>
-                                )}
+                            <td className="px-4 py-2 space-y-2">
+                                <select
+                                    value={selectedCategory[user.user_id] ?? ""}
+                                    onChange={(e) =>
+                                        setSelectedCategory(prev => ({
+                                            ...prev,
+                                            [user.user_id]: e.target.value,
+                                        }))
+                                    }
+                                    className="w-full border border-gray-300 rounded px-2 py-1 text-xs"
+                                >
+                                    <option value="">Global</option>
+                                    <option value="mail">Mail</option>
+                                    <option value="payment">Payment</option>
+                                    <option value="auth">Auth</option>
+                                    <option value="membership">Membership</option>
+                                    <option value="mailing_lists">Mailing Lists</option>
+                                </select>
+                                <div className="space-x-2">
+                                    {currentTier === "administrator" && (
+                                        <button
+                                            onClick={() => handleGrant(user.user_id, "manager")}
+                                            disabled={saving === user.user_id}
+                                            className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 disabled:opacity-50"
+                                        >
+                                            Grant Manager
+                                        </button>
+                                    )}
+                                    {(currentTier === "administrator" || currentTier === "manager") && (
+                                        <button
+                                            onClick={() => handleGrant(user.user_id, "moderator")}
+                                            disabled={saving === user.user_id}
+                                            className="bg-gray-600 text-white px-3 py-1 rounded text-xs hover:bg-gray-700 disabled:opacity-50"
+                                        >
+                                            Grant Moderator
+                                        </button>
+                                    )}
+                                </div>
                             </td>
                         </tr>
                     ))}
