@@ -1,7 +1,7 @@
 "use client";
 
 import MemberStatusChip from "@/components/features/membership/MemberStatusChip";
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 import {
   DescriptionList,
   DescriptionListData,
@@ -14,11 +14,10 @@ import { ReadPayment } from "@/types/payments";
 import { CompareArrows, Info } from "@mui/icons-material";
 import { Box, Button, Skeleton, Tooltip, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
-import { useContext } from "react";
 import useSWR from "swr";
 
 export default function YourMembership() {
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const router = useRouter();
 
   async function handleRenew() {

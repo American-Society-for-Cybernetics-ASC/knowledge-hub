@@ -9,7 +9,7 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
-import { use, useContext, useState } from "react";
+import { use, useState } from "react";
 import {
   CreateTransaction,
   ReadPayment,
@@ -18,7 +18,7 @@ import {
 } from "@/types/payments";
 import useSWR from "swr";
 import { backendFetch } from "@/lib/api/client";
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 import { useRouter } from "next/navigation";
 // import { createTransaction } from "@/lib/api/payments";
 
@@ -35,7 +35,7 @@ export default function PayPage({ params }: PayPageProps) {
   const { paymentId } = use(params);
   const [payment, setPayment] = useState<ReadPayment | null>(null);
   const [providerID, setProviderID] = useState<string>("");
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const router = useRouter();
 
   useSWR<ReadPayment>(`/payments/payments/${paymentId}`, backendFetch, {
