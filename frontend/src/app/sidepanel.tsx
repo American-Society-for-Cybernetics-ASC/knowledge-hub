@@ -12,6 +12,8 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { logout } from "@/lib/api/auth";
+import { useContext } from "react";
+import { AddErrorContext } from "@/components/layout/ErrorContext";
 
 export const SIDEPANEL_WIDTH = 240;
 
@@ -29,14 +31,16 @@ const links = [
 
 export default function SidePanel() {
   const router = useRouter();
+  const addError = useContext(AddErrorContext);
 
   async function handleLogout() {
     try {
       await logout();
+      router.push("/auth/login");
     } catch {
-      //If the request fails, the page redirects to login page without clearing cookies
+      //If the request fails, an error message will be shown on the page.
+      addError("Failed to log out. Please try again.");
     }
-    router.push("/auth/login")
   }
 
   return (
