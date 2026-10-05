@@ -308,3 +308,10 @@ def test_disable_totp(test_server: TestClient):
     response = test_server.post("/auth/disable-totp")
     assert response.status_code == 200
     assert response.json()["message"] == "Two-factor authentication disabled."
+
+
+def test_login(test_server: TestClient):
+    """Test that logout clears the access token cookie"""
+    response = test_server.post("/auth/logout")
+    assert response.status_code == 200
+    assert response.json()["message"] == "Logged out successfully."

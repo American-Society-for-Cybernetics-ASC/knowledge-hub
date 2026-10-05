@@ -323,10 +323,10 @@ def grant_permission(
             raise HTTPException(status_code=403, detail="Cannot grant administrator in a category you are not administrator of")
     else: 
         # Granting global permissions
-        if req.tier == PermissionTier.adminstrator or req.tier == PermissionTier.manager:
+        if req.tier == PermissionTier.adminstrator:
             if not current_permissions.includes([], PermissionTier.adminstrator):
-                raise HTTPException(status_code=403, detail="Only administrators can grant manager or administrator permissions")
-        elif req.tier == PermissionTier.moderator:
+                raise HTTPException(status_code=403, detail="Only administrators can grant administrator permissions")
+        elif req.tier == PermissionTier.manager or req.tier == PermissionTier.moderator:
             if not current_permissions.includes([], PermissionTier.manager):
                 raise HTTPException(status_code=403, detail="Only managers or administrators can grant moderator permissions")
 
@@ -346,6 +346,7 @@ def grant_permission(
         if req.category:
             # Set permissions for specific categories
             children = dict(current_perms.children)
+            # TODO: don't wipe subpermissions
             children[req.category.value] = Permissions(tier=req.tier)
             new_perms = Permissions(tier=current_perms.tier, children=children)
         else:
@@ -356,3 +357,16 @@ def grant_permission(
         session.commit()
 
     return {"message": f"Permission {req.tier} granted successfully."}
+
+@auth_router.post("/logout")
+def logout (response: Response) -> dict:
+    """
+    logs out the current user by clearing the JWT cookie.
+    """
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=True,
+        samesite="strict",
+    )
+    return {"message": "Logged out successfully."}
