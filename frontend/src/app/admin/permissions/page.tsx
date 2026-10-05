@@ -12,14 +12,22 @@ interface User {
     children: Record<string, { tier: string | null }>;
 }
 
+const CATEGORIES = ["mail", "payment", "auth", "membership", "mailing_lists"];
+const TIERS = ["moderator", "manager", "administrator"];
+
 export default function PermissionPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [currentTier, setCurrentTier] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
-    const [saving, setSaving] = useState<number | null>(null);
-    const [selectedCategory, setSelectedCategory] = useState<Record<number, string>>({});
+    const [saving, setSaving] = useState(false);
+
+    // Modal state
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalUser, setModalUser] = useState<User | null>(null);
+    const [modalTier, setModalTier] = useState("moderator");
+    const [modalCategory, setModalCategory] = useState("");
 
     useEffect (() => {
         async function load() {
@@ -41,23 +49,36 @@ export default function PermissionPage() {
         load();
     }, []);
 
-    async function handleGrant(targetUserId: number, tier: string) {
-        setSaving(targetUserId);
+    function openModal(user: User) {
+        setModalUser(user);
+        setModalTier("moderator");
+        setModalCategory("");
+        setModalOpen(true);
         setError("");
         setSuccess("");
-        const category = selectedCategory[targetUserId] || null;
+    }
+
+    async function handleGrant() {
+        if (!modalUser) return;
+        setSaving(true);
+        setError("");
+        setSuccess("");
         try {
-            await backendFetch(`/auth/users/${targetUserId}/permissions`, {
+            await backendFetch(`/auth/users/${modalUser.user_id}/permissions`, {
                 method: "POST",
-                body: JSON.stringify({ tier, category }),
+                body: JSON.stringify({ 
+                    tier: modalTier, 
+                    category: modalCategory || null,
+                }),
             });
             setSuccess("Permission granted successfully.");
             const usersData = await backendFetch<User[]>("/auth/users");
             setUsers(usersData);
+            setModalOpen(false);
         } catch {
             setError("Failed to grant permission.");
         } finally {
-            setSaving(null);
+            setSaving(false);
         }
     }
 
@@ -77,7 +98,7 @@ export default function PermissionPage() {
                 <thead className="bg-gray-50">
                     <tr>
                         <th className="text-left px-4 py-2">User</th>
-                        <th className="text-left px-4 py-2">Current Tier</th>
+                        <th className="text-left px-4 py-2">Permissions</th>
                         <th className="text-left px-4 py-2">Actions</th>
                     </tr>
                 </thead>
@@ -105,49 +126,89 @@ export default function PermissionPage() {
                                     )}
                                 </div>
                             </td>
-                            <td className="px-4 py-2 space-y-2">
-                                <select
-                                    value={selectedCategory[user.user_id] ?? ""}
-                                    onChange={(e) =>
-                                        setSelectedCategory(prev => ({
-                                            ...prev,
-                                            [user.user_id]: e.target.value,
-                                        }))
-                                    }
-                                    className="w-full border border-gray-300 rounded px-2 py-1 text-xs"
-                                >
-                                    <option value="">Global</option>
-                                    <option value="mail">Mail</option>
-                                    <option value="payment">Payment</option>
-                                    <option value="auth">Auth</option>
-                                    <option value="membership">Membership</option>
-                                    <option value="mailing_lists">Mailing Lists</option>
-                                </select>
-                                <div className="space-x-2">
-                                    {currentTier === "administrator" && (
-                                        <button
-                                            onClick={() => handleGrant(user.user_id, "manager")}
-                                            disabled={saving === user.user_id}
-                                            className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 disabled:opacity-50"
-                                        >
-                                            Grant Manager
-                                        </button>
-                                    )}
-                                    {(currentTier === "administrator" || currentTier === "manager") && (
-                                        <button
-                                            onClick={() => handleGrant(user.user_id, "moderator")}
-                                            disabled={saving === user.user_id}
-                                            className="bg-gray-600 text-white px-3 py-1 rounded text-xs hover:bg-gray-700 disabled:opacity-50"
-                                        >
-                                            Grant Moderator
-                                        </button>
-                                    )}
-                                </div>
+                            <td className="px-4 py-2">
+                                {(currentTier === "administrator" || currentTier === "manager") && (
+                                    <button
+                                        onClick={() => openModal(user)}
+                                        className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700"
+                                    >
+                                        Grant Permission
+                                    </button>
+                                )}
                             </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
+
+            {/* Modal */}
+            {modalOpen && modalUser && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-lg p-6 w-96">
+                        <h3 className="text-lg font-semibold mb-4">
+                            Grant Permission to {modalUser.name ?? modalUser.email}
+                        </h3>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Category (leave blank for global)
+                                </label>
+                                <select
+                                    value={modalCategory}
+                                    onChange={(e) => setModalCategory(e.target.value)}
+                                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                                >
+                                    <option value="">Global</option>
+                                    {CATEGORIES.map(cat => (
+                                        <option key={cat} value={cat}>
+                                            {cat.charAt(0).toUpperCase() + cat.slice(1).replace("_", " ")}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Permission Tier
+                                </label>
+                                <select
+                                    value={modalTier}
+                                    onChange={(e) => setModalTier(e.target.value)}
+                                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                                >
+                                    {TIERS.map(tier => (
+                                        <option key={tier} value={tier}>
+                                            {tier.charAt(0).toUpperCase() + tier.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="mt-6">
+                            {error && (
+                                <div className="bg-red-50 text-red-700 p-3 rounded mb-4 text-sm">{error}</div>
+                            )}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleGrant}
+                                    disabled={saving}
+                                    className="flex-1 bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 disabled:opacity-50 text-sm"
+                                >
+                                    {saving ? "Saving..." : "Grant"}
+                                </button>
+                                <button
+                                    onClick={() => setModalOpen(false)}
+                                    className="flex-1 border border-gray-300 py-2 rounded font-medium hover:bg-gray-50 text-sm"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

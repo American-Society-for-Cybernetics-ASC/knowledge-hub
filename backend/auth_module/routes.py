@@ -48,7 +48,7 @@ class ChangeEmailRequest(BaseModel):
 
 
 class GrantPermissionRequest(BaseModel):
-    tier: str
+    tier: PermissionTier
     category: Optional[PermissionCategory] = None
 
 
@@ -315,19 +315,20 @@ def grant_permission(
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     # Validate the tier being granted
-    try:
-        tier = PermissionTier(req.tier)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid permission tier")
-
     if req.category:
         # Granting category specific permissions. 
         if not current_permissions.includes([req.category.value], PermissionTier.manager):
             raise HTTPException(status_code=403, detail=f"You do not have manager permissions for {req.category.value}")
+        if req.tier == PermissionTier.adminstrator and not current_permissions.includes([req.category.value], PermissionTier.adminstrator):
+            raise HTTPException(status_code=403, detail="Cannot grant administrator in a category you are not administrator of")
     else: 
         # Granting global permissions
-        if not current_permissions.includes([], PermissionTier.adminstrator):
-            raise HTTPException(status_code=403, detail="Only global administrators can grant global permissions")
+        if req.tier == PermissionTier.adminstrator or req.tier == PermissionTier.manager:
+            if not current_permissions.includes([], PermissionTier.adminstrator):
+                raise HTTPException(status_code=403, detail="Only administrators can grant manager or administrator permissions")
+        elif req.tier == PermissionTier.moderator:
+            if not current_permissions.includes([], PermissionTier.manager):
+                raise HTTPException(status_code=403, detail="Only managers or administrators can grant moderator permissions")
 
     with database.get_session() as session:
         user = session.get(model.AuthUser, target_user_id)
@@ -335,9 +336,9 @@ def grant_permission(
             raise HTTPException(status_code=404, detail="User not found")
 
         # Prevent changing permissions of a higher-tier user
-        if user.permissions:
+        if user.permissions and not req.category:
             target_perms = Permissions.model_validate(user.permissions)
-            if target_perms.tier == PermissionTier.adminstrator and tier != PermissionTier.adminstrator:
+            if target_perms.tier == PermissionTier.adminstrator and req.tier != PermissionTier.adminstrator:
                 raise HTTPException(status_code=403, detail="Cannot demote an administrator")
 
         current_perms = Permissions.model_validate(user.permissions) if user.permissions else Permissions()
@@ -345,11 +346,11 @@ def grant_permission(
         if req.category:
             # Set permissions for specific categories
             children = dict(current_perms.children)
-            children[req.category.value] = Permissions(tier=tier)
+            children[req.category.value] = Permissions(tier=req.tier)
             new_perms = Permissions(tier=current_perms.tier, children=children)
         else:
             # Set global tier
-            new_perms = Permissions(tier=tier, children=dict(current_perms.children))
+            new_perms = Permissions(tier=req.tier, children=dict(current_perms.children))
 
         user.permissions = new_perms.model_dump(mode="json")
         session.commit()
