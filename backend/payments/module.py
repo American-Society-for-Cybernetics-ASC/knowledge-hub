@@ -5,7 +5,7 @@ import stripe
 from sqlalchemy.exc import NoResultFound
 
 
-from .products.handle_product import handle_successful_payment
+from .handle_product import handle_successful_payment
 import database
 from database.types import PaymentStatus, TransactionStatus
 from database import model
