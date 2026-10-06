@@ -37,7 +37,7 @@ class CreateMembershipProduct(Payment):
 
     @override
     def product_description(self):
-        return f"Created Membership as '{self.member_type}'"
+        return f"Created Membership as '{self.member_type.name}'"
 
     __mapper_args__ = {
         "polymorphic_identity": IDENTITY,
@@ -58,7 +58,7 @@ class RenewMembershipProduct(Payment):
 
     @override
     def product_description(self):
-        return f"Renewed Membership as '{self.member_type}'"
+        return f"Renewed Membership as '{self.member_type.name}'"
 
     __mapper_args__ = {
         "polymorphic_identity": IDENTITY,
