@@ -2,7 +2,7 @@ from uuid import UUID
 from datetime import datetime
 
 import database.model as dbmodel
-from database.types import PaymentStatus
+from database.types import PaymentStatus, ProductType
 from utils import BaseModel
 
 
@@ -13,7 +13,7 @@ class Payment(BaseModel):
     amount: int
     currency: str
     status: PaymentStatus
-    product: str
+    product: ProductType
     product_description: str
 
     @staticmethod
@@ -37,7 +37,7 @@ class ReadPayment(BaseModel):
     amount: int
     currency: str
     status: PaymentStatus
-    product: str
+    product: ProductType
     product_description: str
 
     @staticmethod
