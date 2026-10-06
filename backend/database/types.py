@@ -31,6 +31,12 @@ class ApplicationStatus(str, Enum):
     REVISION_REQUIRED = "revision_required"
 
 
+class ProductType(str, Enum):
+    DONATION = "donation"
+    CREATE_MEMBERSHIP = "create_membership"
+    RENEW_MEMBERSHIP = "renew_membership"
+
+
 class TZDateTime(TypeDecorator):
     impl = DateTime
     cache_ok = True

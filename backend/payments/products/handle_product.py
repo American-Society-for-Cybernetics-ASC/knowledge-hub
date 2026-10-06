@@ -1,19 +1,24 @@
 from sqlalchemy.orm import Session
 
-from payments.products import ProductTypes
+import database
+import database.model
+import database.products
+from database.types import ProductType
 
 
-def handle_successful_payment(session: Session, product: ProductTypes):
+def handle_successful_payment(session: Session, payment: database.model.Payment):
     from membership import membership_module
 
-    match product.product:
-        case "create_membership":
+    match payment.product:
+        case ProductType.CREATE_MEMBERSHIP:
+            assert isinstance(payment, database.products.CreateMembershipProduct)
             membership_module.create_membership(
-                session, product.membership_type_id, product.user_id, product.duration
+                session, payment.member_type_id, payment.user_id, payment.duration
             )
-        case "renew_membership":
+        case ProductType.RENEW_MEMBERSHIP:
+            assert isinstance(payment, database.products.RenewMembershipProduct)
             membership_module.renew_membership(
-                session, product.user_id, product.duration
+                session, payment.user_id, payment.duration
             )
-        case "donation":
+        case ProductType.DONATION:
             pass  # TODO

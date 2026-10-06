@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from datetime import datetime
 from typing import Optional
 import uuid
@@ -19,6 +20,7 @@ from .types import (
     ApplicationStatus,
     PermissionCategory,
     PaymentStatus,
+    ProductType,
     TransactionStatus,
     TZDateTime,
 )
@@ -85,13 +87,23 @@ class Profile(Base):
 class Payment(Base):
     __tablename__ = "payments"
 
-    id = mapped_column(UUID, primary_key=True, index=True, default=uuid.uuid4)
-    user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"), nullable=False)
-    timestamp = mapped_column(TZDateTime, nullable=False, server_default=func.now())
-    amount = mapped_column(Integer, nullable=False)
-    currency = mapped_column(String, nullable=False)
-    status: Mapped[PaymentStatus] = mapped_column(String, nullable=False)
-    product: Mapped[dict] = mapped_column(JSON, nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, index=True, default=uuid.uuid4
+    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("auth_users.user_id"))
+    timestamp: Mapped[datetime] = mapped_column(TZDateTime, server_default=func.now())
+    amount: Mapped[int]
+    currency: Mapped[str]
+    status: Mapped[PaymentStatus] = mapped_column(default=PaymentStatus.PENDING)
+    product: Mapped[ProductType]
+
+    @abstractmethod
+    def product_description(self) -> str: ...
+
+    __mapper_args__ = {
+        "polymorphic_abstract": True,
+        "polymorphic_on": "product",
+    }
 
     transactions = relationship("Transaction", back_populates="payment")
 

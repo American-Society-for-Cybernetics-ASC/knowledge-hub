@@ -4,6 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from database.products import CreateMembershipProduct, RenewMembershipProduct
 from database.model import Member, MemberType, MembershipApplication
 from member_application.application_module import (
     ApplicationNotFoundError,
@@ -15,12 +16,7 @@ from .exceptions import (
     MembershipTypeOutOfDateError,
     NotACurrentMemberError,
 )
-from payments.module import PaymentsModule
 from payments.payment import Payment
-from payments.products import (
-    CreateMembershipProduct,
-    RenewMembershipProduct,
-)
 
 MEMBERSHIP_DURATION = timedelta(days=365)
 RENEWAL_WINDOW = timedelta(days=182)
@@ -94,16 +90,17 @@ def purchase_create_membership(
     if not member_type:
         raise MembershipTypeOutOfDateError()
 
-    return PaymentsModule().create_payment(
-        user_id,
-        member_type.price,
-        "usd",  # TODO: currency
-        CreateMembershipProduct(
+    with session.begin_nested():
+        payment = CreateMembershipProduct(
             user_id=user_id,
-            membership_type_id=member_type.id,
+            amount=member_type.price,
+            currency="usd",  # TODO: currency
             duration=MEMBERSHIP_DURATION,
-        ),
-    )
+            member_type_id=member_type.id,
+        )
+        session.add(payment)
+
+    return Payment.from_db_model(payment)
 
 
 def purchase_renew_membership(session: Session, user_id: int) -> Payment:
@@ -118,12 +115,17 @@ def purchase_renew_membership(session: Session, user_id: int) -> Payment:
     if member.member_type is None:
         raise MembershipTypeOutOfDateError()
 
-    return PaymentsModule().create_payment(
-        user_id,
-        member.member_type.price,
-        "usd",  # TODO: currency
-        RenewMembershipProduct(user_id=user_id, duration=MEMBERSHIP_DURATION),
-    )
+    with session.begin_nested():
+        payment = RenewMembershipProduct(
+            user_id=user_id,
+            amount=member.member_type.price,
+            currency="usd",  # TODO: currency
+            duration=MEMBERSHIP_DURATION,
+            member_type_id=member.member_type.id,
+        )
+        session.add(payment)
+
+    return Payment.from_db_model(payment)
 
 
 def set_members_type(session: Session, application_id: int, user_id: int):
