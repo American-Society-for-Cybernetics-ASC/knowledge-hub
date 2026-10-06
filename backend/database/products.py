@@ -11,8 +11,8 @@ from .model import MemberType, Payment
 
 
 class DonationProduct(Payment):
-    IDENTITY = ProductType.DONATION
-    __tablename__ = "product_" + IDENTITY
+    _IDENTITY = ProductType.DONATION
+    __tablename__ = "product_" + _IDENTITY
     id: Mapped[uuid.UUID] = mapped_column(ForeignKey(Payment.id), primary_key=True)
 
     @override
@@ -20,13 +20,13 @@ class DonationProduct(Payment):
         return "Donation"
 
     __mapper_args__ = {
-        "polymorphic_identity": IDENTITY,
+        "polymorphic_identity": _IDENTITY,
     }
 
 
 class CreateMembershipProduct(Payment):
-    IDENTITY = ProductType.CREATE_MEMBERSHIP
-    __tablename__ = "product_" + IDENTITY
+    _IDENTITY = ProductType.CREATE_MEMBERSHIP
+    __tablename__ = "product_" + _IDENTITY
     id: Mapped[uuid.UUID] = mapped_column(ForeignKey(Payment.id), primary_key=True)
     duration: Mapped[datetime.timedelta]
     member_type_id: Mapped[uuid.UUID] = mapped_column(ForeignKey(MemberType.id))
@@ -40,13 +40,13 @@ class CreateMembershipProduct(Payment):
         return f"Created Membership as '{self.member_type.name}'"
 
     __mapper_args__ = {
-        "polymorphic_identity": IDENTITY,
+        "polymorphic_identity": _IDENTITY,
     }
 
 
 class RenewMembershipProduct(Payment):
-    IDENTITY = ProductType.RENEW_MEMBERSHIP
-    __tablename__ = "product_" + IDENTITY
+    _IDENTITY = ProductType.RENEW_MEMBERSHIP
+    __tablename__ = "product_" + _IDENTITY
 
     id: Mapped[uuid.UUID] = mapped_column(ForeignKey(Payment.id), primary_key=True)
     duration: Mapped[datetime.timedelta]
@@ -61,5 +61,5 @@ class RenewMembershipProduct(Payment):
         return f"Renewed Membership as '{self.member_type.name}'"
 
     __mapper_args__ = {
-        "polymorphic_identity": IDENTITY,
+        "polymorphic_identity": _IDENTITY,
     }
