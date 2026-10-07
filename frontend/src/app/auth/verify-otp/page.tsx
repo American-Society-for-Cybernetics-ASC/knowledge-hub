@@ -33,7 +33,7 @@ export default function VerifyOTPPage() {
       await verifyOTP({ email, code, challenge_token: challengeToken });
       sessionStorage.removeItem("auth_email");
       sessionStorage.removeItem("challenge_token");
-      router.push("/");
+      window.location.href = "/";
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
