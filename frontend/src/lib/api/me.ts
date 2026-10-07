@@ -5,6 +5,7 @@ export interface CurrentUser {
   email: string;
   name: string | null;
   totp_enabled: boolean;
+  tier: string | null;
 }
 
 export async function getCurrentUser(): Promise<CurrentUser> {
