@@ -37,6 +37,10 @@ class ProductType(str, Enum):
     RENEW_MEMBERSHIP = "renew_membership"
 
 
+class MailProviderType(str, Enum):
+    GMAIL_APP_PASSWORD = "google_app_password"
+
+
 class TZDateTime(TypeDecorator):
     impl = DateTime
     cache_ok = True

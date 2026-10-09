@@ -1,9 +1,11 @@
-from typing import Annotated
-
 from fastapi import APIRouter, Depends
 
-from mail.module import MailModule
-from mail.model import FailedEmail, RedactedEmail
+from auth_module import authorized
+from auth_module.model import PermissionTier
+import database
+from database.types import PermissionCategory
+from .model import FailedEmail, RedactedEmail
+from . import mail_module
 
 
 mail_router = APIRouter(prefix="/mail", tags=["mail"])
@@ -11,8 +13,8 @@ mail_router = APIRouter(prefix="/mail", tags=["mail"])
 
 @mail_router.get("/failed")
 def get_failed_emails(
-    module: Annotated[MailModule, Depends(MailModule)],
-    # TODO permissions
+    _=Depends(authorized([PermissionCategory.MAIL], PermissionTier.manager)),
 ) -> list[FailedEmail[RedactedEmail]]:
     """Get all failed emails"""
-    return list(map(FailedEmail.redact, module.get_failed_emails()))
+    with database.with_transaction() as session:
+        return list(map(FailedEmail.redact, mail_module.get_failed_emails(session)))

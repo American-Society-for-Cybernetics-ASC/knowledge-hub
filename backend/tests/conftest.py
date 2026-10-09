@@ -11,13 +11,11 @@ with MonkeyPatch().context() as m:
 from typing import Callable
 import uuid
 
-from fastapi import Request
-
+from mail.model import Email
 from payments.config import PaymentModuleConfig, PaymentOption
 from payments.providers.mock_provider import MockPaymentProvider
 from utils.module_config import set_module_config
-from mail.module import MailModuleConfig
-from mail.provider.mock_provider import MockMailProvider
+from .mock_mail_provider import MockMailProvider
 import database
 from database import model
 from database.base import Base
@@ -25,6 +23,7 @@ import auth_module
 
 
 import pytest
+from fastapi import Request
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -109,12 +108,6 @@ TEST_USER_ID = 0
 def default_database(mock_get_session: Callable[[], Session]):
     with mock_get_session() as session:
         session.add(
-            model.Module(
-                module_name=MailModuleConfig.module_id(),
-                config=MailModuleConfig(provider=MockMailProvider()).model_dump(),
-            )
-        )
-        session.add(
             model.AuthUser(
                 user_id=TEST_USER_ID,
                 email="test@email.com",
@@ -156,6 +149,18 @@ def mock_provider(mock_get_session) -> uuid.UUID:
         )
     )
     return id
+
+
+@pytest.fixture(autouse=True)
+def mock_mail_provider(monkeypatch):
+    provider = MockMailProvider()
+
+    def mock_mail(mail: Email, _):
+        provider.send_mail(mail)
+
+    with monkeypatch.context() as m:
+        m.setattr("mail.handle_provider.handle_send_email", mock_mail)
+        yield provider
 
 
 @pytest.fixture()

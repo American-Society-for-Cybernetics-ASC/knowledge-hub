@@ -1,14 +1,13 @@
 from typing import Literal
 from pydantic import Field
 
-from . import MailProviderInterface
 from mail.model import Email
 
 _fails = 0
 _sent_mail: list[Email] = []
 
 
-class MockMailProvider(MailProviderInterface):
+class MockMailProvider:
     service_name: Literal["mock"] = Field(default="mock")
 
     def send_mail(self, mail: Email):

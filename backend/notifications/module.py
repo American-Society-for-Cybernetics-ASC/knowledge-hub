@@ -2,9 +2,8 @@ from sqlalchemy import false, select
 
 import database
 from database import model
-from mail.module import MailModule
+from mail import mail_module
 from mail.model import Email
-from settings import SETTINGS
 from utils import BaseModel
 
 
@@ -12,16 +11,15 @@ class NotificationData(BaseModel):
     user_id: int
     subject: str
     message: str
-    send_email: bool = False
 
 
 class NotificationsModule:
-    def _get_sender(self) -> str:
-        return SETTINGS.google_username or "noreply@ckh.asc-cybernetics.org"
-
-    def create_notification(self, notification: NotificationData):
+    # Haven't set default=None for email_provider: not sending an email is explicit
+    def create_notification(
+        self, notification: NotificationData, email_provider: model.MailProvider | None
+    ):
         """
-        To create a notification and send an email if the conditions are met
+        Create a notification, sending an email if a provider is provided
         """
         with database.get_session() as session:
             new_notification = model.Notification(
@@ -33,16 +31,16 @@ class NotificationsModule:
             session.add(new_notification)
             session.commit()
 
-        if notification.send_email:
+        if email_provider:
             user = session.get(model.AuthUser, notification.user_id)
-            if user and user.email:
+            if user:
                 mail = Email(
-                    sender=self._get_sender(),
                     recipients=[user.email],
                     subject=f"CKH Notification: {notification.subject}",
                     content=notification.message,
                 )
-                MailModule().send_mail(mail)
+                with session.begin_nested():
+                    mail_module.send_mail(session, mail, email_provider)
 
     def get_notifications(
         self,

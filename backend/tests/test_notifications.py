@@ -27,8 +27,8 @@ def test_create_and_get_notification(
             user_id=user.user_id,
             subject="Application Approved",
             message="Your application has been approved.",
-            send_email=False,
-        )
+        ),
+        email_provider=None,
     )
 
     # Get notifications

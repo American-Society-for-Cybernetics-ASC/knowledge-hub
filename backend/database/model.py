@@ -18,6 +18,7 @@ from sqlalchemy.sql import func
 
 from .types import (
     ApplicationStatus,
+    MailProviderType,
     PermissionCategory,
     PaymentStatus,
     ProductType,
@@ -234,6 +235,20 @@ class CronJobTable(Base):
     last_executed = mapped_column(TZDateTime, nullable=False)
     period = mapped_column(Integer, nullable=False)
     job: Mapped[dict] = mapped_column(JSON, nullable=False)
+
+
+class MailProvider(Base):
+    __tablename__ = "mail_providers"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, index=True, default=uuid.uuid7
+    )
+    provider: Mapped[MailProviderType]
+
+    __mapper_args__ = {
+        "polymorphic_abstract": True,
+        "polymorphic_on": "provider",
+    }
 
 
 class FailedEmailTable(Base):
