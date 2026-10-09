@@ -11,27 +11,29 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState, useContext } from "react";
 import { logout } from "@/lib/api/auth";
-import { useContext } from "react";
+import { getCurrentUser } from "@/lib/api/me";
 import { AddErrorContext } from "@/components/layout/ErrorContext";
 
 export const SIDEPANEL_WIDTH = 240;
 
-const links = [
-  { label: "Home", href: "/" },
-  { label: "Login", href: "/auth/login" },
-  { label: "Mailing Lists", href: "/groups" },
-  { label: "Your Membership", href: "/membership" },
-  { label: "Notifications", href: "/notifications" },
-  { label: "Admin", href: "/admin" },
-  { label: "Settings", href: "/settings" },
-  { label: "Member Matching", href: "/member-matching" },
-  { label: "Profile", href: "/members/me" },
-];
-
 export default function SidePanel() {
   const router = useRouter();
   const addError = useContext(AddErrorContext);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [tier, setTier] = useState<string | null>(null);
+
+  useEffect(() => {
+    getCurrentUser()
+      .then((user) => {
+        if (user) {
+          setUserId(user.user_id);
+          setTier(user.tier);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleLogout() {
     try {
@@ -42,6 +44,10 @@ export default function SidePanel() {
       addError("Failed to log out. Please try again.");
     }
   }
+
+  const isLoggedIn = userId !== null;
+  const isAdminOrMod =
+    tier === "administrator" || tier === "manager" || tier === "moderator";
 
   return (
     <Drawer
@@ -66,19 +72,60 @@ export default function SidePanel() {
           CKH
         </Typography>
       </Toolbar>
-      <Box sx={{ overflow: "auto", display: "flex", flexDirection: "column", height: "100%" }}>
+      <Box sx={{ overflow: "auto" }}>
         <List>
-          {links.map((link) => (
-            <ListItemButton key={link.href} component={Link} href={link.href}>
-              <ListItemText primary={link.label} />
-            </ListItemButton>
-          ))}
-        </List>
-        <Box sx={{ mt: "auto", p: 1}}>
-          <ListItemButton onClick={handleLogout}>
-            <ListItemText primary="Logout" />
+          {/* Always visible */}
+          <ListItemButton component={Link} href="/">
+            <ListItemText primary="Home" />
           </ListItemButton>
-        </Box>
+
+          {/* Not logged in */}
+          {!isLoggedIn && (
+            <ListItemButton component={Link} href="/auth/login">
+              <ListItemText primary="Login" />
+            </ListItemButton>
+          )}
+
+          {/* Logged in users */}
+          {isLoggedIn && (
+            <>
+              <ListItemButton component={Link} href="/groups">
+                <ListItemText primary="Mailing Lists" />
+              </ListItemButton>
+
+              <ListItemButton component={Link} href="/membership">
+                <ListItemText primary="Your Membership" />
+              </ListItemButton>
+
+              <ListItemButton component={Link} href="/notifications">
+                <ListItemText primary="Notifications" />
+              </ListItemButton>
+
+              <ListItemButton component={Link} href="/settings">
+                <ListItemText primary="Settings" />
+              </ListItemButton>
+
+              <ListItemButton component={Link} href="/member-matching">
+                <ListItemText primary="Member Matching" />
+              </ListItemButton>
+
+              <ListItemButton component={Link} href="/members/me">
+                <ListItemText primary="Profile" />
+              </ListItemButton>
+
+              {/* Admin/moderator only */}
+              {isAdminOrMod && (
+                <ListItemButton component={Link} href="/admin">
+                  <ListItemText primary="Admin" />
+                </ListItemButton>
+              )}
+
+              <ListItemButton onClick={handleLogout}>
+                <ListItemText primary="Logout" />
+              </ListItemButton>
+            </>
+          )}
+        </List>
       </Box>
     </Drawer>
   );
