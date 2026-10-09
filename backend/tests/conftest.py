@@ -12,9 +12,7 @@ from typing import Callable
 import uuid
 
 from mail.model import Email
-from payments.config import PaymentModuleConfig, PaymentOption
-from payments.providers.mock_provider import MockPaymentProvider
-from utils.module_config import set_module_config
+from database.payment_providers import MockPaymentProvider
 from .mock_mail_provider import MockMailProvider
 import database
 from database import model
@@ -135,23 +133,18 @@ def override_permissions(request: pytest.FixtureRequest, monkeypatch):
 
 
 @pytest.fixture()
-def mock_provider(mock_get_session) -> uuid.UUID:
-    id = uuid.uuid4()
-    set_module_config(
-        PaymentModuleConfig(
-            payment_options={
-                id: PaymentOption(
-                    name="Example",
-                    description="Example Provider",
-                    provider=MockPaymentProvider(),
-                )
-            }
+def mock_payment_provider(mock_get_session) -> uuid.UUID:
+    with mock_get_session() as session:
+        record = MockPaymentProvider(
+            name="test provider", description="test payment provider from fixture"
         )
-    )
-    return id
+        session.add(record)
+        session.commit()
+        session.flush()
+        return record.id
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def mock_mail_provider(monkeypatch):
     provider = MockMailProvider()
 

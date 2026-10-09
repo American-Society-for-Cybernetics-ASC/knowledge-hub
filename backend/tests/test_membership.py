@@ -40,7 +40,7 @@ def mock_member(mock_get_session) -> int:
 
 
 def test_full_cycle(
-    mock_provider: UUID, mock_application: int, test_server: TestClient
+    mock_payment_provider: UUID, mock_application: int, test_server: TestClient
 ):
     response = test_server.get("/membership")
     assert response.status_code == 200
@@ -54,7 +54,7 @@ def test_full_cycle(
 
     response = test_server.post(
         "/payments/transactions",
-        json={"provider_id": str(mock_provider), "payment_id": payment["id"]},
+        json={"provider_id": str(mock_payment_provider), "payment_id": payment["id"]},
     )
     assert response.status_code == 200
     transaction = response.json()
@@ -103,7 +103,9 @@ def test_update(test_server: TestClient, mock_member, mock_application):
     assert response.json()["member_type"] is not None
 
 
-def test_renew(test_server: TestClient, mock_member, mock_application, mock_provider):
+def test_renew(
+    test_server: TestClient, mock_member, mock_application, mock_payment_provider
+):
     response = test_server.get("/membership")
     assert response.status_code == 200
     assert response.json()["member_type"] is None
@@ -126,7 +128,7 @@ def test_renew(test_server: TestClient, mock_member, mock_application, mock_prov
 
     response = test_server.post(
         "/payments/transactions",
-        json={"provider_id": str(mock_provider), "payment_id": payment["id"]},
+        json={"provider_id": str(mock_payment_provider), "payment_id": payment["id"]},
     )
     assert response.status_code == 200
     transaction = response.json()

@@ -13,7 +13,6 @@ def test_email_failure(
         mail_module.send_mail(
             session,
             Email(
-                sender="Sender",
                 recipients=["A", "B"],
                 subject="Subject",
                 content="Content",

@@ -38,7 +38,17 @@ class ProductType(str, Enum):
 
 
 class MailProviderType(str, Enum):
-    GMAIL_APP_PASSWORD = "google_app_password"
+    GMAIL_APP_PASSWORD = "gmail_app_password"
+
+
+class PaymentProviderType(str, Enum):
+    STRIPE = "stripe"
+    MOCK = "mock"
+
+
+class ModuleName(str, Enum):
+    NOTIFICATIONS = "notifications"
+    MEMBER_MATCHING = "member_matching"
 
 
 class TZDateTime(TypeDecorator):

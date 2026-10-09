@@ -19,6 +19,8 @@ from sqlalchemy.sql import func
 from .types import (
     ApplicationStatus,
     MailProviderType,
+    ModuleName,
+    PaymentProviderType,
     PermissionCategory,
     PaymentStatus,
     ProductType,
@@ -202,11 +204,15 @@ class AuditLog(Base):
     timestamp = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
 
 
-class Module(Base):
-    __tablename__ = "modules"
+class ModuleConfig(Base):
+    __tablename__ = "module_configs"
 
-    module_name = mapped_column(String, primary_key=True, index=True)
-    config: Mapped[dict | None] = mapped_column(JSON)
+    module_name: Mapped[ModuleName] = mapped_column(primary_key=True, index=True)
+
+    __mapper_args__ = {
+        "polymorphic_abstract": True,
+        "polymorphic_on": "module_name",
+    }
 
 
 class MailingListMember(Base):
@@ -244,6 +250,22 @@ class MailProvider(Base):
         primary_key=True, index=True, default=uuid.uuid7
     )
     provider: Mapped[MailProviderType]
+
+    __mapper_args__ = {
+        "polymorphic_abstract": True,
+        "polymorphic_on": "provider",
+    }
+
+
+class PaymentOption(Base):
+    __tablename__ = "payment_option"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, index=True, default=uuid.uuid7
+    )
+    name: Mapped[str]
+    description: Mapped[str]
+    provider: Mapped[PaymentProviderType]
 
     __mapper_args__ = {
         "polymorphic_abstract": True,

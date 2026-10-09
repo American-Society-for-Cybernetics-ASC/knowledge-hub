@@ -1,16 +1,17 @@
 from typing import Annotated, Literal
-import typing
 from uuid import UUID
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from auth_module import user_id
+from auth_module import authorized, user_id
+from auth_module.model import PermissionTier
+from database.model import PaymentOption
+from database.payment_providers import MockPaymentProvider, StripePaymentProvider
+from database.types import PaymentProviderType, PermissionCategory
 from database.products import DonationProduct
 import database
-from utils.module_config import BaseModel, get_module_config, set_module_config
-from .config import PaymentOption, PaymentModuleConfig
-from .providers import ServiceName
+from utils import BaseModel
 from .payment import Payment, ReadPayment
 from .transactions import Transaction, TransactionTypes
 from .module import PaymentsModule
@@ -27,42 +28,166 @@ from .exceptions import (
 
 payments_router = APIRouter(prefix="/payments", tags=["payments", "admin"])
 
-# --- /config ---
 
-
-class PatchPaymentModuleConfig(BaseModel):
-    payment_options: dict[UUID | Literal["new"], PaymentOption] | None = None
-
-
-class ReadPaymentModuleConfig(BaseModel):
-    payment_options: dict[UUID, PaymentOption]
+# --- /providers/admin ---
+class ReadMockPaymentProvider(BaseModel):
+    provider_type: Literal[PaymentProviderType.MOCK] = PaymentProviderType.MOCK
 
     @staticmethod
-    def from_model(config: PaymentModuleConfig) -> ReadPaymentModuleConfig:
-        return ReadPaymentModuleConfig(payment_options=config.payment_options)
+    def from_db_model(_option: MockPaymentProvider) -> ReadMockPaymentProvider:
+        return ReadMockPaymentProvider()
 
 
-@payments_router.patch("/config")
-def update_config(
-    patch: PatchPaymentModuleConfig,
-) -> ReadPaymentModuleConfig:
-    config = get_module_config(PaymentModuleConfig)
-    if patch.payment_options is not None:
-        # Process "new" payment provider
-        if "new" in patch.payment_options:
-            patch.payment_options[uuid.uuid4()] = patch.payment_options.pop("new")
-        payment_options = typing.cast(dict[UUID, PaymentOption], patch.payment_options)
+class ReadStripePaymentProvider(BaseModel):
+    provider_type: Literal[PaymentProviderType.STRIPE] = PaymentProviderType.STRIPE
+    api_key: str
+    publishable_key: str
+    webhook_secret: str
 
-        config.payment_options = payment_options
-    set_module_config(config)
-    return ReadPaymentModuleConfig.from_model(config)
+    @staticmethod
+    def from_db_model(option: StripePaymentProvider) -> ReadStripePaymentProvider:
+        return ReadStripePaymentProvider(
+            api_key=option.api_key,
+            publishable_key=option.publishable_key,
+            webhook_secret=option.webhook_secret,
+        )
 
 
-@payments_router.get("/config")
-def get_config() -> ReadPaymentModuleConfig:
-    config = get_module_config(PaymentModuleConfig)
+type ReadPaymentProvider = ReadMockPaymentProvider | ReadStripePaymentProvider
 
-    return ReadPaymentModuleConfig.from_model(config)
+
+class AdminReadPaymentOption(BaseModel):
+    id: UUID
+    name: str
+    description: str
+    provider: ReadPaymentProvider
+
+    @staticmethod
+    def from_db_model(option: PaymentOption) -> AdminReadPaymentOption:
+        provider: ReadPaymentProvider
+        match option.provider:
+            case PaymentProviderType.STRIPE:
+                assert isinstance(option, StripePaymentProvider)
+                provider = ReadStripePaymentProvider.from_db_model(option)
+            case PaymentProviderType.MOCK:
+                assert isinstance(option, MockPaymentProvider)
+                provider = ReadMockPaymentProvider.from_db_model(option)
+        return AdminReadPaymentOption(
+            id=option.id,
+            name=option.name,
+            description=option.description,
+            provider=provider,
+        )
+
+
+@payments_router.get("/providers/admin")
+def get_config(
+    _=Depends(authorized([PermissionCategory.PAYMENT], PermissionTier.manager)),
+) -> list[AdminReadPaymentOption]:
+    with database.get_session() as session:
+        return list(
+            map(AdminReadPaymentOption.from_db_model, session.query(PaymentOption))
+        )
+
+
+class PatchMockPaymentProvider(BaseModel):
+    provider_type: Literal[PaymentProviderType.MOCK] = PaymentProviderType.MOCK
+
+    def patch_db_model(self, option: MockPaymentProvider):
+        pass
+
+
+class PatchStripePaymentProvider(BaseModel):
+    provider_type: Literal[PaymentProviderType.STRIPE] = PaymentProviderType.STRIPE
+    api_key: str | None = None
+    publishable_key: str | None = None
+    webhook_secret: str | None = None
+
+    def patch_db_model(self, option: StripePaymentProvider):
+        option.api_key = self.api_key or option.api_key
+        option.publishable_key = self.publishable_key or option.publishable_key
+        option.webhook_secret = self.webhook_secret or option.webhook_secret
+
+
+type PatchPaymentProvider = PatchMockPaymentProvider | PatchStripePaymentProvider
+
+
+class PatchPaymentOption(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    provider: PatchPaymentProvider | None = None
+
+
+@payments_router.patch("/providers/{provider_id}")
+def patch_provider(
+    provider_id: uuid.UUID,
+    patch: PatchPaymentOption,
+    _=Depends(authorized([PermissionCategory.PAYMENT], PermissionTier.manager)),
+) -> AdminReadPaymentOption:
+    with database.with_transaction() as session:
+        record = session.get(PaymentOption, provider_id)
+
+        if record is None:
+            raise HTTPException(404, "Not found")
+
+        record.name = patch.name or record.name
+        record.description = patch.description or record.description
+        if patch.provider is not None:
+            if patch.provider.provider_type != record.provider:
+                raise HTTPException(400, "Can't change option type after creation")
+            patch.provider.patch_db_model(
+                # Safety: above line ensures the types match.
+                record  # type: ignore
+            )
+
+        return AdminReadPaymentOption.from_db_model(record)
+
+
+class PostMockPaymentProvider(BaseModel):
+    provider_type: Literal[PaymentProviderType.MOCK] = PaymentProviderType.MOCK
+
+    def to_db_model(self) -> MockPaymentProvider:
+        return MockPaymentProvider()
+
+
+class PostStripePaymentProvider(BaseModel):
+    provider_type: Literal[PaymentProviderType.STRIPE] = PaymentProviderType.STRIPE
+    api_key: str
+    publishable_key: str
+    webhook_secret: str
+
+    def to_db_model(self) -> StripePaymentProvider:
+        return StripePaymentProvider(
+            api_key=self.api_key,
+            publishable_key=self.publishable_key,
+            webhook_secret=self.webhook_secret,
+        )
+
+
+type PostPaymentProvider = PostMockPaymentProvider | PostStripePaymentProvider
+
+
+class PostPaymentOption(BaseModel):
+    name: str
+    description: str
+    provider: PostPaymentProvider
+
+    def to_db_model(self) -> PaymentOption:
+        record = self.provider.to_db_model()
+        record.name = self.name
+        record.description = self.description
+        return record
+
+
+@payments_router.post("/providers")
+def post_provider(
+    provider: PostPaymentOption,
+    _=Depends(authorized([PermissionCategory.PAYMENT], PermissionTier.manager)),
+) -> AdminReadPaymentOption:
+    with database.with_transaction() as session:
+        record = provider.to_db_model()
+        session.add(record)
+    return AdminReadPaymentOption.from_db_model(record)
 
 
 # --- /payments ---
@@ -180,23 +305,19 @@ class ReadPaymentOption(BaseModel):
     id: UUID
     name: str
     description: str
-    service_name: ServiceName
+    provider: PaymentProviderType
 
     @staticmethod
-    def from_payment_option(uuid: UUID, option: PaymentOption) -> ReadPaymentOption:
+    def from_db_model(option: PaymentOption) -> ReadPaymentOption:
         return ReadPaymentOption(
-            id=uuid,
+            id=option.id,
             name=option.name,
             description=option.description,
-            service_name=option.provider.service_name,
+            provider=option.provider,
         )
 
 
 @payments_router.get("/providers")
 def get_providers() -> list[ReadPaymentOption]:
-    config = get_module_config(PaymentModuleConfig)
-
-    return [
-        ReadPaymentOption.from_payment_option(uuid, option)
-        for uuid, option in config.payment_options.items()
-    ]
+    with database.get_session() as session:
+        return list(map(ReadPaymentOption.from_db_model, session.query(PaymentOption)))

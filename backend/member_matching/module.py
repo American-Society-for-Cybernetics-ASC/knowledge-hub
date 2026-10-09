@@ -2,10 +2,11 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 from sqlalchemy import select
 
+from utils.module_config import get_module_config
+from database.module_configs import MemberMatchingConfig
 import database
 from database import model
 
-from .config import MemberMatchingConfig
 from .schema import (
     DismissMatchResult,
     MemberMatchingSuggestion,
@@ -49,24 +50,6 @@ class MemberMatchingModule:
 
         return normalized
 
-    def get_config(self) -> MemberMatchingConfig:
-        """Load matching config, creating MVP defaults when absent."""
-        with database.get_session() as session:
-            config_record = session.scalar(
-                select(model.Module).where(model.Module.module_name == self.MODULE_NAME)
-            )
-
-            if config_record is None:
-                config = MemberMatchingConfig()
-                config_record = model.Module(
-                    module_name=self.MODULE_NAME,
-                    config=config.model_dump(mode="json"),
-                )
-                session.add(config_record)
-                session.commit()
-
-            return MemberMatchingConfig.model_validate(config_record.config)
-
     @staticmethod
     def _display_name(profile: model.Profile) -> str | None:
         """Return the public display name, without exposing full profile content."""
@@ -97,9 +80,10 @@ class MemberMatchingModule:
         member_id: int,
     ) -> MemberMatchSuggestionsResult:
         """Return suggestions ranked by no. of shared tags."""
-        config = self.get_config()
 
         with database.get_session() as session:
+            config = get_module_config(session, MemberMatchingConfig)
+
             active_member = session.get(model.Member, member_id)
 
             # If member does not exist
