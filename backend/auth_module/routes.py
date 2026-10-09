@@ -70,6 +70,7 @@ class CurrentUserResponse(BaseModel):
     email: str
     name: str | None
     totp_enabled: bool
+    tier: str | None = None
 
 
 # Endpoints
@@ -211,18 +212,25 @@ def get_current_user(
     if current_user_id is None:
         return None
 
-    session = database.get_session()
-    user = session.get(model.AuthUser, current_user_id)
+    with database.get_session() as session:
+        user = session.get(model.AuthUser, current_user_id)
 
-    if not user:
-        return None
+        if not user:
+            return None
 
-    return CurrentUserResponse(
-        user_id=user.user_id,
-        email=user.email,
-        name=user.name,
-        totp_enabled=user.totp_enabled,
-    )
+        tier = None
+        if user.permissions:
+            perms = Permissions.model_validate(user.permissions)
+            if perms.tier:
+                tier = perms.tier.value
+
+        return CurrentUserResponse(
+            user_id=user.user_id,
+            email=user.email,
+            name=user.name,
+            totp_enabled=user.totp_enabled,
+            tier=tier,
+        )
 
 
 @auth_router.post("/change-password")
