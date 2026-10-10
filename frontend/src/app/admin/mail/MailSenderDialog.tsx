@@ -6,9 +6,11 @@ import {
   MailProvider,
   ReadMailSender,
   GmailAppPasswordMailProvider,
+  TestMailProvider,
 } from "@/types/mail";
 import { Info } from "@mui/icons-material";
 import {
+  Alert,
   Button,
   Dialog,
   DialogActions,
@@ -17,6 +19,7 @@ import {
   FormControl,
   Grid,
   InputLabel,
+  LinearProgress,
   Link,
   MenuItem,
   Select,
@@ -50,6 +53,8 @@ export default function MailSenderDialog({
   const [description, setDescription] = useState<string | undefined>(
     base.description,
   );
+
+  const [testing, setTesting] = useState<boolean>(false);
 
   const dirty: Partial<ReadMailSender> = {
     name,
@@ -112,6 +117,12 @@ export default function MailSenderDialog({
     <Dialog open={isOpen} onClose={onClose} fullWidth>
       <DialogTitle>Configure Mail Sender</DialogTitle>
       <DialogContent dividers={true}>
+        {testing && provider && (
+          <TestingDialog
+            onClose={() => setTesting(false)}
+            provider={provider}
+          ></TestingDialog>
+        )}
         <form id="provider-form" action={handleSubmit}>
           <Stack spacing={1}>
             <FormControl fullWidth required>
@@ -165,11 +176,96 @@ export default function MailSenderDialog({
         </Button>
         <Button
           variant="contained"
+          disabled={current.provider === undefined}
+          form="provider-form"
+          onClick={() => setTesting(true)}
+        >
+          Test Provider
+        </Button>
+        <Button
+          variant="contained"
           disabled={sender == "new" ? !readyToCreate : !readyToPatch}
           type={"submit"}
           form="provider-form"
         >
           {sender === "new" ? "Create" : "Save"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function TestingDialog({
+  onClose,
+  provider,
+}: {
+  onClose: () => void;
+  provider: MailProvider;
+}) {
+  const [email, setEmail] = useState<string | undefined>(undefined);
+  const [loading, setLoading] = useState(false);
+  const [testResult, setTestResult] = useState<true | string | undefined>(
+    undefined,
+  );
+
+  async function handleTest() {
+    if (email !== undefined) {
+      setLoading(true);
+      const body: TestMailProvider = {
+        email,
+        provider,
+      };
+      await backendFetch("/mail/test_provider", {
+        method: "POST",
+        body: JSON.stringify(body),
+      })
+        .then(() => {
+          setTestResult(true);
+        })
+        .catch((e) => setTestResult(e.message));
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={true} onClose={onClose}>
+      <DialogContent>
+        <Stack spacing={6}>
+          {testResult === true ? (
+            <Alert variant="outlined" severity="success">
+              Email sent without errors. Check your inbox, accounting for
+              possible delays with the service.
+            </Alert>
+          ) : testResult !== undefined ? (
+            <Alert variant="outlined" severity="error">
+              Error sending email: {testResult}
+            </Alert>
+          ) : loading ? (
+            <LinearProgress />
+          ) : (
+            <></>
+          )}
+          <TextField
+            required
+            name="email"
+            type="email"
+            value={email || ""}
+            onChange={(e) => setEmail(e.target.value)}
+            label="Email"
+            variant="outlined"
+          />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button variant="contained" color="error" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          disabled={email === undefined}
+          onClick={handleTest}
+        >
+          Test
         </Button>
       </DialogActions>
     </Dialog>
@@ -211,6 +307,7 @@ function GmailAppPasswordForm({
       <TextField
         required
         name="google_username"
+        type="email"
         value={google_username}
         onChange={(e) => {
           setGoogleUsername(e.target.value);
@@ -220,22 +317,23 @@ function GmailAppPasswordForm({
       />
       <Grid container direction="row">
         <Grid size={11}>
-        <TextField
-          required
-          name="app_password"
-          value={app_password}
-          onChange={(e) => {
-            setAppPassword(e.target.value);
-          }}
-          label="App Password"
-          variant="outlined"
-          fullWidth
-        />
+          <TextField
+            required
+            type="password"
+            name="app_password"
+            value={app_password}
+            onChange={(e) => {
+              setAppPassword(e.target.value);
+            }}
+            label="App Password"
+            variant="outlined"
+            fullWidth
+          />
         </Grid>
         <Grid>
-        <Link href="https://support.google.com/accounts/answer/185833">
-          <Info></Info>
-        </Link>
+          <Link href="https://support.google.com/accounts/answer/185833">
+            <Info></Info>
+          </Link>
         </Grid>
       </Grid>
     </>

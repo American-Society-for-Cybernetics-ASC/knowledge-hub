@@ -27,3 +27,8 @@ export interface ReadMailSender {
 
 export type PatchMailSender = Partial<Omit<ReadMailSender, "id">>;
 export type PostMailSender = Omit<ReadMailSender, "id">;
+
+export interface TestMailProvider {
+  provider: MailProvider;
+  email: string;
+}

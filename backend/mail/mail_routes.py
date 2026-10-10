@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from auth_module import authorized
 from auth_module.model import PermissionTier
+from mail.handle_provider import handle_send_email
 from database.mail_providers import GmailAppPasswordMailProvider
 from database.model import MailSender
 from utils import BaseModel
 import database
 from database.types import MailProviderType, PermissionCategory
-from .model import FailedEmail, RedactedEmail
+from .model import Email, FailedEmail, RedactedEmail
 from . import mail_module
 
 
@@ -158,3 +159,24 @@ def patch_mail_sender(
             )
 
         return ReadMailSender.from_db_model(record)
+
+
+class TestMailProvider(BaseModel):
+    email: str
+    provider: PostMailProvider
+
+
+@mail_router.post("/test_provider")
+def test_mail_provider(
+    body: TestMailProvider,
+    _=Depends(authorized([PermissionCategory.MAIL], PermissionTier.manager)),
+):
+    test_email = Email(
+        recipients=[body.email],
+        subject="CKH - Mail Provider Test Email",
+        content="If you have received this email, then the mail provider was correctly configured",
+    )
+    try:
+        handle_send_email(test_email, body.provider.to_db_model())
+    except Exception as e:
+        raise HTTPException(500, str(e))
