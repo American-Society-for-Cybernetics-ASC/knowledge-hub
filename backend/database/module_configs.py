@@ -10,7 +10,7 @@ from .model import ModuleConfig, MailSender
 
 
 class ModuleConfigHelper:
-    """Necessary interface for use with :func:`~utils.module_config.get_module_config` and :func:`~utils.module_config.set_module_config`"""
+    """Necessary interface for use with :func:`~utils.module_config.get_module_config`"""
 
     @staticmethod
     @abstractmethod
