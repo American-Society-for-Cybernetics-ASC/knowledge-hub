@@ -62,8 +62,8 @@ export default function PayPage({ params }: PayPageProps) {
       return;
     }
 
-    if (provider.service_name !== "mock") {
-      addError(`${provider.service_name} is not supported right now`);
+    if (provider.provider_type !== "mock") {
+      addError(`${provider.provider_type} is not supported right now`);
       return;
     }
 
