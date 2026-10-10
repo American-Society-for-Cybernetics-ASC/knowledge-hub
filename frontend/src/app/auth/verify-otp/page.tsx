@@ -35,7 +35,7 @@ export default function VerifyOTPPage() {
       await verifyOTP({ email, code, challenge_token: challengeToken });
       sessionStorage.removeItem("auth_email");
       sessionStorage.removeItem("challenge_token");
-      router.push("/");
+      window.location.href = "/";
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Invalid code. Please try again."));
     } finally {
