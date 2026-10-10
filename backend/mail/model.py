@@ -8,7 +8,8 @@ from utils import BaseModel
 
 
 class Email(BaseModel):
-    """All metadata and content for an email"""
+    """All metadata and content for an email.
+    Does **not** include the sender - that is provided by the sender handler when :func:`into_py_email` is called."""
 
     recipients: list[str]
     subject: str

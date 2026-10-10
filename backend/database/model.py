@@ -205,8 +205,11 @@ class AuditLog(Base):
 
 
 class ModuleConfig(Base):
+    """Polymorphic: see module_configs.py for subclasses"""
+
     __tablename__ = "module_configs"
 
+    # This is a primary key: i.e. there is precisely one config for each module.
     module_name: Mapped[ModuleName] = mapped_column(primary_key=True, index=True)
 
     __mapper_args__ = {
@@ -244,7 +247,9 @@ class CronJobTable(Base):
 
 
 class MailSender(Base):
-    __tablename__ = "mail_options"
+    """A sender that a mail manager has configured. Polymorphic: see mail_providers.py for subclasses"""
+
+    __tablename__ = "mail_senders"
 
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True, index=True, default=uuid.uuid7
@@ -260,6 +265,8 @@ class MailSender(Base):
 
 
 class PaymentOption(Base):
+    """An option a manager has configured for users to use to pay. Polymorphic: see payment_providers.py for subclasses"""
+
     __tablename__ = "payment_options"
 
     id: Mapped[uuid.UUID] = mapped_column(
