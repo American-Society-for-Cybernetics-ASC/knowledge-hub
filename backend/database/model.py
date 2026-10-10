@@ -243,12 +243,14 @@ class CronJobTable(Base):
     job: Mapped[dict] = mapped_column(JSON, nullable=False)
 
 
-class MailProvider(Base):
-    __tablename__ = "mail_providers"
+class MailSender(Base):
+    __tablename__ = "mail_options"
 
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True, index=True, default=uuid.uuid7
     )
+    name: Mapped[str]
+    description: Mapped[str]
     provider: Mapped[MailProviderType]
 
     __mapper_args__ = {
@@ -258,7 +260,7 @@ class MailProvider(Base):
 
 
 class PaymentOption(Base):
-    __tablename__ = "payment_option"
+    __tablename__ = "payment_options"
 
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True, index=True, default=uuid.uuid7

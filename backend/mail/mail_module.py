@@ -16,7 +16,7 @@ def get_failed_emails(session: Session) -> list[FailedEmail[Email]]:
     )
 
 
-def send_mail(session: Session, mail: Email, provider: model.MailProvider):
+def send_mail(session: Session, mail: Email, provider: model.MailSender):
     """Attempt to send an email. Adds it to :class:`~database.model.FailedEmailTable` on failure"""
     error = None
     try:

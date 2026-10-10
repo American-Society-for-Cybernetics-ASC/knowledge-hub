@@ -16,7 +16,7 @@ class NotificationData(BaseModel):
 class NotificationsModule:
     # Haven't set default=None for email_provider: not sending an email is explicit
     def create_notification(
-        self, notification: NotificationData, email_provider: model.MailProvider | None
+        self, notification: NotificationData, email_provider: model.MailSender | None
     ):
         """
         Create a notification, sending an email if a provider is provided

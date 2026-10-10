@@ -6,7 +6,7 @@ from sqlalchemy import CheckConstraint, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from database.types import ModuleName
-from .model import ModuleConfig, MailProvider
+from .model import ModuleConfig, MailSender
 
 
 class ModuleConfigHelper:
@@ -37,7 +37,7 @@ class NotificationsConfig(ModuleConfig, ModuleConfigHelper):
         default=ModuleName.NOTIFICATIONS,
     )
     email_provider: Mapped[Optional[uuid.UUID]] = mapped_column(
-        ForeignKey(MailProvider.id)
+        ForeignKey(MailSender.id)
     )
 
     @classmethod
