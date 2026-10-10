@@ -22,6 +22,7 @@ class PermissionCategory(str, Enum):
     AUTH = "auth"
     MEMBERSHIP = "membership"
     MAILING_LISTS = "mailing_lists"
+    NOTIFICATIONS = "notifications"
 
 
 class ApplicationStatus(str, Enum):
