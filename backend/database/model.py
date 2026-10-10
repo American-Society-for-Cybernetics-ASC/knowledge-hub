@@ -280,3 +280,10 @@ class EmailTemplate(Base):
     subject = mapped_column(String, nullable=False)
     body = mapped_column(String, nullable=False)
     variables: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+
+
+class StaticPage(Base):
+    __tablename__= "static_pages"
+
+    slug = mapped_column(String, primary_key=True, index=True)
+    content = mapped_column(String, nullable=False, default="")
