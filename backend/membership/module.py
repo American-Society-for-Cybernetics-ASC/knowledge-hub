@@ -60,7 +60,6 @@ class MembershipModule:
         return PaymentsModule().create_payment(
             user_id,
             member_type.price,
-            "usd",  # TODO: currency
             CreateMembershipProduct(
                 user_id=user_id,
                 membership_type_id=member_type.id,
@@ -86,7 +85,6 @@ class MembershipModule:
         return PaymentsModule().create_payment(
             user_id,
             member.member_type.price,
-            "usd",  # TODO: currency
             RenewMembershipProduct(user_id=user_id, duration=MEMBERSHIP_DURATION),
         )
 

@@ -41,7 +41,7 @@ def mock_stripe_transaction(monkeypatch, mock_payment):
 @pytest.fixture()
 def mock_payment(mock_get_session) -> Payment:
     return PaymentsModule().create_payment(
-        TEST_USER_ID, 10010, "usd", DonationProduct()
+        TEST_USER_ID, 10010, DonationProduct()
     )
 
 

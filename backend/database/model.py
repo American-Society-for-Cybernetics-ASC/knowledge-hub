@@ -176,7 +176,6 @@ class AuthUser(Base):
 
     currency: Mapped[Currency] = mapped_column(String, nullable=False, server_default=Currency.USD.value)
 
-
 class AuditLog(Base):
     __tablename__ = "auth_logs"
 

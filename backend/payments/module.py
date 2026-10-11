@@ -14,6 +14,7 @@ from .payment import Payment
 from .transactions import Transaction
 from .config import PaymentModuleConfig
 from .products import ProductTypes
+from .currency import Currency
 from .exceptions import (
     PaymentNotYoursError,
     PaymentProviderNotFoundError,
@@ -29,11 +30,12 @@ stripe.api_key = os.environ.get("STRIPE_API_KEY", "")
 
 class PaymentsModule:
     def create_payment(
-        self, user_id: int, amount: int, currency: str, product: ProductTypes
+        self, user_id: int, amount: int, product: ProductTypes
     ) -> Payment:
         """
         :parameter amount: in the smallest unit of the currency (e.g. cents for usd)
         """
+        currency = self.get_currency(user_id)
         with database.get_session() as session:
             record = model.Payment(
                 user_id=user_id,
@@ -142,3 +144,12 @@ class PaymentsModule:
         with database.get_session() as session:
             query = session.query(model.Payment)
             return [Payment.from_db_model(model) for model in query]
+
+    def get_currency(self, user_id: int) -> Currency:
+        with database.get_session() as session:
+            return session.get_one(model.AuthUser, user_id).currency
+
+    def set_currency(self, user_id: int, currency: Currency):
+        with database.get_session() as session:
+            session.get_one(model.AuthUser, user_id).currency = currency
+            session.commit()

@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from auth_module import user_id
 from utils.module_config import BaseModel, get_module_config, set_module_config
+from database.types import Currency
 from .config import PaymentOption, PaymentModuleConfig
 from .providers import ServiceName
 from .payment import ReadPayment
@@ -21,6 +22,7 @@ from .exceptions import (
     TransactionInProgressError,
     TransactionNotFoundError,
     TransactionNotSuccessful,
+    CurrencyConversionError,
 )
 
 
@@ -102,7 +104,6 @@ def create_donation(
         payments.create_payment(
             user_id=user_id,
             amount=body.amount,
-            currency="usd",
             product=DonationProduct(),
         )
     )
@@ -199,3 +200,34 @@ def get_providers() -> list[ReadPaymentOption]:
         ReadPaymentOption.from_payment_option(uuid, option)
         for uuid, option in config.payment_options.items()
     ]
+
+# --- /currency ---
+
+class ReadCurrency(BaseModel):
+    currency: Currency
+    supported_currencies: list[Currency] = list(Currency)
+
+class UpdateCurrency(BaseModel):
+    currency: Currency
+
+@payments_router.get("/currency")
+def get_currency(
+    payments: Annotated[PaymentsModule, Depends(PaymentsModule)],
+    user_id: Annotated[int | None, Depends(user_id)],
+) -> ReadCurrency:
+    if user_id is None:
+        raise HTTPException(401, "Unauthorized")
+
+    return ReadCurrency(currency=payments.get_currency(user_id))
+
+@payments_router.put("/currency")
+def set_currency(
+    body: UpdateCurrency,
+    payments: Annotated[PaymentsModule, Depends(PaymentsModule)],
+    user_id: Annotated[int | None, Depends(user_id)],
+) -> ReadCurrency:
+    if user_id is None:
+        raise HTTPException(401, "Unauthorized")
+
+    payments.set_currency(user_id, body.currency)
+    return ReadCurrency(currency=body.currency)
