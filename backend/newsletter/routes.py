@@ -94,7 +94,7 @@ def publish_newsletter(
         newsletter = session.get(model.Newsletter, newsletter_id)
         if not newsletter:
             raise HTTPException(status_code=404, detail="Newsletter not found")
-        if not newsletter.published:
+        if newsletter.published:
             raise HTTPException(status_code=400, detail="Already published")
 
         newsletter.published = True
