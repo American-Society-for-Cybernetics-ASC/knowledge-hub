@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemberMatching } from "@/hooks/useMemberMatching";
+import InlineError from "@/components/layout/InlineError";
 
 export default function MemberMatchingView() {
   const {
@@ -27,23 +28,11 @@ export default function MemberMatchingView() {
   if (error) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-12">
-        <div
-          className="rounded-lg border border-red-200 bg-red-50 p-4"
-          role="alert"
-        >
-          <h1 className="font-semibold text-red-800">
-            Unable to load member matching
-          </h1>
-          <p className="mt-1 text-sm text-red-700">{error}</p>
-
-          <button
-            type="button"
-            onClick={() => void refresh()}
-            className="mt-4 rounded bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800"
-          >
-            Retry
-          </button>
-        </div>
+        <InlineError
+          title="Unable to load member matching"
+          message={error}
+          onRetry={() => void refresh()}
+        />
       </main>
     );
   }

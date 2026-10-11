@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { login } from "@/lib/api/auth";
+import InlineError from "@/components/layout/InlineError";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,11 +30,7 @@ export default function LoginPage() {
         window.location.href = "/";
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Login failed. Please try again.");
-      }
+      setError(getErrorMessage(err, "Login failed. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -43,11 +41,7 @@ export default function LoginPage() {
       <div className="max-w-md w-full bg-white rounded-lg shadow p-8">
         <h1 className="text-2xl font-bold text-center mb-6">Sign in to CKH</h1>
 
-        {error && (
-          <div className="bg-red-50 text-red-700 p-3 rounded mb-4 text-sm">
-            {error}
-          </div>
-        )}
+        <InlineError message={error} />
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

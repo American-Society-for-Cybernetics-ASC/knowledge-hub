@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { backendFetch } from "@/lib/api/client";
+import InlineError from "@/components/layout/InlineError";
+import { useAddError } from "@/components/layout/ErrorContext";
 
 interface EmailTemplate {
   name: string;
@@ -24,7 +26,8 @@ export default function EmailTemplatesPage() {
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const addError = useAddError();
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
@@ -33,11 +36,12 @@ export default function EmailTemplatesPage() {
 
   async function fetchTemplates() {
     setLoading(true);
+    setLoadError("");
     try {
       const data = await backendFetch<EmailTemplate[]>("/email-templates");
       setTemplates(data);
     } catch {
-      setError("Failed to load templates.");
+      setLoadError("Failed to load templates.");
     } finally {
       setLoading(false);
     }
@@ -47,7 +51,6 @@ export default function EmailTemplatesPage() {
     setSelected(template);
     setSubject(template.subject);
     setBody(template.body);
-    setError("");
     setSuccess("");
   }
 
@@ -55,7 +58,6 @@ export default function EmailTemplatesPage() {
     e.preventDefault();
     if (!selected) return;
     setSaving(true);
-    setError("");
     setSuccess("");
 
     try {
@@ -72,7 +74,7 @@ export default function EmailTemplatesPage() {
       setSelected(updated);
       setSuccess("Template saved successfully.");
     } catch {
-      setError("Failed to save template.");
+      addError("Failed to save template.");
     } finally {
       setSaving(false);
     }
@@ -80,6 +82,14 @@ export default function EmailTemplatesPage() {
 
   if (loading) {
     return <p className="text-gray-600 p-4">Loading templates...</p>;
+  }
+
+  if (loadError) {
+    return (
+      <div className="p-4">
+        <InlineError message={loadError} onRetry={fetchTemplates} />
+      </div>
+    )
   }
 
   return (
@@ -124,12 +134,6 @@ export default function EmailTemplatesPage() {
               ))}
             </div>
           </div>
-
-          {error && (
-            <div className="bg-red-50 text-red-700 p-3 rounded mb-4 text-sm">
-              {error}
-            </div>
-          )}
 
           {success && (
             <div className="bg-green-50 text-green-700 p-3 rounded mb-4 text-sm">

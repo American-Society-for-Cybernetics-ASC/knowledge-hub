@@ -11,11 +11,10 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { useContext } from "react";
 import useSWR from "swr";
 import MemberTypes from "./MembershipTypeConfig";
 import MemberStatusChip from "@/components/features/membership/MemberStatusChip";
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 
 export default function Page() {
   return (
@@ -30,7 +29,7 @@ export default function Page() {
 }
 
 function MembershipList() {
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const { data } = useSWR<MembershipSummary[]>(
     "/membership/admin/members",
     backendFetch,

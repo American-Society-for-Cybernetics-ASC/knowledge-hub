@@ -1,4 +1,4 @@
-import Errors from "@/components/layout/Errors";
+import { useAddError } from "@/components/layout/ErrorContext";
 import { backendFetch } from "@/lib/api/client";
 import { MemberType } from "@/types/membership";
 import { Add, Settings } from "@mui/icons-material";
@@ -20,7 +20,6 @@ import { useState } from "react";
 import useSWR from "swr";
 
 export default function MemberTypes() {
-  const [errors, setErrors] = useState<string[]>([]);
   const { data, mutate } = useSWR<MemberType[]>(
     "/membership/member_type",
     backendFetch,
@@ -29,7 +28,6 @@ export default function MemberTypes() {
 
   return (
     <>
-      <Errors errors={errors} setErrors={setErrors} />
       {dialog && (
         <EditMemberTypeDialog
           memberType={dialog}
@@ -78,7 +76,7 @@ function EditMemberTypeDialog({
   onClose: () => void;
   mutate: () => void;
 }) {
-  const [errors, setErrors] = useState<string[]>([]);
+  const addError = useAddError();
   const base: Partial<MemberType> = memberType === "new" ? {} : memberType;
   const [name, setName] = useState<string>();
   const [price, setPrice] = useState<string>();
@@ -110,7 +108,7 @@ function EditMemberTypeDialog({
             onClose();
             mutate();
           })
-          .catch((e) => setErrors([...errors, e.message]));
+          .catch(addError);
       } else {
         await backendFetch(`/membership/member_type/${memberType.id}`, {
           method: "PATCH",
@@ -120,7 +118,7 @@ function EditMemberTypeDialog({
             onClose();
             mutate();
           })
-          .catch((e) => setErrors([...errors, e.message]));
+          .catch(addError);
       }
     }
   }
@@ -129,7 +127,6 @@ function EditMemberTypeDialog({
     <Dialog open={true} onClose={onClose} fullWidth>
       <DialogTitle>Configure Member Type</DialogTitle>
       <DialogContent dividers={true}>
-        <Errors errors={errors} setErrors={setErrors} />
         <form id="member-type-form" action={handleSubmit}>
           <Stack spacing={1}>
             <TextField

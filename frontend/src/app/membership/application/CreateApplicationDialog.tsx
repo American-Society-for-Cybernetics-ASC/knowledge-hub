@@ -1,5 +1,5 @@
 "use client";
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 import { backendFetch } from "@/lib/api/client";
 import { MemberType, SubmitApplication } from "@/types/membership";
 import {
@@ -15,7 +15,7 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import useSWR from "swr";
 
 export default function CreateApplicationDialog({
@@ -25,7 +25,7 @@ export default function CreateApplicationDialog({
   onClose: () => void;
   onSubmit: () => void;
 }) {
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const { data: memberTypes, isLoading: memberTypesIsLoading } = useSWR<
     MemberType[]
   >("/membership/member_type", backendFetch);

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { register, confirmTOTP } from "@/lib/api/auth";
+import InlineError from "@/components/layout/InlineError";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -32,11 +34,7 @@ export default function RegisterPage() {
       setQrUri(response.qr_uri);
       setStep("totp-choice");
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Registration failed. Please try again.");
-      }
+      setError(getErrorMessage(err, "Registration failed. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -51,11 +49,7 @@ export default function RegisterPage() {
       await confirmTOTP({ email, code: totpCode });
       router.push("/auth/login");
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Invalid code. Please try again.");
-      }
+      setError(getErrorMessage(err, "Invalid code. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -70,11 +64,7 @@ export default function RegisterPage() {
             Create your account
           </h1>
 
-          {error && (
-            <div className="bg-red-50 text-red-700 p-3 rounded mb-4 text-sm">
-              {error}
-            </div>
-          )}
+          <InlineError message={error} />
 
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
@@ -185,11 +175,7 @@ export default function RegisterPage() {
           Scan the QR code below with your authenticator app
         </p>
 
-        {error && (
-          <div className="bg-red-50 text-red-700 p-3 rounded mb-4 text-sm">
-            {error}
-          </div>
-        )}
+        <InlineError message={error} />
 
         <div className="flex justify-center mb-6">
           <img
