@@ -1,6 +1,6 @@
 "use client";
 import ApplicationStatusChip from "@/components/features/membership/ApplicationStatusChip";
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 import { backendFetch } from "@/lib/api/client";
 import { ReadMembershipApplication } from "@/types/membership";
 import {
@@ -15,7 +15,6 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { useContext } from "react";
 import useSWR from "swr";
 
 export default function UserApplicationModal({
@@ -27,7 +26,7 @@ export default function UserApplicationModal({
   userName: string;
   onClose: () => void;
 }) {
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const { data, mutate } = useSWR<ReadMembershipApplication[]>(
     `/membership/application/admin/all/${userId}`,
     backendFetch,
@@ -70,7 +69,7 @@ function SingleApplication({
   mutate: () => void;
 }) {
   const lastEdited = new Date(application.last_edited);
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
 
   async function approve() {
     backendFetch(
@@ -109,9 +108,15 @@ function SingleApplication({
       </AccordionSummary>
       <AccordionDetails>
         <Stack direction={"row"} spacing={1}>
-          <Button color="success" onClick={approve}>Approve</Button>
-          <Button color="error" onClick={deny}>Deny</Button>
-          <Button color="warning" onClick={request_revision}>Request Revision</Button>
+          <Button color="success" onClick={approve}>
+            Approve
+          </Button>
+          <Button color="error" onClick={deny}>
+            Deny
+          </Button>
+          <Button color="warning" onClick={request_revision}>
+            Request Revision
+          </Button>
         </Stack>
         <Typography>{application.content}</Typography>
       </AccordionDetails>

@@ -1,14 +1,14 @@
 export function getErrorMessage(
-    error: unknown,
-    fallback = "Something went wrong. Please try again.",
+  error: unknown,
+  fallback = "Something went wrong. Please try again.",
 ): string {
-    if (error instanceof Error && error.message) {
-        return error.message;
-    }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
 
-    if (typeof error === "string" && error) {
-        return error;
-    }
+  if (typeof error === "string" && error) {
+    return error;
+  }
 
-    return fallback;
+  return fallback;
 }

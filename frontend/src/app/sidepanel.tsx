@@ -11,16 +11,16 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import { logout } from "@/lib/api/auth";
 import { getCurrentUser } from "@/lib/api/me";
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 
 export const SIDEPANEL_WIDTH = 240;
 
 export default function SidePanel() {
   const router = useRouter();
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const [userId, setUserId] = useState<number | null>(null);
   const [tier, setTier] = useState<string | null>(null);
 

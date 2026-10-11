@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 
@@ -38,7 +37,7 @@ def list_newsletter() -> list[NewsletterResponse]:
     with database.get_session() as session:
         newsletters = session.scalars(
             select(model.Newsletter)
-            .where(model.Newsletter.published == True)
+            .where(model.Newsletter.published)
             .order_by(model.Newsletter.published_at.desc())
         ).all()
         return [NewsletterResponse.model_validate_sqlalchemy(n) for n in newsletters]
@@ -105,11 +104,13 @@ def publish_newsletter(
         # Notify all users
         users = session.scalars(select(model.AuthUser)).all()
         for user in users:
-            NotificationsModule().create_notification(NotificationData(
-                user_id=user.user_id,
-                subject=f"New Newsletter: {newsletter.name}",
-                message=f"A new newsletter has been published: {newsletter.name}. Read it at /newsletters/{newsletter_id}",
-                send_email=False,
-            ))
+            NotificationsModule().create_notification(
+                NotificationData(
+                    user_id=user.user_id,
+                    subject=f"New Newsletter: {newsletter.name}",
+                    message=f"A new newsletter has been published: {newsletter.name}. Read it at /newsletters/{newsletter_id}",
+                ),
+                email_provider=None,  # TODO
+            )
 
         return NewsletterResponse.model_validate_sqlalchemy(newsletter)

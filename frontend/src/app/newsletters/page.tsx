@@ -23,10 +23,15 @@ export default function NewslettersPage() {
   if (selected) {
     return (
       <div className="max-w-3xl p-4">
-        <button onClick={() => setSelected(null)} className="text-sm text-blue-600 hover:underline mb-4 block">
+        <button
+          onClick={() => setSelected(null)}
+          className="text-sm text-blue-600 hover:underline mb-4 block"
+        >
           ← Back to newsletters
         </button>
-        <Typography variant="h5" className="mb-4">{selected.name}</Typography>
+        <Typography variant="h5" className="mb-4">
+          {selected.name}
+        </Typography>
         <Typography variant="body2" className="text-gray-500 mb-4">
           {new Date(selected.published_at).toLocaleDateString()}
         </Typography>
@@ -37,7 +42,9 @@ export default function NewslettersPage() {
 
   return (
     <div className="max-w-3xl p-4">
-      <Typography variant="h5" className="mb-4">Newsletters</Typography>
+      <Typography variant="h5" className="mb-4">
+        Newsletters
+      </Typography>
       {newsletters.length === 0 && (
         <Typography variant="body1">No newsletters published yet.</Typography>
       )}
@@ -61,16 +68,37 @@ function StaticRenderer({ content }: { content: string }) {
   return (
     <div>
       {content.split("\n").map((line, i) => {
-        if (line.startsWith("# ")) return <Typography key={i} variant="h4" sx={{ mt: 1 }}>{line.slice(2)}</Typography>;
-        if (line.startsWith("## ")) return <Typography key={i} variant="h5" sx={{ mt: 1 }}>{line.slice(3)}</Typography>;
-        if (line.startsWith("### ")) return <Typography key={i} variant="h6" sx={{ mt: 1 }}>{line.slice(4)}</Typography>;
+        if (line.startsWith("# "))
+          return (
+            <Typography key={i} variant="h4" sx={{ mt: 1 }}>
+              {line.slice(2)}
+            </Typography>
+          );
+        if (line.startsWith("## "))
+          return (
+            <Typography key={i} variant="h5" sx={{ mt: 1 }}>
+              {line.slice(3)}
+            </Typography>
+          );
+        if (line.startsWith("### "))
+          return (
+            <Typography key={i} variant="h6" sx={{ mt: 1 }}>
+              {line.slice(4)}
+            </Typography>
+          );
         const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
         const rendered = parts.map((part, j) => {
-          if (part.startsWith("**") && part.endsWith("**")) return <strong key={j}>{part.slice(2, -2)}</strong>;
-          if (part.startsWith("*") && part.endsWith("*")) return <em key={j}>{part.slice(1, -1)}</em>;
+          if (part.startsWith("**") && part.endsWith("**"))
+            return <strong key={j}>{part.slice(2, -2)}</strong>;
+          if (part.startsWith("*") && part.endsWith("*"))
+            return <em key={j}>{part.slice(1, -1)}</em>;
           return part;
         });
-        return <Typography key={i} variant="body1">{rendered}</Typography>;
+        return (
+          <Typography key={i} variant="body1">
+            {rendered}
+          </Typography>
+        );
       })}
     </div>
   );

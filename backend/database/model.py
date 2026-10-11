@@ -354,14 +354,14 @@ class EmailTemplate(Base):
 
 
 class StaticPage(Base):
-    __tablename__= "static_pages"
+    __tablename__ = "static_pages"
 
     slug = mapped_column(String, primary_key=True, index=True)
     content = mapped_column(String, nullable=False, default="")
 
 
 class Newsletter(Base):
-    __tablename__="newsletters"
+    __tablename__ = "newsletters"
 
     id = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
     name = mapped_column(String, nullable=False)

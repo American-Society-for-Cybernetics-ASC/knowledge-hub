@@ -1,6 +1,6 @@
 "use client";
 
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 import { backendFetch } from "@/lib/api/client";
 import { FailedEmail, ReadMailSender } from "@/types/mail";
 import { Settings } from "@mui/icons-material";
@@ -15,7 +15,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import useSWR from "swr";
 import MailSenderDialog from "./MailSenderDialog";
 
@@ -31,7 +31,7 @@ export default function Page() {
 }
 
 function DeadLetters() {
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const { data } = useSWR<FailedEmail[]>("/mail/failed", backendFetch, {
     onError: addError,
   });
@@ -70,7 +70,7 @@ function DeadLetters() {
 }
 
 function ProviderForm() {
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const { data, mutate } = useSWR<ReadMailSender[]>(
     "/mail/senders",
     backendFetch,

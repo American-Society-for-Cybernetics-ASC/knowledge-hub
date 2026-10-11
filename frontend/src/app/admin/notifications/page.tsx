@@ -1,6 +1,6 @@
 "use client";
 
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 import { backendFetch } from "@/lib/api/client";
 import { ReadMailSender } from "@/types/mail";
 import { NotificationsConfig } from "@/types/notifications";
@@ -13,7 +13,7 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import useSWR from "swr";
 
 export default function Page() {
@@ -27,7 +27,7 @@ export default function Page() {
 }
 
 function ConfigForm() {
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const { data, mutate } = useSWR<NotificationsConfig>(
     "/notifications/config",
     backendFetch,
