@@ -16,13 +16,13 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import CreateApplicationDialog from "./CreateApplicationDialog";
 import EditApplicationDialog from "./EditApplicationDialog";
 import ApplicationStatusChip from "@/components/features/membership/ApplicationStatusChip";
 import { useRouter } from "next/navigation";
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 import { ReadPayment } from "@/types/payments";
 
 export default function Page() {
@@ -144,7 +144,7 @@ function ActionButton({
 }) {
   const router = useRouter();
   const { mutate } = useSWRConfig();
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
 
   if (member === null) {
     async function createMembership() {
@@ -155,7 +155,7 @@ function ActionButton({
         method: "POST",
         body: JSON.stringify(purchaseMembership),
       })
-        .then((payment) => router.push(`/billing/pay/${payment.id}`))
+        .then((payment) => router.push(`/billing/selectProvider/${payment.id}`))
         .catch(addError);
     }
 

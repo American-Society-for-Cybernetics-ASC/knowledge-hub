@@ -1,5 +1,9 @@
+import { useAddError } from "@/components/layout/ErrorContext";
+import { backendFetch } from "@/lib/api/client";
 import {
-  PaymentOption,
+  AdminPatchPaymentOption,
+  AdminPostPaymentOption,
+  AdminReadPaymentOption,
   PaymentProvider,
   StripePaymentProvider,
 } from "@/types/payments";
@@ -22,35 +26,72 @@ export default function PaymentOptionDialog({
   isOpen,
   onClose,
   option,
-  onSubmit,
+  mutate,
 }: {
   isOpen: boolean;
   onClose: () => void;
-  option: PaymentOption | undefined;
-  onSubmit: (value: PaymentOption) => void;
+  option: AdminReadPaymentOption | "new";
+  mutate: () => void;
 }) {
+  const addError = useAddError();
+
+  const base: Partial<AdminReadPaymentOption> = option === "new" ? {} : option;
+
   const [providerType, setProviderType] = useState<
-    PaymentProvider["service_name"]
-  >(option?.provider.service_name || "stripe");
+    PaymentProvider["provider_type"]
+  >(base.provider?.provider_type || "stripe");
   const [provider, setProvider] = useState<PaymentProvider | undefined>(
-    option?.provider,
+    base.provider,
   );
-  const [name, setName] = useState<string>(option?.name || "");
-  const [description, setDescription] = useState<string>(
-    option?.description || "",
+  const [name, setName] = useState<string | undefined>(base.name);
+  const [description, setDescription] = useState<string | undefined>(
+    base.description,
   );
 
-  const readyToSubmit = provider && name && description;
+  const dirty: Partial<AdminReadPaymentOption> = {
+    name,
+    description,
+    provider,
+  };
 
-  const handleSubmit = () => {
-    if (readyToSubmit) {
-      onSubmit({
+  const current: Partial<AdminReadPaymentOption> = { ...base, ...dirty };
+
+  const isDirty = Object.values(dirty).some((p) => p !== undefined);
+  const readyToCreate = provider !== undefined && name && description;
+  const readyToPatch =
+    isDirty && (provider !== undefined || name || description);
+
+  async function handleSubmit() {
+    if (option === "new" && readyToCreate) {
+      const body: AdminPostPaymentOption = {
+        provider,
         name,
         description,
-        provider,
-      });
+      };
+      await backendFetch("/payments/providers", {
+        method: "POST",
+        body: JSON.stringify(body),
+      })
+        .then(() => {
+          onClose();
+          mutate();
+        })
+        .catch(addError);
+      return;
     }
-  };
+    if (option !== "new" && readyToPatch) {
+      const body: AdminPatchPaymentOption = dirty;
+      await backendFetch(`/payments/providers/${option.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      })
+        .then(() => {
+          onClose();
+          mutate();
+        })
+        .catch(addError);
+    }
+  }
 
   let form;
   switch (providerType) {
@@ -77,9 +118,10 @@ export default function PaymentOptionDialog({
                 labelId="provider-type-label"
                 label="Provider"
                 value={providerType}
+                disabled={option !== "new"} // Currently can't change provider type.
                 onChange={(e) =>
                   setProviderType(
-                    e.target.value as PaymentProvider["service_name"],
+                    e.target.value as PaymentProvider["provider_type"],
                   )
                 }
               >
@@ -91,7 +133,7 @@ export default function PaymentOptionDialog({
               required
               name="name"
               type="text"
-              value={name}
+              value={current.name || ""}
               slotProps={{ htmlInput: { maxLength: 16 } }}
               onChange={(e) => setName(e.target.value)}
               label="Name"
@@ -102,7 +144,7 @@ export default function PaymentOptionDialog({
               name="description"
               type="text"
               fullWidth
-              value={description}
+              value={current.description || ""}
               slotProps={{ htmlInput: { maxLength: 100 } }}
               onChange={(e) => setDescription(e.target.value)}
               label="Description"
@@ -120,11 +162,11 @@ export default function PaymentOptionDialog({
         </Button>
         <Button
           variant="contained"
-          disabled={!readyToSubmit}
+          disabled={option == "new" ? !readyToCreate : !readyToPatch}
           type={"submit"}
           form="provider-form"
         >
-          Save
+          {option === "new" ? "Create" : "Save"}
         </Button>
       </DialogActions>
     </Dialog>
@@ -139,7 +181,7 @@ function StripeForm({
   setProvider: (value?: PaymentProvider) => void;
 }) {
   const asStripeProvider = (
-    provider && provider.service_name === "stripe" ? provider : {}
+    provider && provider.provider_type === "stripe" ? provider : {}
   ) as Partial<StripePaymentProvider>;
 
   const [api_key, setApiKey] = useState(asStripeProvider.api_key || "");
@@ -155,7 +197,7 @@ function StripeForm({
       (api_key &&
         publishable_key &&
         webhook_secret && {
-          service_name: "stripe",
+          provider_type: "stripe",
           api_key,
           publishable_key,
           webhook_secret,
@@ -207,7 +249,7 @@ function MockForm({
 }) {
   useEffect(() => {
     setProvider({
-      service_name: "mock",
+      provider_type: "mock",
     });
   }, [setProvider]);
   return <></>;

@@ -1,7 +1,6 @@
 "use client";
 
 import { backendFetch } from "@/lib/api/client";
-import { PaymentsConfig } from "@/types/payments";
 import {
   Button,
   Grid,
@@ -12,13 +11,14 @@ import {
   TableRow,
   Typography,
   Skeleton,
-  Alert,
 } from "@mui/material";
 import { useState } from "react";
 import useSWR from "swr";
 import PaymentOptionDialog from "./paymentOptionDialog";
-import { Add, Settings } from "@mui/icons-material";
+import { Settings } from "@mui/icons-material";
 import PaymentLog from "@/components/features/billing/PaymentLog";
+import { useAddError } from "@/components/layout/ErrorContext";
+import { AdminReadPaymentOption } from "@/types/payments";
 
 export default function Page() {
   return (
@@ -35,133 +35,85 @@ export default function Page() {
 }
 
 function FormSection() {
-  const { data, error, isLoading } = useSWR<PaymentsConfig>(
-    "/payments/config",
+  const addError = useAddError();
+  const { data, mutate } = useSWR<AdminReadPaymentOption[]>(
+    "/payments/providers/admin",
     backendFetch,
+    {
+      onError: addError,
+    },
   );
 
-  if (isLoading) {
+  if (data === undefined) {
     return <Skeleton sx={{ minHeight: 100 }} />;
-  } else if (error) {
-    return <Alert severity="error">{error.message}</Alert>;
-  } else if (!data) {
-    return <Alert severity="error">Error: No Data</Alert>;
   } else {
-    return <ConfigForm config={data} />;
+    return <ConfigForm data={data} mutate={mutate} />;
   }
 }
 
-function ConfigForm(props: { config: PaymentsConfig }) {
-  const [config, setConfig] = useState(props.config);
-  const [dirtyConfig, setDirtyConfig] = useState<Partial<PaymentsConfig>>({});
-  const [providerModalKey, setProviderModalKey] = useState<
-    string | "new" | undefined
+function ConfigForm({
+  data,
+  mutate,
+}: {
+  data: AdminReadPaymentOption[];
+  mutate: () => void;
+}) {
+  const [option, setOption] = useState<
+    AdminReadPaymentOption | "new" | undefined
   >(undefined);
-
-  const submitEvent = () => {
-    backendFetch<PaymentsConfig>("/payments/config", {
-      method: "PATCH",
-      body: JSON.stringify(currentConfig),
-    }).then((response) => {
-      setConfig(response);
-      setDirtyConfig({});
-    });
-  };
-
-  const currentConfig = { ...config, ...dirtyConfig };
 
   return (
     <>
-      {providerModalKey !== undefined && (
+      {option !== undefined && (
         <PaymentOptionDialog
-          option={currentConfig.payment_options[providerModalKey]}
-          onSubmit={(provider) => {
-            setDirtyConfig({
-              ...dirtyConfig,
-              payment_options: {
-                ...currentConfig.payment_options,
-                [providerModalKey]: provider,
-              },
-            });
-            setProviderModalKey(undefined);
-          }}
+          option={option}
           isOpen
-          onClose={() => setProviderModalKey(undefined)}
+          onClose={() => setOption(undefined)}
+          mutate={mutate}
         />
       )}
-      <form action={submitEvent}>
-        <Grid container sx={{ width: "50%" }}>
-          <Grid container direction={"row"} size={12} spacing={5}>
-            <Typography variant={"h6"}>Payment Options</Typography>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => setProviderModalKey("new")}
-            >
-              <Add />
-            </Button>
-          </Grid>
-
-          <Grid size={12}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Provider</TableCell>
-                  <TableCell>Edit</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {Object.entries(currentConfig.payment_options).map(
-                  ([key, option]) => (
-                    <TableRow key={`payment-option-${key}`}>
-                      <TableCell>{option.name}</TableCell>
-                      <TableCell>{option.description}</TableCell>
-                      <TableCell>{option.provider.service_name}</TableCell>
-                      <TableCell>
-                        <Button
-                          title={`Edit payment option: ${option.name}`}
-                          onClick={() => setProviderModalKey(key)}
-                        >
-                          <Settings />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ),
-                )}
-              </TableBody>
-            </Table>
-          </Grid>
-
-          <Grid
-            container
-            direction="row"
-            offset={6}
-            size={6}
-            sx={{ justifyContent: "flex-end" }}
-            spacing={5}
+      <Grid container sx={{ width: "50%" }}>
+        <Grid container direction={"row"} size={12} spacing={5}>
+          <Typography variant={"h6"}>Payment Options</Typography>
+          <Button
+            title="New"
+            variant="contained"
+            onClick={() => setOption("new")}
           >
-            <Button
-              title="Reset unsaved changes"
-              color="error"
-              variant="contained"
-              disabled={Object.keys(dirtyConfig).length === 0}
-              onClick={() => setDirtyConfig({})}
-            >
-              Reset
-            </Button>
-            <Button
-              title="Submit saved changes"
-              variant="contained"
-              disabled={Object.keys(dirtyConfig).length === 0}
-              type="submit"
-            >
-              Submit
-            </Button>
-          </Grid>
+            New
+          </Button>
         </Grid>
-      </form>
+
+        <Grid size={12}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell>Provider</TableCell>
+                <TableCell>Edit</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.map((option) => (
+                <TableRow key={`payment-option-${option.id}`}>
+                  <TableCell>{option.name}</TableCell>
+                  <TableCell>{option.description}</TableCell>
+                  <TableCell>{option.provider.provider_type}</TableCell>
+                  <TableCell>
+                    <Button
+                      title={`Edit payment option: ${option.name}`}
+                      onClick={() => setOption(option)}
+                    >
+                      <Settings />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Grid>
+      </Grid>
     </>
   );
 }

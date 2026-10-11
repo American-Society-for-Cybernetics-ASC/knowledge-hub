@@ -9,6 +9,9 @@ import type {
   ProfilePublication,
 } from "@/types/member";
 import { useRouter } from "next/navigation";
+import InlineError from "@/components/layout/InlineError";
+import { useAddError } from "@/components/layout/ErrorContext";
+import { getErrorMessage } from "@/lib/errors";
 
 // Convert list fields from API into CSV
 function toCSV(values: string[] | null): string {
@@ -146,6 +149,7 @@ export default function EditMyProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const addError = useAddError();
 
   // Load current member profile when the page is loaded
   useEffect(() => {
@@ -178,9 +182,7 @@ export default function EditMyProfilePage() {
             : [],
         );
       } catch (err: unknown) {
-        setError(
-          err instanceof Error ? err.message : "Unable to load your profile",
-        );
+        addError(getErrorMessage(err, "Unable to load your profile"));
       } finally {
         setLoading(false);
       }
@@ -314,9 +316,10 @@ export default function EditMyProfilePage() {
       });
     } catch (err: unknown) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Please check your affiliations and publications.",
+        getErrorMessage(
+          err,
+          "Please check your affiliations and publications.",
+        ),
       );
       return;
     }
@@ -356,10 +359,8 @@ export default function EditMyProfilePage() {
       setSuccess("Your profile has been saved.");
       router.push("/members/me");
     } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to save your profile. Please try again.",
+      addError(
+        getErrorMessage(err, "Unable to save your profile. Please try again."),
       );
     } finally {
       setSaving(false);
@@ -379,9 +380,7 @@ export default function EditMyProfilePage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow p-8">
           <h1 className="text-2xl font-bold mb-4">Edit my profile</h1>
-          <div className="bg-red-50 text-red-700 p-3 rounded text-sm">
-            {error || "Your profile could not be loaded."}
-          </div>
+          <InlineError message={error || "Your profile could not be loaded."} />
         </div>
       </div>
     );
@@ -392,11 +391,7 @@ export default function EditMyProfilePage() {
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-8">
         <h1 className="text-2xl font-bold mb-6">Edit my profile</h1>
 
-        {error && (
-          <div className="bg-red-50 text-red-700 p-3 rounded mb-4 text-sm">
-            {error}
-          </div>
-        )}
+        <InlineError message={error} />
 
         {success && (
           <div className="bg-green-50 text-green-700 p-3 rounded mb-4 text-sm">

@@ -7,14 +7,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=(".env", "../.env.local"))
 
-    local_deployment: bool = True
+    local_deployment: bool = False
     """Set to True if this deployment is a local deployment.
     Set to False if this deployment is a production deployment."""
     testing: bool = False
     """Set to true when tests are currently executing"""
-
-    google_username: Optional[str] = None
-    google_password: Optional[str] = None
 
     # google workspace
     google_workspace_admin_email: Optional[str] = None
@@ -44,8 +41,11 @@ class Settings(BaseSettings):
     jwt_expiry_minutes: int = 10
     """JWT token expiry in minutes"""
 
-    supabase_database_url: str = ""
+    database_url: str = ""
     """Connection string for the production Supabase database"""
+
+    backend_root_path: str = ""
+    """Root path for if served behind a proxy"""
 
 
 SETTINGS = Settings()

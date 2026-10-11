@@ -15,6 +15,7 @@ export default function SettingsNav({
           { label: "Profile", href: "/settings" },
           { label: "Auth", href: "/settings/auth" },
           { label: "Member Matching", href: "/settings/matching" },
+          { label: "Currency", href: "/settings/currency" },
         ]}
       />
       {children}

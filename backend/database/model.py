@@ -1,4 +1,6 @@
-from datetime import datetime
+from abc import abstractmethod
+from datetime import datetime, timedelta, timezone
+from typing import Optional
 import uuid
 
 from sqlalchemy import (
@@ -16,8 +18,15 @@ from sqlalchemy.sql import func
 
 from .types import (
     ApplicationStatus,
+    Currency,
+    CronJobType,
+    DuesEmailStep,
+    MailProviderType,
+    ModuleName,
+    PaymentProviderType,
     PermissionCategory,
     PaymentStatus,
+    ProductType,
     TransactionStatus,
     TZDateTime,
 )
@@ -31,7 +40,9 @@ class Member(Base):
     user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"), primary_key=True)
     due_date: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)
     member_type_id = mapped_column(UUID, ForeignKey("member_types.id"), nullable=True)
-    cancelled = mapped_column(Boolean, nullable=False, default=False)
+    cancelling = mapped_column(Boolean, nullable=False, default=False)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    dues_email_step: Mapped[DuesEmailStep] = mapped_column(default=DuesEmailStep.NONE)
 
     profile = relationship("Profile", back_populates="member", uselist=False)
     member_type: Mapped[MemberType | None] = relationship(
@@ -83,13 +94,23 @@ class Profile(Base):
 class Payment(Base):
     __tablename__ = "payments"
 
-    id = mapped_column(UUID, primary_key=True, index=True, default=uuid.uuid4)
-    user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"), nullable=False)
-    timestamp = mapped_column(TZDateTime, nullable=False, server_default=func.now())
-    amount = mapped_column(Integer, nullable=False)
-    currency = mapped_column(String, nullable=False)
-    status: Mapped[PaymentStatus] = mapped_column(String, nullable=False)
-    product: Mapped[dict] = mapped_column(JSON, nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, index=True, default=uuid.uuid4
+    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("auth_users.user_id"))
+    timestamp: Mapped[datetime] = mapped_column(TZDateTime, server_default=func.now())
+    amount: Mapped[int]
+    currency: Mapped[str]
+    status: Mapped[PaymentStatus] = mapped_column(default=PaymentStatus.PENDING)
+    product: Mapped[ProductType]
+
+    @abstractmethod
+    def product_description(self) -> str: ...
+
+    __mapper_args__ = {
+        "polymorphic_abstract": True,
+        "polymorphic_on": "product",
+    }
 
     transactions = relationship("Transaction", back_populates="payment")
 
@@ -156,7 +177,7 @@ class AuthUser(Base):
 
     user_id = mapped_column(Integer, primary_key=True, index=True)
 
-    name = mapped_column(String)
+    name: Mapped[Optional[str]] = mapped_column(String)
     email = mapped_column(String, unique=True, index=True, nullable=False)
     permissions: Mapped[dict | None] = mapped_column(JSON)
 
@@ -173,6 +194,11 @@ class AuthUser(Base):
     last_login = mapped_column(TZDateTime)
     hash_password = mapped_column(String)
 
+    currency: Mapped[Currency] = mapped_column(
+        String, nullable=False, server_default=Currency.USD.value
+    )
+    applications: Mapped[list[MembershipApplication]] = relationship()
+
 
 class AuditLog(Base):
     __tablename__ = "auth_logs"
@@ -185,11 +211,18 @@ class AuditLog(Base):
     timestamp = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
 
 
-class Module(Base):
-    __tablename__ = "modules"
+class ModuleConfig(Base):
+    """Polymorphic: see module_configs.py for subclasses"""
 
-    module_name = mapped_column(String, primary_key=True, index=True)
-    config: Mapped[dict | None] = mapped_column(JSON)
+    __tablename__ = "module_configs"
+
+    # This is a primary key: i.e. there is precisely one config for each module.
+    module_name: Mapped[ModuleName] = mapped_column(primary_key=True, index=True)
+
+    __mapper_args__ = {
+        "polymorphic_abstract": True,
+        "polymorphic_on": "module_name",
+    }
 
 
 class MailingListMember(Base):
@@ -210,14 +243,49 @@ class MailingListMember(Base):
     member = relationship("Member", back_populates="mailing_list_memberships")
 
 
-class CronJobTable(Base):
+class CronJob(Base):
     __tablename__ = "cron_jobs"
 
-    id = mapped_column(Integer, primary_key=True, index=True)
-    enabled = mapped_column(Boolean, nullable=False)
-    last_executed = mapped_column(TZDateTime, nullable=False)
-    period = mapped_column(Integer, nullable=False)
-    job: Mapped[dict] = mapped_column(JSON, nullable=False)
+    job_type: Mapped[CronJobType] = mapped_column(primary_key=True, index=True)
+    last_executed: Mapped[datetime] = mapped_column(
+        TZDateTime, default=datetime.now(timezone.utc) - timedelta(days=100)
+    )
+
+
+class MailSender(Base):
+    """A sender that a mail manager has configured. Polymorphic: see mail_providers.py for subclasses"""
+
+    __tablename__ = "mail_senders"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, index=True, default=uuid.uuid7
+    )
+    name: Mapped[str]
+    description: Mapped[str]
+    provider: Mapped[MailProviderType]
+
+    __mapper_args__ = {
+        "polymorphic_abstract": True,
+        "polymorphic_on": "provider",
+    }
+
+
+class PaymentOption(Base):
+    """An option a manager has configured for users to use to pay. Polymorphic: see payment_providers.py for subclasses"""
+
+    __tablename__ = "payment_options"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, index=True, default=uuid.uuid7
+    )
+    name: Mapped[str]
+    description: Mapped[str]
+    provider: Mapped[PaymentProviderType]
+
+    __mapper_args__ = {
+        "polymorphic_abstract": True,
+        "polymorphic_on": "provider",
+    }
 
 
 class FailedEmailTable(Base):
@@ -243,11 +311,16 @@ class MembershipApplication(Base):
         String, nullable=False
     )  # pending, approved, denied, revision_requested
     submitted_at = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
-    last_edited = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
+    last_edited: Mapped[datetime] = mapped_column(
+        TZDateTime, server_default=func.now(), nullable=False
+    )
     content = mapped_column(String, nullable=False)  # the application form's fields
 
     member_type: Mapped[MemberType | None] = relationship(
         "MemberType", foreign_keys=[member_type_id], lazy="joined"
+    )
+    user: Mapped[AuthUser] = relationship(
+        AuthUser, foreign_keys=[user_id], back_populates="applications"
     )
 
 
@@ -280,3 +353,21 @@ class EmailTemplate(Base):
     subject = mapped_column(String, nullable=False)
     body = mapped_column(String, nullable=False)
     variables: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+
+
+class StaticPage(Base):
+    __tablename__ = "static_pages"
+
+    slug = mapped_column(String, primary_key=True, index=True)
+    content = mapped_column(String, nullable=False, default="")
+
+
+class Newsletter(Base):
+    __tablename__ = "newsletters"
+
+    id = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    name = mapped_column(String, nullable=False)
+    content = mapped_column(String, nullable=False, default="")
+    published = mapped_column(Boolean, nullable=False, default=False)
+    published_at = mapped_column(TZDateTime, nullable=True)
+    created_at = mapped_column(TZDateTime, server_default=func.now())

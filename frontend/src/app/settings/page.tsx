@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import { getCurrentUser } from "@/lib/api/me";
 import { backendFetch } from "@/lib/api/client";
+import { useAddError } from "@/components/layout/ErrorContext";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function ProfileSettingsPage() {
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const addError = useAddError();
 
   useEffect(() => {
     async function loadUser() {
@@ -17,7 +19,7 @@ export default function ProfileSettingsPage() {
         const user = await getCurrentUser();
         setDisplayName(user.name ?? "");
       } catch {
-        setError("Failed to load profile.");
+        addError("Failed to load profile.");
       } finally {
         setLoading(false);
       }
@@ -28,7 +30,6 @@ export default function ProfileSettingsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    setError("");
     setSuccess("");
 
     try {
@@ -40,11 +41,7 @@ export default function ProfileSettingsPage() {
       });
       setSuccess("Display name updated successfully.");
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Failed to update display name.");
-      }
+      addError(getErrorMessage(err, "Failed to update display name."));
     } finally {
       setSaving(false);
     }
@@ -57,12 +54,6 @@ export default function ProfileSettingsPage() {
   return (
     <div className="max-w-md p-6">
       <h2 className="text-lg font-semibold mb-4">Profile</h2>
-
-      {error && (
-        <div className="bg-red-50 text-red-700 p-3 rounded mb-4 text-sm">
-          {error}
-        </div>
-      )}
 
       {success && (
         <div className="bg-green-50 text-green-700 p-3 rounded mb-4 text-sm">

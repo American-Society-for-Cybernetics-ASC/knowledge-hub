@@ -1,6 +1,13 @@
-from typing import Annotated
+from typing import Annotated, Literal
+import uuid
 from fastapi import APIRouter, Depends, HTTPException
 
+from auth_module import authorized
+from auth_module.model import PermissionTier
+from database.types import PermissionCategory
+from utils.module_config import get_module_config
+import database
+from database.module_configs import NotificationsConfig
 from utils import BaseModel
 from . import NotificationsModule
 
@@ -42,3 +49,43 @@ def mark_as_read(
     if not success:
         raise HTTPException(status_code=404, detail="Notification not found.")
     return {"message": "Notification marked as read."}
+
+
+class ReadNotificationConfig(BaseModel):
+    email_provider_id: uuid.UUID | Literal[""]
+
+    @staticmethod
+    def from_db_model(config: NotificationsConfig) -> ReadNotificationConfig:
+        return ReadNotificationConfig(
+            email_provider_id=""
+            if config.email_provider_id is None
+            else config.email_provider_id
+        )
+
+
+@notifications_router.get("/config")
+def get_notification_config(
+    _=Depends(authorized([PermissionCategory.NOTIFICATIONS], PermissionTier.manager)),
+):
+    with database.get_session() as session:
+        config = get_module_config(session, NotificationsConfig)
+        return ReadNotificationConfig.from_db_model(config)
+
+
+class PatchNotificationConfig(BaseModel):
+    email_provider_id: uuid.UUID | Literal[""] | None = None
+
+
+@notifications_router.patch("/config")
+def patch_notification_config(
+    patch: PatchNotificationConfig,
+) -> ReadNotificationConfig:
+    with database.with_transaction() as session:
+        config = get_module_config(session, NotificationsConfig)
+
+        if patch.email_provider_id == "":
+            config.email_provider_id = None
+        elif patch.email_provider_id is not None:
+            config.email_provider_id = patch.email_provider_id
+
+        return ReadNotificationConfig.from_db_model(config)

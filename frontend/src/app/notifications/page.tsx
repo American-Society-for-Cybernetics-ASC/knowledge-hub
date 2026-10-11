@@ -7,12 +7,16 @@ import {
   Notification,
 } from "@/lib/api/notifications";
 import { getCurrentUser } from "@/lib/api/me";
+import InlineError from "@/components/layout/InlineError";
+import { getErrorMessage } from "@/lib/errors";
+import { useAddError } from "@/components/layout/ErrorContext";
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const addError = useAddError();
   const [selectedNotification, setSelectedNotification] =
     useState<Notification | null>(null);
 
@@ -22,16 +26,13 @@ export default function NotificationsPage() {
 
   async function fetchNotifications() {
     setLoading(true);
+    setLoadError("");
     try {
       const CurrentUser = await getCurrentUser();
       const data = await getNotifications(CurrentUser.user_id);
       setNotifications(data);
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Failed to load notifications.");
-      }
+      setLoadError(getErrorMessage(err, "Failed to load notifications."));
     } finally {
       setLoading(false);
     }
@@ -49,7 +50,7 @@ export default function NotificationsPage() {
       );
       setSelectedNotification({ ...notification, read: true });
     } catch {
-      setError("Failed to mark notification as read.");
+      addError("Failed to mark notification as read.");
     }
   }
 
@@ -100,14 +101,10 @@ export default function NotificationsPage() {
           className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
-        {error && (
-          <div className="bg-red-50 text-red-700 p-3 rounded mb-4 text-sm">
-            {error}
-          </div>
-        )}
-
         {loading ? (
           <p className="text-gray-500 text-sm">Loading...</p>
+        ) : loadError ? (
+          <InlineError message={loadError} onRetry={fetchNotifications} />
         ) : filtered.length === 0 ? (
           <p className="text-gray-500 text-sm">No notifications found.</p>
         ) : (

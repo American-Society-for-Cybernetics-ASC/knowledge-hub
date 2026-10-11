@@ -1,5 +1,5 @@
 "use client";
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 import { backendFetch } from "@/lib/api/client";
 import {
   ReadMembershipApplication,
@@ -14,7 +14,7 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { useContext, useState } from "react";
+import { useState } from "react";
 
 export default function EditApplicationDialog({
   application,
@@ -25,7 +25,7 @@ export default function EditApplicationDialog({
   onClose: () => void;
   onSubmit: () => void;
 }) {
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const [dirtyContent, setDirtyContent] = useState<string>();
   const content = dirtyContent ?? application.content;
 

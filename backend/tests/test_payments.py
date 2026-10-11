@@ -3,25 +3,30 @@ import uuid
 from fastapi.testclient import TestClient
 import pytest
 
+from payments.routes import (
+    PostMockPaymentProvider,
+    PostPaymentOption,
+    PostStripePaymentProvider,
+)
+from database.products import DonationProduct
+
 from .conftest import TEST_USER_ID
-from payments.providers.stripe_provider import StripePaymentProvider
 from payments.payment import PaymentStatus, Payment
-from payments.products import DonationProduct
-from payments.module import PaymentsModule
-from payments.providers.mock_provider import MockPaymentProvider
 from payments.transactions.stripe_transaction import StripeTransaction
+from payments.module import PaymentsModule
 
 # Test Resources
 
 
 class MockPaymentIntent:
-    def __init__(self, id: str = "", status: str = "") -> None:
+    def __init__(self, id: str = "", status: str = "", client_secret: str = "") -> None:
         self.id = id
         self.status = status
+        self.client_secret = client_secret
 
 
 def mock_create(**kwargs):
-    return MockPaymentIntent(id="pi_test_id")
+    return MockPaymentIntent(id="pi_test_id", client_secret="pi_test_client_secret")
 
 
 def mock_retrieve(payment_id):
@@ -39,31 +44,29 @@ def mock_stripe_transaction(monkeypatch, mock_payment):
 
 @pytest.fixture()
 def mock_payment(mock_get_session) -> Payment:
-    return PaymentsModule().create_payment(
-        TEST_USER_ID, 10010, "usd", DonationProduct()
-    )
+    with mock_get_session() as session:
+        payment = PaymentsModule().add_payment(
+            session, DonationProduct(user_id=TEST_USER_ID, amount=10010)
+        )
+        session.commit()
+        return payment
 
 
 def test_config(test_server: TestClient):
-    id = uuid.uuid4()
-    response = test_server.patch(
-        "/payments/config",
-        json={
-            "payment_options": {
-                str(id): {
-                    "name": "example",
-                    "description": "example provider",
-                    "provider": MockPaymentProvider().model_dump(mode="json"),
-                }
-            }
-        },
+    response = test_server.post(
+        "/payments/providers",
+        json=PostPaymentOption(
+            name="example",
+            description="example provider",
+            provider=PostMockPaymentProvider(),
+        ).model_dump(mode="json"),
     )
 
     assert response.status_code == 200
 
     response = test_server.get("/payments/providers")
     assert response.status_code == 200
-    assert response.json()[0]["service_name"] == "mock"
+    assert response.json()[0]["provider"] == "mock"
 
 
 def test_donation(test_server: TestClient):
@@ -74,12 +77,18 @@ def test_donation(test_server: TestClient):
     response = test_server.get(f"/payments/payments/{response.json()['id']}")
     assert response.status_code == 200
     assert response.json()["amount"] == 10010
+    assert response.json()["product_description"] == "Donation"
 
 
-def test_transaction(test_server, mock_provider: uuid.UUID, mock_payment: Payment):
+def test_transaction(
+    test_server, mock_payment_provider: uuid.UUID, mock_payment: Payment
+):
     response = test_server.post(
         "/payments/transactions",
-        json={"provider_id": str(mock_provider), "payment_id": str(mock_payment.id)},
+        json={
+            "provider_id": str(mock_payment_provider),
+            "payment_id": str(mock_payment.id),
+        },
     )
     assert response.status_code == 200
     assert "id" in response.json()
@@ -98,11 +107,14 @@ def test_transaction(test_server, mock_provider: uuid.UUID, mock_payment: Paymen
 
 
 def test_repeat_transactions_fail(
-    test_server, mock_provider: uuid.UUID, mock_payment: Payment
+    test_server, mock_payment_provider: uuid.UUID, mock_payment: Payment
 ):
     response = test_server.post(
         "/payments/transactions",
-        json={"provider_id": str(mock_provider), "payment_id": str(mock_payment.id)},
+        json={
+            "provider_id": str(mock_payment_provider),
+            "payment_id": str(mock_payment.id),
+        },
     )
     assert response.status_code == 200
     assert "id" in response.json()
@@ -111,7 +123,10 @@ def test_repeat_transactions_fail(
     # Currently in progress
     response = test_server.post(
         "/payments/transactions",
-        json={"provider_id": str(mock_provider), "payment_id": str(mock_payment.id)},
+        json={
+            "provider_id": str(mock_payment_provider),
+            "payment_id": str(mock_payment.id),
+        },
     )
     assert response.status_code == 400
 
@@ -123,7 +138,10 @@ def test_repeat_transactions_fail(
     # Already succeeded
     response = test_server.post(
         "/payments/transactions",
-        json={"provider_id": str(mock_provider), "payment_id": str(mock_payment.id)},
+        json={
+            "provider_id": str(mock_payment_provider),
+            "payment_id": str(mock_payment.id),
+        },
     )
     assert response.status_code == 400
 
@@ -138,7 +156,7 @@ def test_stripe_create_one_off_calls_stripe_with_parameters(
 
     def mock_create_and_record(**kwargs):
         calls.update(kwargs)
-        return MockPaymentIntent(id="pi_test_id")
+        return MockPaymentIntent(id="pi_test_id", client_secret="pi_test_client_secret")
 
     with monkeypatch.context() as m:
         m.setattr(
@@ -154,6 +172,7 @@ def test_stripe_create_one_off_calls_stripe_with_parameters(
             "automatic_payment_methods": {"enabled": True},
         }
         assert transaction.payment_id == "pi_test_id"
+        assert transaction.client_secret == "pi_test_client_secret"
 
 
 def test_stripe_check_always_calls_stripe(monkeypatch, mock_stripe_transaction):
@@ -186,23 +205,18 @@ def test_stripe_provider_create_one_off_returns_stripe_transaction(
             "payments.transactions.stripe_transaction.PaymentIntent.create", mock_create
         )
 
-        provider_id = uuid.uuid4()
-        provider = StripePaymentProvider(
-            api_key="", publishable_key="", webhook_secret=""
-        )
-        response = test_server.patch(
-            "/payments/config",
-            json={
-                "payment_options": {
-                    str(provider_id): {
-                        "name": "example",
-                        "description": "example provider",
-                        "provider": provider.model_dump(mode="json"),
-                    }
-                }
-            },
+        response = test_server.post(
+            "/payments/providers",
+            json=PostPaymentOption(
+                name="example",
+                description="example provider",
+                provider=PostStripePaymentProvider(
+                    api_key="", publishable_key="", webhook_secret=""
+                ),
+            ).model_dump(mode="json"),
         )
         assert response.status_code == 200
+        provider_id = response.json()["id"]
 
         response = test_server.post(
             "/payments/transactions",

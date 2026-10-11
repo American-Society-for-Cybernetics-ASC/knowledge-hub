@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
 from auth_module import PermissionTier, authorized
+import database
 from email_templates.module import EmailTemplatesModule
 from email_templates.model import EmailTemplateData, EmailTemplateUpdate
 
@@ -25,7 +26,8 @@ def get_template(
     _=Depends(authorized(["email_templates"], PermissionTier.manager)),
 ) -> EmailTemplateData:
     """Get a specific email template by name."""
-    template = module.get_template(name)
+    with database.with_transaction() as session:
+        template = module.get_template(session, name)
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
     return template
