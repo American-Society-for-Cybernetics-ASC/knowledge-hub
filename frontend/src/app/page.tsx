@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, Grid, Typography } from "@mui/material";
+import StaticContent from "@/components/StaticContent";
 
 interface NavItem {
   label: string;
@@ -19,9 +20,7 @@ export default function Home() {
     <div>
       <header>
         <Typography variant="h4">Welcome to the Knowledge Hub</Typography>
-        <Typography variant="body1">
-          Jump to a section below to get started.
-        </Typography>
+        <StaticContent slug="home" default="Jump to a section below to get started." />
       </header>
 
       <Grid container spacing={2} sx={{ mt: 2 }}>
