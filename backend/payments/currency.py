@@ -23,7 +23,7 @@ def convert_currency(amount: int, currency: Currency) -> int:
         )
         response.raise_for_status()
         rate = response.json()[0]["rate"]
-    except (httpx.HTTPError, KeyError) as e:
-        raise CurrencyConversionError(f"Failed to get exchange rate for {currency}") from e
+    except (httpx.HTTPError, KeyError, IndexError):
+        raise CurrencyConversionError(f"Failed to get exchange rate for {currency}")
 
     return round(amount * rate)

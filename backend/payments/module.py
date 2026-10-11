@@ -14,7 +14,7 @@ from .payment import Payment
 from .transactions import Transaction
 from .config import PaymentModuleConfig
 from .products import ProductTypes
-from .currency import Currency
+from .currency import Currency, convert_currency
 from .exceptions import (
     PaymentNotYoursError,
     PaymentProviderNotFoundError,
@@ -39,7 +39,7 @@ class PaymentsModule:
         with database.get_session() as session:
             record = model.Payment(
                 user_id=user_id,
-                amount=amount,
+                amount=convert_currency(amount, currency),
                 currency=currency,
                 status=PaymentStatus.PENDING,
                 product=product.model_dump(mode="json"),

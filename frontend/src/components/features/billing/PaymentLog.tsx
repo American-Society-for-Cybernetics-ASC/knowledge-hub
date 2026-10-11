@@ -18,6 +18,7 @@ import {
 import useSWR from "swr";
 import { backendFetch } from "@/lib/api/client";
 import { ProductTypes, ReadPayment } from "@/types/payments";
+import { formatAmount } from "@/lib/format";
 
 const statusType: Record<string, "success" | "warning" | "error" | "default"> =
   {
@@ -25,11 +26,6 @@ const statusType: Record<string, "success" | "warning" | "error" | "default"> =
     pending: "warning",
     failed: "error",
   };
-
-const formatAmount = (cents: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "usd" }).format(
-    cents / 100,
-  );
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString(undefined, {
@@ -107,7 +103,7 @@ export default function PaymentLog() {
                     <TableCell>{formatDate(p.timestamp)}</TableCell>
                     <TableCell>{productDescription(p.product)}</TableCell>
                     <TableCell align="right">
-                      {formatAmount(p.amount)}
+                      {formatAmount(p.amount, p.currency)}
                     </TableCell>
                     <TableCell>
                       <Chip

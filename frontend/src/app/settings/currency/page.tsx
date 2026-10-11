@@ -4,7 +4,7 @@ import { AddErrorContext } from "@/components/layout/ErrorContext";
 import { backendFetch } from "@/lib/api/client";
 import { ReadCurrency } from "@/types/payments";
 import { MenuItem, Select, Skeleton } from "@mui/material";
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import useSWR from "swr";
 
 export default function CurrencySettingsPage() {

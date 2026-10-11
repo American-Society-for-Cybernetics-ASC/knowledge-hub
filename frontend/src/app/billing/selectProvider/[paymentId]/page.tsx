@@ -73,7 +73,7 @@ export default function SelectProviderPage({ params }: SelectProviderPageProps) 
         Collaborative Knowledge Hub Membership
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Amount: {payment ? formatAmount(payment.amount) : "Invalid amount"}
+        Amount: {payment ? formatAmount(payment.amount, payment.currency) : "Invalid amount"}
       </Typography>
 
       {paymentOptionsLoading ? (

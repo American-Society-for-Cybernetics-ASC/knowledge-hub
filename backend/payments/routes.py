@@ -100,13 +100,16 @@ def create_donation(
     if user_id is None:
         raise HTTPException(401, "Unauthorized")
 
-    return ReadPayment.from_payment(
-        payments.create_payment(
-            user_id=user_id,
-            amount=body.amount,
-            product=DonationProduct(),
+    try:
+        return ReadPayment.from_payment(
+            payments.create_payment(
+                user_id=user_id,
+                amount=body.amount,
+                product=DonationProduct(),
+            )
         )
-    )
+    except CurrencyConversionError:
+        raise HTTPException(503, "Failed to convert currency")
 
 
 # --- /payments/{payment_id}/transactions ---
