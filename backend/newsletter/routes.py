@@ -109,7 +109,8 @@ def publish_newsletter(
                     user_id=user.user_id,
                     subject=f"New Newsletter: {newsletter.name}",
                     message=f"A new newsletter has been published: {newsletter.name}. Read it at /newsletters/{newsletter_id}",
-                )
+                ),
+                email_provider=None,  # TODO
             )
 
         return NewsletterResponse.model_validate_sqlalchemy(newsletter)
