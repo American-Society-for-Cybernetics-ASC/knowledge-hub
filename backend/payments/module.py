@@ -41,7 +41,7 @@ class PaymentsModule:
                 user_id=user_id,
                 amount=convert_currency(amount, currency),
                 currency=currency,
-                status=PaymentStatus.PENDING,
+                status=PaymentStatus.SUCCEEDED if (amount == 0) else PaymentStatus.PENDING,
                 product=product.model_dump(mode="json"),
             )
             session.add(record)

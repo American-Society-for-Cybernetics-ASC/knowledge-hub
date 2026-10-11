@@ -208,7 +208,8 @@ class MembershipModule:
                 raise MembershipTypeNotFoundError()
 
             record.name = name or record.name
-            record.price = price or record.price
+            if price is not None:
+                record.price = price
             session.commit()
             session.flush()
 
