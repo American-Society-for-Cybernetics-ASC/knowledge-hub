@@ -132,6 +132,23 @@ class PaymentsModule:
         if product:
             handle_successful_payment(product)
 
+    def get_transaction(self, user_id: int, transaction_id: UUID) -> Transaction:
+        """
+        :raises TransactionNotFoundError:
+        :raises PaymentNotYoursError: if the transaction's payment is not owned by user_id
+        """
+        with database.get_session() as session:
+            try:
+                record = session.get_one(model.Transaction, transaction_id)
+            except NoResultFound:
+                raise TransactionNotFoundError()
+            
+            payment_record = session.get_one(model.Payment, record.payment_id)
+            if payment_record.user_id != user_id:
+                raise PaymentNotYoursError()
+
+            return Transaction.from_db_model(record)
+
     def get_payment(self, payment_id: UUID) -> Payment:
         """:raises PaymentNotFoundError:"""
         with database.get_session() as session:
