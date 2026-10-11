@@ -83,3 +83,8 @@ export interface CreateTransaction {
   provider_id: string;
   payment_id: string;
 }
+
+export interface ReadCurrency {
+  currency: string;
+  supported_currencies: string[];
+}
