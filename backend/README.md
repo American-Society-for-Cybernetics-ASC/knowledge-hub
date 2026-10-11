@@ -60,6 +60,39 @@ A single cron job is defined in `vercel.json`. This calls the `/cron` endpoint d
 ## Local Testing
 Cron can be triggered manually by calling the `/cron` GET endpoint.
 
+# Payments - Stripe
+
+## Setup
+
+Create API keys from the [Stripe Dashboard](https://dashboard.stripe.com) in the Developer section of the account settings.
+
+- Populate backend keys: `STRIPE_API_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET` in `backend/.env`.
+- Populate frontend key: `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` in `frontend/.env`.
+
+## Local Testing
+
+1. Register the Stripe payment provider by running `uv run python seed.py stripe` from `/backend`. It accepts the name of any registered providers, so `mock stripe`, for example, seeds both.
+
+2. `POST /payments/payments/donate` with an amount, which will return a `Payment` that stores its `paymentId`.
+
+3. Choose Stripe on `/billing/selectProvider/<paymentId>`
+
+4. Pay on `/billing/pay/<transactionId>`.
+
+5. Observe the status on `/billing/confirmed/<transactionId>`.
+
+## Test Cards
+
+Stripe provides test cards with different statuses. Some examples are:
+
+- `4242 4242 4242 4242` is a card that will succeed.
+- `4000 0027 6000 3184` is a card that requires a 3DS2 challenge to succeed.
+- `4000 0000 0000 0002` is a card that will decline.
+
+Any future expiry data, CVC, and postcode are valid for testing with these cards.
+
+There are many more cards available on the [Stripe Docs](https://docs.stripe.com/testing?testing-method=card-numbers#cards) for more extensive testing (different brands, etc).
+
 # Auth Module Setup
 To run the auth module locally, generate the following keys and add them to the .env file in the backend folder
 

@@ -2,7 +2,7 @@
 
 import { confirmTransaction } from "@/lib/api/billing";
 import { Box, Typography, Alert, CircularProgress } from "@mui/material";
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useRef } from "react";
 
 type State =
   | { status: "verifying" }
@@ -16,8 +16,12 @@ export default function ConfirmedPage({
 }) {
   const { transactionId } = use(params);
   const [state, setState] = useState<State>({ status: "verifying" });
+  const confirmedId = useRef<string | null>(null);
 
   useEffect(() => {
+    if (confirmedId.current === transactionId) return;
+    confirmedId.current = transactionId;
+
     confirmTransaction(transactionId)
       .then(() => setState({ status: "success" }))
       .catch((e) => setState({ status: "failed", message: e.message }));

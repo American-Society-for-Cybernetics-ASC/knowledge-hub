@@ -11,30 +11,25 @@ import {
 } from "@mui/material";
 import { use, useState } from "react";
 import {
-  CreateTransaction,
   ReadPayment,
   ReadPaymentOption,
-  ReadTransaction,
 } from "@/types/payments";
 import useSWR from "swr";
 import { backendFetch } from "@/lib/api/client";
 import { useAddError } from "@/components/layout/ErrorContext";
 import { useRouter } from "next/navigation";
-// import { createTransaction } from "@/lib/api/payments";
+import { createTransaction } from "@/lib/api/billing";
+import { formatAmount } from "@/lib/format";
 
-interface PayPageProps {
+interface SelectProviderPageProps {
   params: Promise<{ paymentId: string }>;
 }
 
-const formatAmount = (cents: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "usd" }).format(
-    cents / 100,
-  );
-
-export default function PayPage({ params }: PayPageProps) {
+export default function SelectProviderPage({ params }: SelectProviderPageProps) {
   const { paymentId } = use(params);
   const [payment, setPayment] = useState<ReadPayment | null>(null);
-  const [providerID, setProviderID] = useState<string>("");
+  const [providerId, setProviderId] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
   const addError = useAddError();
   const router = useRouter();
 
@@ -49,36 +44,26 @@ export default function PayPage({ params }: PayPageProps) {
     onError: addError,
   });
 
-  async function handleMockPayment() {
-    if (!providers) {
-      addError("Select a payment provider");
-      return;
-    }
-
-    const provider = providers.find((p) => p.id === providerID);
-
+  function handleContinue() {
+    const provider = providers?.find((p) => p.id === providerId);
     if (!provider) {
-      addError("Select a payment provider");
-      return;
+        addError("Select a payment provider");
+        return;
     }
 
-    if (provider.service_name !== "mock") {
-      addError(`${provider.service_name} is not supported right now`);
-      return;
-    }
-
-    const body: CreateTransaction = {
-      payment_id: paymentId,
-      provider_id: provider.id,
-    };
-    backendFetch<ReadTransaction>("/payments/transactions", {
-      method: "POST",
-      body: JSON.stringify(body),
-    })
-      .then((transaction) =>
-        router.push(`/billing/confirmed/${transaction.id}`),
-      )
-      .catch(addError);
+    setSubmitting(true);
+    createTransaction(paymentId, provider.id)
+        .then((transaction) =>
+            router.replace(
+                transaction.data.transaction_type === "stripe"
+                    ? `/billing/pay/${transaction.id}`
+                    : `/billing/confirmed/${transaction.id}`,
+            )
+        )
+        .catch((e) => {
+            addError(e);
+            setSubmitting(false);
+        });
   }
 
   return (
@@ -96,9 +81,9 @@ export default function PayPage({ params }: PayPageProps) {
       ) : (
         <FormControl fullWidth required>
           <Select
-            value={providerID}
+            value={providerId}
             displayEmpty
-            onChange={(e) => setProviderID(e.target.value)}
+            onChange={(e) => setProviderId(e.target.value)}
           >
             <MenuItem value="">
               <em>Select a payment provider</em>
@@ -115,9 +100,9 @@ export default function PayPage({ params }: PayPageProps) {
         </FormControl>
       )}
 
-      <Button variant="contained" onClick={handleMockPayment}>
-        Pay
-      </Button>
+        <Button variant="contained" onClick={handleContinue} disabled={!providerId || submitting} sx={{ mt: 2}}>
+            {submitting ? "Processing..." : "Continue"}
+        </Button>
     </Box>
   );
 }
