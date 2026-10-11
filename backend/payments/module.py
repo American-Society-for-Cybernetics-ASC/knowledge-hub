@@ -125,10 +125,9 @@ class PaymentsModule:
             else:
                 raise TransactionNotSuccessful()
 
+            if product:
+                handle_successful_payment(session, product)
             session.commit()
-
-        if product:
-            handle_successful_payment(product)
 
     def get_transaction(self, user_id: int, transaction_id: UUID) -> Transaction:
         """

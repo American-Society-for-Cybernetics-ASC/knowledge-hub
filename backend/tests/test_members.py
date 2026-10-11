@@ -4,7 +4,6 @@ from typing import Callable
 import pytest
 from sqlalchemy.orm import Session
 
-from membership.model import MemberStatus
 from database import model
 from members.model import ProfileUpdate
 from members.module import MemberNotFoundError, MembersModule
@@ -29,7 +28,6 @@ def create_member(
             auth_user=auth_user,
             due_date=datetime.datetime.now(datetime.timezone.utc)
             + datetime.timedelta(days=100),
-            cancelled=False,
         )
         session.add(member)
         session.commit()
@@ -46,7 +44,7 @@ def test_get_profile_creates_empty_profile(mock_get_session):
     profile = MembersModule().get_profile(member_id)
 
     assert profile.member_id == member_id
-    assert profile.status == MemberStatus.CURRENT
+    assert profile.active
     assert profile.content.personal_statement is None
     assert profile.content.research_interests == []
     assert profile.content.expertise == []
@@ -209,13 +207,14 @@ def test_get_member_profile_returns_expired_status(
         expired_member.due_date = datetime.datetime.now(
             datetime.timezone.utc
         ) - datetime.timedelta(days=1)
+        expired_member.active = False
         session.commit()
 
     authenticate_member(requesting_member_id)
     response = TestClient(app).get(f"/members/{expired_member_id}")
 
     assert response.status_code == 200
-    assert response.json()["status"] == MemberStatus.EXPIRED
+    assert not response.json()["active"]
 
 
 def test_get_member_profile_returns_metadata(

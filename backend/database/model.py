@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 import uuid
 
 from sqlalchemy import (
@@ -31,7 +32,8 @@ class Member(Base):
     user_id = mapped_column(Integer, ForeignKey("auth_users.user_id"), primary_key=True)
     due_date: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)
     member_type_id = mapped_column(UUID, ForeignKey("member_types.id"), nullable=True)
-    cancelled = mapped_column(Boolean, nullable=False, default=False)
+    cancelling = mapped_column(Boolean, nullable=False, default=False)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     profile = relationship("Profile", back_populates="member", uselist=False)
     member_type: Mapped[MemberType | None] = relationship(
@@ -156,7 +158,7 @@ class AuthUser(Base):
 
     user_id = mapped_column(Integer, primary_key=True, index=True)
 
-    name = mapped_column(String)
+    name: Mapped[Optional[str]] = mapped_column(String)
     email = mapped_column(String, unique=True, index=True, nullable=False)
     permissions: Mapped[dict | None] = mapped_column(JSON)
 
@@ -172,6 +174,8 @@ class AuthUser(Base):
 
     last_login = mapped_column(TZDateTime)
     hash_password = mapped_column(String)
+
+    applications: Mapped[list[MembershipApplication]] = relationship()
 
 
 class AuditLog(Base):
@@ -243,11 +247,16 @@ class MembershipApplication(Base):
         String, nullable=False
     )  # pending, approved, denied, revision_requested
     submitted_at = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
-    last_edited = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
+    last_edited: Mapped[datetime] = mapped_column(
+        TZDateTime, server_default=func.now(), nullable=False
+    )
     content = mapped_column(String, nullable=False)  # the application form's fields
 
     member_type: Mapped[MemberType | None] = relationship(
         "MemberType", foreign_keys=[member_type_id], lazy="joined"
+    )
+    user: Mapped[AuthUser] = relationship(
+        AuthUser, foreign_keys=[user_id], back_populates="applications"
     )
 
 

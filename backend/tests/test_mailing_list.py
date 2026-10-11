@@ -43,7 +43,6 @@ def create_member(get_session: Callable[[], Session]) -> int:
             auth_user=auth_user,
             due_date=datetime.datetime.now(datetime.timezone.utc)
             + datetime.timedelta(days=100),
-            cancelled=False,
         )
         session.add(member)
         session.commit()

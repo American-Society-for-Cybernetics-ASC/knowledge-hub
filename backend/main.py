@@ -14,10 +14,10 @@ from auth_module.routes import auth_router
 from mail.routes import mail_router
 from mailing_list.routes import mailing_list_router
 from members.routes import members_router
-from membership.routes import membership_router
+from membership.membership_routes import membership_router
 from notifications.routes import notifications_router
 from member_matching.routes import member_matching_router
-from member_application.routes import member_application_router
+from member_application.application_routes import member_application_router
 from payments.routes import payments_router
 from audit_log.routes import audit_router
 from members.model import ProfileContent, ProfileIdentity
@@ -32,9 +32,8 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         database.base.Base.metadata.drop_all(conn)
         database.base.Base.metadata.create_all(conn)
         conn.commit()
-        session.close()
 
-    AuthModule().register("test@test.com", "test", "Test User")
+    AuthModule().register("test@test.com", "test", "Test Admin")
 
     with database.get_session() as session:
         user = (

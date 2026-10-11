@@ -1,15 +1,19 @@
+from sqlalchemy.orm import Session
+
 from payments.products import ProductTypes
 
 
-def handle_successful_payment(product: ProductTypes):
-    from membership.module import MembershipModule
+def handle_successful_payment(session: Session, product: ProductTypes):
+    from membership import membership_module
 
     match product.product:
         case "create_membership":
-            MembershipModule().create_membership(
-                product.membership_type_id, product.user_id, product.duration
+            membership_module.create_membership(
+                session, product.membership_type_id, product.user_id, product.duration
             )
         case "renew_membership":
-            MembershipModule().renew_membership(product.user_id, product.duration)
+            membership_module.renew_membership(
+                session, product.user_id, product.duration
+            )
         case "donation":
             pass  # TODO
