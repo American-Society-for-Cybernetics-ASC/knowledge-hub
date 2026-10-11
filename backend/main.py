@@ -24,6 +24,7 @@ from members.model import ProfileContent, ProfileIdentity
 from email_templates.routes import email_templates_router
 from email_templates.module import EmailTemplatesModule
 from pages.routes import pages_router
+from newsletter.routes import newsletter_router
 
 if SETTINGS.local_deployment and not SETTINGS.testing:
     with database.get_session() as session:
@@ -99,3 +100,4 @@ app.include_router(payments_router)
 app.include_router(audit_router)
 app.include_router(email_templates_router)
 app.include_router(pages_router)
+app.include_router(newsletter_router)
