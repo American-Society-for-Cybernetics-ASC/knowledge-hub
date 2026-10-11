@@ -1,7 +1,10 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from mail.handle_provider import handle_send_email
+import smtplib
+
+from database.mail_providers import GmailAppPasswordMailProvider
+from database.types import MailProviderType
 from mail.model import Email, FailedEmail
 from database import model
 
@@ -30,3 +33,14 @@ def send_mail(session: Session, mail: Email, provider: model.MailSender):
             session.add(
                 model.FailedEmailTable(email=mail.model_dump(mode="json"), error=error)
             )
+
+
+def handle_send_email(mail: Email, provider: model.MailSender):
+    match provider.provider:
+        case MailProviderType.GMAIL_APP_PASSWORD:
+            assert isinstance(provider, GmailAppPasswordMailProvider)
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp_server:
+                smtp_server.login(provider.google_username, provider.app_password)
+                smtp_server.send_message(
+                    mail.into_py_email(sender=provider.google_username)
+                )

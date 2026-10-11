@@ -1,6 +1,7 @@
 import datetime
 from typing import Iterable
 
+from membership import membership_module
 from database.types import CronJobType
 from database.model import CronJob
 
@@ -40,7 +41,7 @@ def run_cron_jobs(session: Session):
         period = handle_get_cron_job_period(job_type) - datetime.timedelta(hours=2)
         if (now - job.last_executed) < period:
             return
-        handle_run_cron_job(job_type)
+        handle_run_cron_job(session, job_type)
         job.last_executed = now
 
 
@@ -58,8 +59,8 @@ def handle_get_cron_job_enabled(job: CronJobType) -> bool:
             return True
 
 
-def handle_run_cron_job(job: CronJobType):
+def handle_run_cron_job(session: Session, job: CronJobType):
     """Forward to the appropriate handler"""
     match job:
         case CronJobType.DUES_REMINDERS:
-            pass
+            membership_module.send_membership_dues_reminders(session)

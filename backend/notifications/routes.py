@@ -58,8 +58,8 @@ class ReadNotificationConfig(BaseModel):
     def from_db_model(config: NotificationsConfig) -> ReadNotificationConfig:
         return ReadNotificationConfig(
             email_provider=""
-            if config.email_provider is None
-            else config.email_provider
+            if config.email_provider_id is None
+            else config.email_provider_id
         )
 
 
@@ -84,8 +84,8 @@ def patch_notification_config(
         config = get_module_config(session, NotificationsConfig)
 
         if patch.email_provider == "":
-            config.email_provider = None
+            config.email_provider_id = None
         elif patch.email_provider is not None:
-            config.email_provider = patch.email_provider
+            config.email_provider_id = patch.email_provider
 
         return ReadNotificationConfig.from_db_model(config)

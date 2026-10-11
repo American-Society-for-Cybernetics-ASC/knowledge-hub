@@ -4,6 +4,8 @@ from uuid import UUID
 from fastapi.testclient import TestClient
 import pytest
 
+from database.module_configs import MembershipsConfig
+from utils.module_config import get_module_config
 from database.types import ApplicationStatus
 from .conftest import TEST_USER_ID
 from database import model as dbmodel
@@ -141,3 +143,66 @@ def test_renew(
     response = test_server.get("/membership")
     assert response.status_code == 200
     assert response.json()["due_date"] > current_membership_duration
+
+
+def test_dues_notifications(
+    test_server: TestClient,
+    monkeypatch,
+    mock_get_session,
+    mock_mail_manager,
+    mock_mail_provider,
+):
+    with mock_get_session() as session:
+        config = get_module_config(session, MembershipsConfig)
+        config.email_provider_id = mock_mail_provider
+
+        member = dbmodel.Member(
+            user_id=TEST_USER_ID,
+            due_date=datetime.datetime.now(datetime.timezone.utc)
+            + datetime.timedelta(days=365),
+            member_type_id=None,
+        )
+        session.add(member)
+
+        session.commit()
+
+    time = datetime.datetime.now(datetime.timezone.utc)
+
+    with monkeypatch.context() as m:
+        m.setattr(
+            "cron.cron_module._now",
+            lambda: time,
+        )
+        m.setattr(
+            "membership.membership_module._now",
+            lambda: time,
+        )
+
+        r = test_server.get("cron")
+        assert r.status_code == 200
+        assert len(mock_mail_manager.sent_mail()) == 0
+
+        time += datetime.timedelta(days=336)
+        r = test_server.get("cron")
+        assert r.status_code == 200
+        assert len(mock_mail_manager.sent_mail()) == 1
+
+        r = test_server.get("cron")
+        assert r.status_code == 200
+        assert len(mock_mail_manager.sent_mail()) == 1
+
+        time += datetime.timedelta(days=30)
+        r = test_server.get("cron")
+        assert r.status_code == 200
+        assert len(mock_mail_manager.sent_mail()) == 2
+        r = test_server.get("cron")
+        assert r.status_code == 200
+        assert len(mock_mail_manager.sent_mail()) == 2
+
+        time += datetime.timedelta(days=22)
+        r = test_server.get("cron")
+        assert r.status_code == 200
+        assert len(mock_mail_manager.sent_mail()) == 3
+        r = test_server.get("cron")
+        assert r.status_code == 200
+        assert len(mock_mail_manager.sent_mail()) == 3

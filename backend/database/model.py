@@ -41,7 +41,7 @@ class Member(Base):
     member_type_id = mapped_column(UUID, ForeignKey("member_types.id"), nullable=True)
     cancelling = mapped_column(Boolean, nullable=False, default=False)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    last_dues_email: Mapped[DuesEmailStep] = mapped_column(default=DuesEmailStep.NONE)
+    dues_email_step: Mapped[DuesEmailStep] = mapped_column(default=DuesEmailStep.NONE)
 
     profile = relationship("Profile", back_populates="member", uselist=False)
     member_type: Mapped[MemberType | None] = relationship(

@@ -50,6 +50,7 @@ class PaymentProviderType(str, Enum):
 class ModuleName(str, Enum):
     NOTIFICATIONS = "notifications"
     MEMBER_MATCHING = "member_matching"
+    MEMBERSHIPS = "memberships"
 
 
 class DuesEmailStep(str, Enum):

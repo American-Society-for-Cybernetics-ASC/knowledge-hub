@@ -1,27 +1,25 @@
-from typing import Literal
-from pydantic import Field
+from uuid import UUID
+import uuid
 
 from mail.model import Email
 
-_fails = 0
-_sent_mail: list[Email] = []
 
-
-class MockMailProvider:
-    service_name: Literal["mock"] = Field(default="mock")
+class MockMailManager:
+    ids: list[UUID] = []
+    _fails = 0
+    _sent_mail: list[Email] = []
 
     def send_mail(self, mail: Email):
-        global _fails
-        if _fails > 0:
-            _fails -= 1
-            raise Exception(f"test-induced error: {_fails} errors remain")
-        _sent_mail.append(mail)
+        if self._fails > 0:
+            self._fails -= 1
+            raise Exception(f"test-induced error: {self._fails} errors remain")
+        self._sent_mail.append(mail)
 
-    @staticmethod
-    def fail_next_n_mail(n: int):
-        global _fails
-        _fails += n
+    def register_mock(self, id: uuid.UUID):
+        self.ids.append(id)
 
-    @staticmethod
-    def sent_mail() -> list[Email]:
-        return _sent_mail
+    def fail_next_n_mail(self, n: int):
+        self._fails += n
+
+    def sent_mail(self) -> list[Email]:
+        return self._sent_mail

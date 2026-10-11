@@ -3,7 +3,7 @@ from typing import Literal, Optional, Self
 import uuid
 
 from sqlalchemy import CheckConstraint, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.types import ModuleName
 from .model import ModuleConfig, MailSender
@@ -34,9 +34,9 @@ class NotificationsConfig(ModuleConfig, ModuleConfigHelper):
     module_name: Mapped[Literal[ModuleName.NOTIFICATIONS]] = mapped_column(
         ForeignKey(ModuleConfig.module_name),
         primary_key=True,
-        default=ModuleName.NOTIFICATIONS,
+        default=get_module_name(),
     )
-    email_provider: Mapped[Optional[uuid.UUID]] = mapped_column(
+    email_provider_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         ForeignKey(MailSender.id)
     )
 
@@ -62,7 +62,7 @@ class MemberMatchingConfig(ModuleConfig, ModuleConfigHelper):
     module_name: Mapped[Literal[ModuleName.MEMBER_MATCHING]] = mapped_column(
         ForeignKey(ModuleConfig.module_name),
         primary_key=True,
-        default=ModuleName.MEMBER_MATCHING,
+        default=get_module_name(),
     )
     dismissal_days: Mapped[int] = mapped_column(default=7)
     maximum_suggestions: Mapped[int] = mapped_column(default=20)
@@ -70,3 +70,29 @@ class MemberMatchingConfig(ModuleConfig, ModuleConfigHelper):
     @classmethod
     def default(cls) -> MemberMatchingConfig:
         return MemberMatchingConfig()
+
+
+class MembershipsConfig(ModuleConfig, ModuleConfigHelper):
+    @staticmethod
+    def get_module_name():
+        return ModuleName.MEMBERSHIPS
+
+    __mapper_args__ = {
+        "polymorphic_identity": get_module_name(),
+    }
+    __tablename__ = "module_config_" + get_module_name()
+
+    module_name: Mapped[Literal[ModuleName.MEMBERSHIPS]] = mapped_column(
+        ForeignKey(ModuleConfig.module_name),
+        primary_key=True,
+        default=get_module_name(),
+    )
+    email_provider_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey(MailSender.id), default=None
+    )
+
+    email_provider: Mapped[Optional[MailSender]] = relationship(MailSender)
+
+    @classmethod
+    def default(cls) -> MembershipsConfig:
+        return MembershipsConfig()

@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from auth_module import authorized
 from auth_module.model import PermissionTier
-from mail.handle_provider import handle_send_email
 from database.mail_providers import GmailAppPasswordMailProvider
 from database.model import MailSender
 from utils import BaseModel
@@ -177,6 +176,6 @@ def test_mail_provider(
         content="If you have received this email, then the mail provider was correctly configured",
     )
     try:
-        handle_send_email(test_email, body.provider.to_db_model())
+        mail_module.handle_send_email(test_email, body.provider.to_db_model())
     except Exception as e:
         raise HTTPException(500, str(e))

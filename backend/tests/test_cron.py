@@ -5,7 +5,6 @@ import pytest
 
 from database.types import CronJobType
 from settings import SETTINGS
-from cron import cron_module
 
 
 class MockData:
@@ -23,9 +22,9 @@ def mock_cron_job(monkeypatch):
         return datetime.timedelta(days=1)
 
     def mock_enabled(job_type: CronJobType):
-        return cron_module.handle_get_cron_job_enabled(job_type)
+        return True
 
-    def mock_run(job_type: CronJobType):
+    def mock_run(session, job_type: CronJobType):
         data.calls.append(job_type)
         return
 

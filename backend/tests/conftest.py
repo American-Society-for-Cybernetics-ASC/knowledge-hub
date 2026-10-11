@@ -13,12 +13,13 @@ import uuid
 
 from mail.model import Email
 from database.payment_providers import MockPaymentProvider
-from .mock_mail_provider import MockMailProvider
+from .mock_mail_provider import MockMailManager
 import database
 from database import model
 from database.base import Base
 import auth_module
-
+from database.mail_providers import GmailAppPasswordMailProvider
+from mail import mail_module
 
 import pytest
 from fastapi import Request
@@ -145,15 +146,30 @@ def mock_payment_provider(mock_get_session) -> uuid.UUID:
 
 
 @pytest.fixture()
-def mock_mail_provider(monkeypatch):
-    provider = MockMailProvider()
+def mock_mail_manager(monkeypatch):
+    manager = MockMailManager()
 
-    def mock_mail(mail: Email, _):
-        provider.send_mail(mail)
+    def mock_mail(mail: Email, provider: model.MailSender):
+        if provider.id in manager.ids:
+            manager.send_mail(mail)
+            return
+        mail_module.handle_send_email(mail, provider)
 
     with monkeypatch.context() as m:
-        m.setattr("mail.handle_provider.handle_send_email", mock_mail)
-        yield provider
+        m.setattr("mail.mail_module.handle_send_email", mock_mail)
+        yield manager
+
+
+@pytest.fixture()
+def mock_mail_provider(mock_mail_manager, mock_get_session):
+    with mock_get_session() as session:
+        email_provider = GmailAppPasswordMailProvider(
+            name="mock", description="mock", google_username="", app_password=""
+        )
+        session.add(email_provider)
+        session.commit()
+        mock_mail_manager.register_mock(email_provider.id)
+    return email_provider.id
 
 
 @pytest.fixture()
