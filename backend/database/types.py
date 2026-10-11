@@ -30,6 +30,14 @@ class ApplicationStatus(str, Enum):
     DENIED = "denied"
     REVISION_REQUIRED = "revision_required"
 
+class Currency(str, Enum):
+    USD = "usd"
+    AUD = "aud"
+    NZD = "nzd"
+    EUR = "eur"
+    GBP = "gbp"
+    CAD = "cad"
+
 
 class TZDateTime(TypeDecorator):
     impl = DateTime
