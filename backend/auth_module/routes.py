@@ -304,8 +304,12 @@ def list_users(
                 else None,
                 "children": {
                     k: {"tier": v.tier.value if v.tier else None}
-                    for k, v in Permissions.model_validate(u.permissions).children.items()
-                } if u.permissions else {}
+                    for k, v in Permissions.model_validate(
+                        u.permissions
+                    ).children.items()
+                }
+                if u.permissions
+                else {},
             }
             for u in users
         ]
@@ -324,19 +328,35 @@ def grant_permission(
 
     # Validate the tier being granted
     if req.category:
-        # Granting category specific permissions. 
-        if not current_permissions.includes([req.category.value], PermissionTier.manager):
-            raise HTTPException(status_code=403, detail=f"You do not have manager permissions for {req.category.value}")
-        if req.tier == PermissionTier.adminstrator and not current_permissions.includes([req.category.value], PermissionTier.adminstrator):
-            raise HTTPException(status_code=403, detail="Cannot grant administrator in a category you are not administrator of")
-    else: 
+        # Granting category specific permissions.
+        if not current_permissions.includes(
+            [req.category.value], PermissionTier.manager
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail=f"You do not have manager permissions for {req.category.value}",
+            )
+        if req.tier == PermissionTier.adminstrator and not current_permissions.includes(
+            [req.category.value], PermissionTier.adminstrator
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="Cannot grant administrator in a category you are not administrator of",
+            )
+    else:
         # Granting global permissions
         if req.tier == PermissionTier.adminstrator:
             if not current_permissions.includes([], PermissionTier.adminstrator):
-                raise HTTPException(status_code=403, detail="Only administrators can grant administrator permissions")
+                raise HTTPException(
+                    status_code=403,
+                    detail="Only administrators can grant administrator permissions",
+                )
         elif req.tier == PermissionTier.manager or req.tier == PermissionTier.moderator:
             if not current_permissions.includes([], PermissionTier.manager):
-                raise HTTPException(status_code=403, detail="Only managers or administrators can grant moderator permissions")
+                raise HTTPException(
+                    status_code=403,
+                    detail="Only managers or administrators can grant moderator permissions",
+                )
 
     with database.get_session() as session:
         user = session.get(model.AuthUser, target_user_id)
@@ -346,10 +366,19 @@ def grant_permission(
         # Prevent changing permissions of a higher-tier user
         if user.permissions and not req.category:
             target_perms = Permissions.model_validate(user.permissions)
-            if target_perms.tier == PermissionTier.adminstrator and req.tier != PermissionTier.adminstrator:
-                raise HTTPException(status_code=403, detail="Cannot demote an administrator")
+            if (
+                target_perms.tier == PermissionTier.adminstrator
+                and req.tier != PermissionTier.adminstrator
+            ):
+                raise HTTPException(
+                    status_code=403, detail="Cannot demote an administrator"
+                )
 
-        current_perms = Permissions.model_validate(user.permissions) if user.permissions else Permissions()
+        current_perms = (
+            Permissions.model_validate(user.permissions)
+            if user.permissions
+            else Permissions()
+        )
 
         if req.category:
             # Set permissions for specific categories
@@ -359,15 +388,18 @@ def grant_permission(
             new_perms = Permissions(tier=current_perms.tier, children=children)
         else:
             # Set global tier
-            new_perms = Permissions(tier=req.tier, children=dict(current_perms.children))
+            new_perms = Permissions(
+                tier=req.tier, children=dict(current_perms.children)
+            )
 
         user.permissions = new_perms.model_dump(mode="json")
         session.commit()
 
     return {"message": f"Permission {req.tier} granted successfully."}
 
+
 @auth_router.post("/logout")
-def logout (response: Response) -> dict:
+def logout(response: Response) -> dict:
     """
     logs out the current user by clearing the JWT cookie.
     """

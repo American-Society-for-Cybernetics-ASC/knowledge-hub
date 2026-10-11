@@ -115,7 +115,7 @@ class PaymentsModule:
                 record = session.get_one(model.Transaction, transaction_id)
             except NoResultFound:
                 raise TransactionNotFoundError()
-            
+
             payment_record = session.get_one(model.Payment, record.payment_id)
             if payment_record.user_id != user_id:
                 raise PaymentNotYoursError()

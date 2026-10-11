@@ -10,10 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import { use, useState } from "react";
-import {
-  ReadPayment,
-  ReadPaymentOption,
-} from "@/types/payments";
+import { ReadPayment, ReadPaymentOption } from "@/types/payments";
 import useSWR from "swr";
 import { backendFetch } from "@/lib/api/client";
 import { useAddError } from "@/components/layout/ErrorContext";
@@ -25,7 +22,9 @@ interface SelectProviderPageProps {
   params: Promise<{ paymentId: string }>;
 }
 
-export default function SelectProviderPage({ params }: SelectProviderPageProps) {
+export default function SelectProviderPage({
+  params,
+}: SelectProviderPageProps) {
   const { paymentId } = use(params);
   const [payment, setPayment] = useState<ReadPayment | null>(null);
   const [providerId, setProviderId] = useState<string>("");
@@ -47,23 +46,23 @@ export default function SelectProviderPage({ params }: SelectProviderPageProps) 
   function handleContinue() {
     const provider = providers?.find((p) => p.id === providerId);
     if (!provider) {
-        addError("Select a payment provider");
-        return;
+      addError("Select a payment provider");
+      return;
     }
 
     setSubmitting(true);
     createTransaction(paymentId, provider.id)
-        .then((transaction) =>
-            router.replace(
-                transaction.data.transaction_type === "stripe"
-                    ? `/billing/pay/${transaction.id}`
-                    : `/billing/confirmed/${transaction.id}`,
-            )
-        )
-        .catch((e) => {
-            addError(e);
-            setSubmitting(false);
-        });
+      .then((transaction) =>
+        router.replace(
+          transaction.data.transaction_type === "stripe"
+            ? `/billing/pay/${transaction.id}`
+            : `/billing/confirmed/${transaction.id}`,
+        ),
+      )
+      .catch((e) => {
+        addError(e);
+        setSubmitting(false);
+      });
   }
 
   return (
@@ -100,9 +99,14 @@ export default function SelectProviderPage({ params }: SelectProviderPageProps) 
         </FormControl>
       )}
 
-        <Button variant="contained" onClick={handleContinue} disabled={!providerId || submitting} sx={{ mt: 2}}>
-            {submitting ? "Processing..." : "Continue"}
-        </Button>
+      <Button
+        variant="contained"
+        onClick={handleContinue}
+        disabled={!providerId || submitting}
+        sx={{ mt: 2 }}
+      >
+        {submitting ? "Processing..." : "Continue"}
+      </Button>
     </Box>
   );
 }

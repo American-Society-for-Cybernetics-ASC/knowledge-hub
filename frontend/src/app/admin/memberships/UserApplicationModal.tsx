@@ -108,9 +108,15 @@ function SingleApplication({
       </AccordionSummary>
       <AccordionDetails>
         <Stack direction={"row"} spacing={1}>
-          <Button color="success" onClick={approve}>Approve</Button>
-          <Button color="error" onClick={deny}>Deny</Button>
-          <Button color="warning" onClick={request_revision}>Request Revision</Button>
+          <Button color="success" onClick={approve}>
+            Approve
+          </Button>
+          <Button color="error" onClick={deny}>
+            Deny
+          </Button>
+          <Button color="warning" onClick={request_revision}>
+            Request Revision
+          </Button>
         </Stack>
         <Typography>{application.content}</Typography>
       </AccordionDetails>

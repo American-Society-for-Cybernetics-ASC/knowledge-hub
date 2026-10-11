@@ -20,7 +20,10 @@ export default function Home() {
     <div>
       <header>
         <Typography variant="h4">Welcome to the Knowledge Hub</Typography>
-        <StaticContent slug="home" default="Jump to a section below to get started." />
+        <StaticContent
+          slug="home"
+          default="Jump to a section below to get started."
+        />
       </header>
 
       <Grid container spacing={2} sx={{ mt: 2 }}>

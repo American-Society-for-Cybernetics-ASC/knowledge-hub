@@ -1,15 +1,8 @@
 "use client";
 
-import {
-  Box,
-  Skeleton,
-  Typography,
-} from "@mui/material";
-import { use, useEffect} from "react";
-import {
-  ReadPayment,
-  ReadTransaction,
-} from "@/types/payments";
+import { Box, Skeleton, Typography } from "@mui/material";
+import { use, useEffect } from "react";
+import { ReadPayment, ReadTransaction } from "@/types/payments";
 import useSWR from "swr";
 import { backendFetch } from "@/lib/api/client";
 import { useAddError } from "@/components/layout/ErrorContext";
@@ -34,15 +27,17 @@ export default function PayPage({ params }: PayPageProps) {
     );
 
   const { data: payment, error: paymentError } = useSWR<ReadPayment>(
-    transaction ? `/payments/payments/${transaction.payment_id}` : null, 
-    backendFetch, 
+    transaction ? `/payments/payments/${transaction.payment_id}` : null,
+    backendFetch,
     { onError: addError },
   );
 
   const data = transaction?.data;
   const stripeData = data?.transaction_type === "stripe" ? data : null;
-  const noActionRequired = payment !== undefined && payment.status !== "pending";
-  const nothingToPay = transaction !== undefined && (stripeData === null || noActionRequired);
+  const noActionRequired =
+    payment !== undefined && payment.status !== "pending";
+  const nothingToPay =
+    transaction !== undefined && (stripeData === null || noActionRequired);
 
   useEffect(() => {
     if (nothingToPay) router.replace(`/billing/confirmed/${transactionId}`);
@@ -59,11 +54,13 @@ export default function PayPage({ params }: PayPageProps) {
       </Typography>
 
       {stripeData && payment?.status === "pending" ? (
-        <StripeCheckout clientSecret={stripeData.client_secret} transactionId={transactionId}/>
+        <StripeCheckout
+          clientSecret={stripeData.client_secret}
+          transactionId={transactionId}
+        />
       ) : (
-        !transactionError && !paymentError && (
-          <Skeleton variant="rounded" height={200} />
-        )
+        !transactionError &&
+        !paymentError && <Skeleton variant="rounded" height={200} />
       )}
     </Box>
   );

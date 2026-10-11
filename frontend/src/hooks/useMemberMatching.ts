@@ -45,23 +45,26 @@ export function useMemberMatching() {
   }, [refresh]);
 
   // Removes a dismissed suggestion from the list after success.
-  const dismiss = useCallback(async (suggestedMemberId: number) => {
-    setActionLoading(true);
+  const dismiss = useCallback(
+    async (suggestedMemberId: number) => {
+      setActionLoading(true);
 
-    try {
-      await dismissMemberMatch(suggestedMemberId);
+      try {
+        await dismissMemberMatch(suggestedMemberId);
 
-      setSuggestions((currentSuggestions) =>
-        currentSuggestions.filter(
-          (suggestion) => suggestion.member_id !== suggestedMemberId,
-        ),
-      );
-    } catch (error) {
-      addError(error);
-    } finally {
-      setActionLoading(false);
-    }
-  }, [addError]);
+        setSuggestions((currentSuggestions) =>
+          currentSuggestions.filter(
+            (suggestion) => suggestion.member_id !== suggestedMemberId,
+          ),
+        );
+      } catch (error) {
+        addError(error);
+      } finally {
+        setActionLoading(false);
+      }
+    },
+    [addError],
+  );
 
   const optOut = useCallback(async () => {
     setActionLoading(true);

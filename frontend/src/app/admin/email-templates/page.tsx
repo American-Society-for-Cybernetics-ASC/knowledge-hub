@@ -89,7 +89,7 @@ export default function EmailTemplatesPage() {
       <div className="p-4">
         <InlineError message={loadError} onRetry={fetchTemplates} />
       </div>
-    )
+    );
   }
 
   return (

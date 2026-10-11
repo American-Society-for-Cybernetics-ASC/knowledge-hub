@@ -273,7 +273,7 @@ def send_membership_dues_reminders(session: Session):
     ):
         delta = now - member.due_date
         email = None
-        print(delta, member.dues_email_step)
+
         match member.dues_email_step:
             case DuesEmailStep.NONE:
                 if delta > DUES_ANNOUNCEMENT_DELTA:

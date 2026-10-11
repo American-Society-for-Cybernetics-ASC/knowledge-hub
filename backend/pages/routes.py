@@ -1,5 +1,4 @@
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 import database
 from database import model
 from utils import BaseModel

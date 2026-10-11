@@ -18,7 +18,7 @@ export default function NotificationsPage() {
   const [loadError, setLoadError] = useState("");
   const addError = useAddError();
   const [selectedNotification, setSelectedNotification] =
-    useState<Notification | null>(null);  
+    useState<Notification | null>(null);
 
   useEffect(() => {
     fetchNotifications();
