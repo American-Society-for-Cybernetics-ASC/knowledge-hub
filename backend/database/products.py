@@ -1,5 +1,4 @@
 import datetime
-from typing import override
 import uuid
 
 from sqlalchemy import ForeignKey
@@ -15,7 +14,6 @@ class DonationProduct(Payment):
     __tablename__ = "product_" + _IDENTITY
     id: Mapped[uuid.UUID] = mapped_column(ForeignKey(Payment.id), primary_key=True)
 
-    @override
     def product_description(self):
         return "Donation"
 
@@ -35,7 +33,6 @@ class CreateMembershipProduct(Payment):
         "MemberType", foreign_keys=[member_type_id], lazy="joined"
     )
 
-    @override
     def product_description(self):
         return f"Created Membership as '{self.member_type.name}'"
 
@@ -56,7 +53,6 @@ class RenewMembershipProduct(Payment):
         "MemberType", foreign_keys=[member_type_id], lazy="joined"
     )
 
-    @override
     def product_description(self):
         return f"Renewed Membership as '{self.member_type.name}'"
 

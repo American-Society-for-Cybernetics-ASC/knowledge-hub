@@ -9,9 +9,9 @@ import database
 import database.model as dbmodel
 import database.base
 from example_module.routes import example_router
-from cron.routes import cron_router
+from cron.cron_routes import cron_router
 from auth_module.routes import auth_router
-from mail.routes import mail_router
+from mail.mail_routes import mail_router
 from mailing_list.routes import mailing_list_router
 from members.routes import members_router
 from membership.membership_routes import membership_router
@@ -22,7 +22,6 @@ from payments.routes import payments_router
 from audit_log.routes import audit_router
 from members.model import ProfileContent, ProfileIdentity
 from email_templates.routes import email_templates_router
-from email_templates.module import EmailTemplatesModule
 from pages.routes import pages_router
 from newsletter.routes import newsletter_router
 
@@ -69,10 +68,6 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         )
 
         session.commit()
-
-# Seed default email templates
-if not SETTINGS.testing:
-    EmailTemplatesModule().seed_defaults()
 
 app = FastAPI(title="CKH API", version="0.1.0", root_path=SETTINGS.backend_root_path)
 

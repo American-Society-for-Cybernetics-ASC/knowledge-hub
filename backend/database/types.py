@@ -22,6 +22,7 @@ class PermissionCategory(str, Enum):
     AUTH = "auth"
     MEMBERSHIP = "membership"
     MAILING_LISTS = "mailing_lists"
+    NOTIFICATIONS = "notifications"
 
 
 class ApplicationStatus(str, Enum):
@@ -35,6 +36,32 @@ class ProductType(str, Enum):
     DONATION = "donation"
     CREATE_MEMBERSHIP = "create_membership"
     RENEW_MEMBERSHIP = "renew_membership"
+
+
+class MailProviderType(str, Enum):
+    GMAIL_APP_PASSWORD = "gmail_app_password"
+
+
+class PaymentProviderType(str, Enum):
+    STRIPE = "stripe"
+    MOCK = "mock"
+
+
+class ModuleName(str, Enum):
+    NOTIFICATIONS = "notifications"
+    MEMBER_MATCHING = "member_matching"
+    MEMBERSHIPS = "memberships"
+
+
+class DuesEmailStep(str, Enum):
+    NONE = "none"
+    ANNOUNCED = "announced"
+    OVERDUE = "overdue"
+    OVERDUE_REMINDER = "overdue_reminder"
+
+
+class CronJobType(str, Enum):
+    DUES_REMINDERS = "dues_reminders"
 
 
 class TZDateTime(TypeDecorator):

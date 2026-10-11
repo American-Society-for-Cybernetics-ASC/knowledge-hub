@@ -1,11 +1,39 @@
-from datetime import datetime, timezone
-from typing import Callable
+import datetime
+from typing import Iterable
 
-from sqlalchemy.orm import Session
+import pytest
 
-from cron.module import CronModule, ExampleCronJob, CronJob
+from database.types import CronJobType
 from settings import SETTINGS
-import database.model as model
+
+
+class MockData:
+    calls: list[CronJobType] = []
+
+
+@pytest.fixture()
+def mock_cron_job(monkeypatch):
+    data = MockData()
+
+    def mock_job_list() -> Iterable[str]:
+        return [CronJobType.DUES_REMINDERS]
+
+    def mock_period(_job_type: CronJobType):
+        return datetime.timedelta(days=1)
+
+    def mock_enabled(job_type: CronJobType):
+        return True
+
+    def mock_run(session, job_type: CronJobType):
+        data.calls.append(job_type)
+        return
+
+    with monkeypatch.context() as m:
+        m.setattr("cron.cron_module._job_list", mock_job_list)
+        m.setattr("cron.cron_module.handle_get_cron_job_period", mock_period)
+        m.setattr("cron.cron_module.handle_get_cron_job_enabled", mock_enabled)
+        m.setattr("cron.cron_module.handle_run_cron_job", mock_run)
+        yield data
 
 
 def test_require_auth_in_prod(test_server, monkeypatch):
@@ -33,78 +61,42 @@ def test_check_auth_in_prod(test_server, monkeypatch):
         assert response.status_code == 200
 
 
-def test_conversion():
-    job = model.CronJobTable(
-        id=1,
-        enabled=False,
-        last_executed=datetime(2026, 1, 1, tzinfo=timezone.utc),
-        period=60 * 60 * 24,
-        job={"job_type": "example_job"},
-    )
-
-    converted_job = CronJob.model_validate_sqlalchemy(job)
-
-    assert isinstance(converted_job.job, ExampleCronJob)
-
-    round_trip = model.CronJobTable(**converted_job.model_dump())
-
-    assert round_trip.job == {"job_type": "example_job"}
-
-
-def test_queued(test_server, mock_get_session: Callable[[], Session]):
-    with mock_get_session() as session:
-        session.add(
-            model.CronJobTable(
-                id=1,
-                enabled=False,
-                last_executed=datetime(2026, 1, 1, tzinfo=timezone.utc),
-                period=60 * 60 * 24,
-                job={"job_type": "example_job"},
-            )
-        )
-        session.commit()
-
-    r = test_server.get("cron/jobs")
-    assert r.status_code == 200, r.content
-    r = r.json()
-    assert r == [
-        {
-            "id": 1,
-            "enabled": False,
-            "last_executed": "2026-01-01T00:00:00Z",
-            "period": 86400,
-            "job": {"job_type": "example_job"},
-        }
-    ]
-
-
-def test_execute_cron(test_server, mock_get_session: Callable[[], Session]):
-    with mock_get_session() as session:
-        session.add(
-            model.CronJobTable(
-                id=1,
-                enabled=True,
-                last_executed=datetime(2026, 1, 1, tzinfo=timezone.utc),
-                period=60 * 60 * 24,
-                job={"job_type": "example_job"},
-            )
-        )
-        session.commit()
-
-    assert len(CronModule().get_queued_cron_jobs()) == 1
-
+def test_execute_cron(test_server, monkeypatch, mock_cron_job):
+    # Call job
     r = test_server.get("cron")
     assert r.status_code == 200
+    assert len(mock_cron_job.calls) == 1
 
-    assert len(CronModule().get_queued_cron_jobs()) == 0
-
-    r = test_server.get("cron/jobs")
+    # Don't call job again before the period expires
+    r = test_server.get("cron")
     assert r.status_code == 200
-    job = r.json()[0]
-    assert job == {
-        "id": 1,
-        "enabled": True,
-        "last_executed": job["last_executed"],
-        "period": 86400,
-        "job": {"job_type": "example_job"},
-    }
+    assert len(mock_cron_job.calls) == 1
+
+    # Call again in 12 hours
+    with monkeypatch.context() as m:
+        m.setattr(
+            "cron.cron_module._now",
+            lambda: (
+                datetime.datetime.now(datetime.timezone.utc)
+                + datetime.timedelta(hours=12)
+            ),
+        )
+
+        r = test_server.get("cron")
+        assert r.status_code == 200
+        assert len(mock_cron_job.calls) == 1
+
+    # Call again in 23 hours
+    # (Vercel doesn't promise precise cron jobs to hobby plans, so we DO want this to count as a day!)
+    with monkeypatch.context() as m:
+        m.setattr(
+            "cron.cron_module._now",
+            lambda: (
+                datetime.datetime.now(datetime.timezone.utc)
+                + datetime.timedelta(hours=23)
+            ),
+        )
+
+        r = test_server.get("cron")
+        assert r.status_code == 200
+        assert len(mock_cron_job.calls) == 2

@@ -4,15 +4,13 @@ from uuid import UUID
 import stripe
 from sqlalchemy.exc import NoResultFound
 
-
+from .handle_provider import handle_create_transaction
 from .handle_product import handle_successful_payment
 import database
 from database.types import PaymentStatus, TransactionStatus
 from database import model
-from utils.module_config import get_module_config
 from .payment import Payment
 from .transactions import Transaction
-from .config import PaymentModuleConfig
 from .exceptions import (
     PaymentNotYoursError,
     PaymentProviderNotFoundError,
@@ -37,23 +35,22 @@ class PaymentsModule:
         :raises PaymentAlreadyComplete:
         :raises TransactionInProgressError:
         """
-        config = get_module_config(PaymentModuleConfig)
-
-        payment_option = config.payment_options.get(provider_id)
-        if not payment_option:
-            raise PaymentProviderNotFoundError(
-                "The requested payment provider doesn't currently exist"
-            )
-
-        payment = self.get_payment(payment_id)
-
-        if payment.user_id != user_id:
-            raise PaymentNotYoursError()
-
-        if payment.status != PaymentStatus.PENDING:
-            raise PaymentAlreadyComplete()
-
         with database.get_session() as session:
+            payment_option = session.get(model.PaymentOption, provider_id)
+
+            if not payment_option:
+                raise PaymentProviderNotFoundError(
+                    "The requested payment provider doesn't currently exist"
+                )
+
+            payment = self.get_payment(payment_id)
+
+            if payment.user_id != user_id:
+                raise PaymentNotYoursError()
+
+            if payment.status != PaymentStatus.PENDING:
+                raise PaymentAlreadyComplete()
+
             for transaction in (
                 session.query(model.Transaction)
                 .where(model.Transaction.payment_id == payment.id)
@@ -65,7 +62,7 @@ class PaymentsModule:
                 if transaction.last_known_status != TransactionStatus.FAILED:
                     raise TransactionInProgressError()
 
-            data = payment_option.provider.create(payment)
+            data = handle_create_transaction(payment, payment_option)
 
             record = model.Transaction(
                 payment_id=payment_id, data=data.model_dump(mode="json")

@@ -1,46 +1,143 @@
 "use client";
 
+import { AddErrorContext } from "@/components/layout/ErrorContext";
 import { backendFetch } from "@/lib/api/client";
-import { Typography } from "@mui/material";
+import { FailedEmail, ReadMailSender } from "@/types/mail";
+import { Settings } from "@mui/icons-material";
+import {
+  Button,
+  Grid,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
+import { useContext, useState } from "react";
 import useSWR from "swr";
-
-interface FailedEmail {
-  id: number;
-  email: {
-    sender: string;
-    recipients: string[];
-    subject: string;
-  };
-}
+import MailSenderDialog from "./MailSenderDialog";
 
 export default function Page() {
-  const { data, error, isLoading } = useSWR<FailedEmail[]>(
-    "/mail/failed",
+  return (
+    <>
+      <Typography variant={"h4"}>Mail</Typography>
+      <ProviderForm />
+      <Typography variant={"h5"}>Failed Emails</Typography>
+      <DeadLetters />
+    </>
+  );
+}
+
+function DeadLetters() {
+  const addError = useContext(AddErrorContext);
+  const { data } = useSWR<FailedEmail[]>("/mail/failed", backendFetch, {
+    onError: addError,
+  });
+
+  if (!data) {
+    return <Skeleton />;
+  }
+
+  return (
+    <Table>
+      <TableHead>
+        <TableRow>
+          <TableCell>Last Sent</TableCell>
+          <TableCell>Retries</TableCell>
+          <TableCell>Subject</TableCell>
+          <TableCell>Sender</TableCell>
+          <TableCell>Recipients</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {data.map((email) => {
+          const last_sent = new Date(email.last_sent);
+          return (
+            <TableRow key={email.id}>
+              <TableCell>{last_sent.toISOString()}</TableCell>
+              <TableCell>{email.retries}</TableCell>
+              <TableCell>{email.email.subject}</TableCell>
+              <TableCell>{email.email.sender}</TableCell>
+              <TableCell>{email.email.recipients.join("\n")}</TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  );
+}
+
+function ProviderForm() {
+  const addError = useContext(AddErrorContext);
+  const { data, mutate } = useSWR<ReadMailSender[]>(
+    "/mail/senders",
     backendFetch,
+    {
+      onError: addError,
+    },
+  );
+  const [sender, setSender] = useState<ReadMailSender | "new" | undefined>(
+    undefined,
   );
 
-  let body;
-  if (isLoading) {
-    body = <p>Loading</p>;
-  } else if (error) {
-    body = <p>Error: {error.toString()}</p>;
-  } else if (!data) {
-    body = <p>Error: No Data</p>;
-  } else {
-    body = data.map((email, i) => (
-      <ul key={email.id}>
-        <h3>Email #{i}</h3>
-        <li>Sender: {email.email.sender}</li>
-        <li>Recipients: {email.email.recipients}</li>
-        <li>Subject: {email.email.subject}</li>
-      </ul>
-    ));
+  if (data === undefined) {
+    return <Skeleton sx={{ minHeight: 100 }} />;
   }
 
   return (
     <>
-      <Typography variant={"h4"}>Mail</Typography>
-      {body}
+      {sender !== undefined && (
+        <MailSenderDialog
+          option={sender}
+          isOpen
+          onClose={() => setSender(undefined)}
+          mutate={mutate}
+        />
+      )}
+      <Grid container sx={{ width: "50%" }}>
+        <Grid container direction={"row"} size={12} spacing={5}>
+          <Typography variant={"h5"}>Mail Senders</Typography>
+          <Button
+            title="New"
+            variant="contained"
+            onClick={() => setSender("new")}
+          >
+            New
+          </Button>
+        </Grid>
+
+        <Grid size={12}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell>Provider</TableCell>
+                <TableCell>Edit</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.map((sender) => (
+                <TableRow key={`payment-option-${sender.id}`}>
+                  <TableCell>{sender.name}</TableCell>
+                  <TableCell>{sender.description}</TableCell>
+                  <TableCell>{sender.provider.provider_type}</TableCell>
+                  <TableCell>
+                    <Button
+                      title={`Edit mail sender: ${sender.name}`}
+                      onClick={() => setSender(sender)}
+                    >
+                      <Settings />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Grid>
+      </Grid>
     </>
   );
 }

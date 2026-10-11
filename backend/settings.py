@@ -13,9 +13,6 @@ class Settings(BaseSettings):
     testing: bool = False
     """Set to true when tests are currently executing"""
 
-    google_username: Optional[str] = None
-    google_password: Optional[str] = None
-
     # google workspace
     google_workspace_admin_email: Optional[str] = None
 

@@ -2,8 +2,14 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
+import sqlalchemy
 from sqlalchemy.orm import Session
 
+from database.module_configs import MembershipsConfig
+from utils.module_config import get_module_config
+from email_templates.module import EmailTemplatesModule
+from notifications.module import NotificationData, NotificationsModule
+from database.types import DuesEmailStep
 from database.products import CreateMembershipProduct, RenewMembershipProduct
 from database.model import Member, MemberType, MembershipApplication
 from member_application.application_module import (
@@ -20,6 +26,10 @@ from payments.payment import Payment
 
 MEMBERSHIP_DURATION = timedelta(days=365)
 RENEWAL_WINDOW = timedelta(days=182)
+
+DUES_ANNOUNCEMENT_DELTA = timedelta(days=-30)
+OVERDUE_DELTA = timedelta(days=0)
+OVERDUE_REMINDER_DELTA = timedelta(days=21)
 
 
 def get_member(session: Session, user_id: int) -> Member | None:
@@ -185,6 +195,7 @@ def renew_membership(session: Session, user_id: int, duration: timedelta) -> Mem
     )
     with session.begin_nested():
         member.due_date = new_expiry
+        member.dues_email_step = DuesEmailStep.NONE
 
     return member
 
@@ -244,3 +255,59 @@ def update_member_type(
     session.flush()
 
     return record
+
+
+def _now() -> datetime:
+    """Indirection for use in mocking"""
+    return datetime.now(timezone.utc)
+
+
+def send_membership_dues_reminders(session: Session):
+    """For use in cron job"""
+    now = _now()
+    config = get_module_config(session, MembershipsConfig)
+    for member in (
+        session.query(Member)
+        .where(sqlalchemy.not_(Member.cancelling))
+        .where(Member.active)
+    ):
+        delta = now - member.due_date
+        email = None
+        print(delta, member.dues_email_step)
+        match member.dues_email_step:
+            case DuesEmailStep.NONE:
+                if delta > DUES_ANNOUNCEMENT_DELTA:
+                    email = EmailTemplatesModule().render_template(
+                        "dues_announce",
+                        {
+                            "name": member.auth_user.name or "ASC Friend",
+                            "date": member.due_date.isoformat(),
+                        },
+                    )
+            case DuesEmailStep.ANNOUNCED:
+                if delta > OVERDUE_DELTA:
+                    email = EmailTemplatesModule().render_template(
+                        "dues_overdue",
+                        {
+                            "name": member.auth_user.name or "ASC Friend",
+                            "date": member.due_date.isoformat(),
+                        },
+                    )
+            case DuesEmailStep.OVERDUE_REMINDER:
+                if delta > OVERDUE_REMINDER_DELTA:
+                    email = EmailTemplatesModule().render_template(
+                        "dues_overdue_reminder",
+                        {
+                            "name": member.auth_user.name or "ASC Friend",
+                            "date": member.due_date.isoformat(),
+                        },
+                    )
+
+        if email is not None:
+            subject, body = email
+            NotificationsModule().create_notification(
+                notification=NotificationData(
+                    user_id=member.user_id, subject=subject, message=body
+                ),
+                email_provider=config.email_provider,
+            )

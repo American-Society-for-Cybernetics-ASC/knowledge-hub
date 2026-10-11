@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 import uuid
 
@@ -18,6 +18,11 @@ from sqlalchemy.sql import func
 
 from .types import (
     ApplicationStatus,
+    CronJobType,
+    DuesEmailStep,
+    MailProviderType,
+    ModuleName,
+    PaymentProviderType,
     PermissionCategory,
     PaymentStatus,
     ProductType,
@@ -36,6 +41,7 @@ class Member(Base):
     member_type_id = mapped_column(UUID, ForeignKey("member_types.id"), nullable=True)
     cancelling = mapped_column(Boolean, nullable=False, default=False)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    dues_email_step: Mapped[DuesEmailStep] = mapped_column(default=DuesEmailStep.NONE)
 
     profile = relationship("Profile", back_populates="member", uselist=False)
     member_type: Mapped[MemberType | None] = relationship(
@@ -201,11 +207,18 @@ class AuditLog(Base):
     timestamp = mapped_column(TZDateTime, server_default=func.now(), nullable=False)
 
 
-class Module(Base):
-    __tablename__ = "modules"
+class ModuleConfig(Base):
+    """Polymorphic: see module_configs.py for subclasses"""
 
-    module_name = mapped_column(String, primary_key=True, index=True)
-    config: Mapped[dict | None] = mapped_column(JSON)
+    __tablename__ = "module_configs"
+
+    # This is a primary key: i.e. there is precisely one config for each module.
+    module_name: Mapped[ModuleName] = mapped_column(primary_key=True, index=True)
+
+    __mapper_args__ = {
+        "polymorphic_abstract": True,
+        "polymorphic_on": "module_name",
+    }
 
 
 class MailingListMember(Base):
@@ -226,14 +239,49 @@ class MailingListMember(Base):
     member = relationship("Member", back_populates="mailing_list_memberships")
 
 
-class CronJobTable(Base):
+class CronJob(Base):
     __tablename__ = "cron_jobs"
 
-    id = mapped_column(Integer, primary_key=True, index=True)
-    enabled = mapped_column(Boolean, nullable=False)
-    last_executed = mapped_column(TZDateTime, nullable=False)
-    period = mapped_column(Integer, nullable=False)
-    job: Mapped[dict] = mapped_column(JSON, nullable=False)
+    job_type: Mapped[CronJobType] = mapped_column(primary_key=True, index=True)
+    last_executed: Mapped[datetime] = mapped_column(
+        TZDateTime, default=datetime.now(timezone.utc) - timedelta(days=100)
+    )
+
+
+class MailSender(Base):
+    """A sender that a mail manager has configured. Polymorphic: see mail_providers.py for subclasses"""
+
+    __tablename__ = "mail_senders"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, index=True, default=uuid.uuid7
+    )
+    name: Mapped[str]
+    description: Mapped[str]
+    provider: Mapped[MailProviderType]
+
+    __mapper_args__ = {
+        "polymorphic_abstract": True,
+        "polymorphic_on": "provider",
+    }
+
+
+class PaymentOption(Base):
+    """An option a manager has configured for users to use to pay. Polymorphic: see payment_providers.py for subclasses"""
+
+    __tablename__ = "payment_options"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, index=True, default=uuid.uuid7
+    )
+    name: Mapped[str]
+    description: Mapped[str]
+    provider: Mapped[PaymentProviderType]
+
+    __mapper_args__ = {
+        "polymorphic_abstract": True,
+        "polymorphic_on": "provider",
+    }
 
 
 class FailedEmailTable(Base):

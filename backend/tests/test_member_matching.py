@@ -6,6 +6,8 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from database.module_configs import MemberMatchingConfig
+from utils.module_config import get_module_config
 from database import model
 from main import app
 from member_matching.module import MemberMatchingModule
@@ -165,15 +167,9 @@ def test_dismissal_hides_suggestion_until_cooldown_expires(
     )
 
     with mock_get_session() as session:
-        session.add(
-            model.Module(
-                module_name=MemberMatchingModule.MODULE_NAME,
-                config={
-                    "dismissal_days": 1,
-                    "maximum_suggestions": 20,
-                },
-            )
-        )
+        config = get_module_config(session, MemberMatchingConfig)
+        config.dismissal_days = 1
+        config.maximum_suggestions = 20
         session.commit()
 
     module = MemberMatchingModule()
