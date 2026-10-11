@@ -7,23 +7,19 @@ import {
   optIntoMemberMatching,
   optOutOfMemberMatching,
 } from "@/lib/api/member-matching";
+import { useAddError } from "@/components/layout/ErrorContext";
+import { getErrorMessage } from "@/lib/errors";
 import type { MemberMatchingSuggestion } from "@/types/member-matching";
 
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Unable to complete member matching request.";
-}
-
 export function useMemberMatching() {
+  const addError = useAddError();
   const [suggestions, setSuggestions] = useState<MemberMatchingSuggestion[]>(
     [],
   );
   const [optedOut, setOptedOut] = useState(false);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  // Only set when the initial load fails. Action failures use the snackbar.
   const [error, setError] = useState<string | null>(null);
 
   // Loads the current member's matching preference and suggestions.
@@ -37,7 +33,7 @@ export function useMemberMatching() {
       setSuggestions(result.suggestions);
       setOptedOut(result.opted_out);
     } catch (error) {
-      setError(getErrorMessage(error));
+      setError(getErrorMessage(error, "Unable to load member matching data."));
     } finally {
       setLoading(false);
     }
@@ -51,7 +47,6 @@ export function useMemberMatching() {
   // Removes a dismissed suggestion from the list after success.
   const dismiss = useCallback(async (suggestedMemberId: number) => {
     setActionLoading(true);
-    setError(null);
 
     try {
       await dismissMemberMatch(suggestedMemberId);
@@ -62,15 +57,14 @@ export function useMemberMatching() {
         ),
       );
     } catch (error) {
-      setError(getErrorMessage(error));
+      addError(error);
     } finally {
       setActionLoading(false);
     }
-  }, []);
+  }, [addError]);
 
   const optOut = useCallback(async () => {
     setActionLoading(true);
-    setError(null);
 
     try {
       const result = await optOutOfMemberMatching();
@@ -78,15 +72,14 @@ export function useMemberMatching() {
       setOptedOut(result.matching_opt_out);
       await refresh();
     } catch (error) {
-      setError(getErrorMessage(error));
+      addError(error);
     } finally {
       setActionLoading(false);
     }
-  }, [refresh]);
+  }, [refresh, addError]);
 
   const optIn = useCallback(async () => {
     setActionLoading(true);
-    setError(null);
 
     try {
       const result = await optIntoMemberMatching();
@@ -94,11 +87,11 @@ export function useMemberMatching() {
       setOptedOut(result.matching_opt_out);
       await refresh();
     } catch (error) {
-      setError(getErrorMessage(error));
+      addError(error);
     } finally {
       setActionLoading(false);
     }
-  }, [refresh]);
+  }, [refresh, addError]);
 
   return {
     suggestions,

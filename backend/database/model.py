@@ -289,3 +289,21 @@ class EmailTemplate(Base):
     subject = mapped_column(String, nullable=False)
     body = mapped_column(String, nullable=False)
     variables: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+
+
+class StaticPage(Base):
+    __tablename__= "static_pages"
+
+    slug = mapped_column(String, primary_key=True, index=True)
+    content = mapped_column(String, nullable=False, default="")
+
+
+class Newsletter(Base):
+    __tablename__="newsletters"
+
+    id = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    name = mapped_column(String, nullable=False)
+    content = mapped_column(String, nullable=False, default="")
+    published = mapped_column(Boolean, nullable=False, default=False)
+    published_at = mapped_column(TZDateTime, nullable=True)
+    created_at = mapped_column(TZDateTime, server_default=func.now())
