@@ -1,6 +1,5 @@
 "use client";
 
-import { AddErrorContext } from "@/components/layout/ErrorContext";
 import { backendFetch } from "@/lib/api/client";
 import { ApplicationSummary } from "@/types/membership";
 import { RateReview } from "@mui/icons-material";
@@ -13,12 +12,13 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import useSWR from "swr";
 import UserApplicationModal from "./UserApplicationModal";
+import { useAddError } from "@/components/layout/ErrorContext";
 
 export default function ApplicationManagement() {
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const [user, setUser] = useState<ApplicationSummary>();
   const { data } = useSWR<ApplicationSummary[]>(
     "/membership/application/admin/summary",

@@ -18,7 +18,7 @@ export default function AdminNav({ children }: { children: React.ReactNode }) {
           { label: "Email Templates", href: "/admin/email-templates" },
           { label: "Permissions", href: "/admin/permissions" },
           { label: "Pages", href: "/admin/pages" },
-          { label: "Newsletters", href: "/admin/newsletters" }
+          { label: "Newsletters", href: "/admin/newsletters" },
         ]}
       />
       {children}

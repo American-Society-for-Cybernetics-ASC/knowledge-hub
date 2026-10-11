@@ -316,7 +316,10 @@ export default function EditMyProfilePage() {
       });
     } catch (err: unknown) {
       setError(
-        getErrorMessage(err, "Please check your affiliations and publications."),
+        getErrorMessage(
+          err,
+          "Please check your affiliations and publications.",
+        ),
       );
       return;
     }
@@ -358,7 +361,7 @@ export default function EditMyProfilePage() {
     } catch (err: unknown) {
       addError(
         getErrorMessage(err, "Unable to save your profile. Please try again."),
-      )
+      );
     } finally {
       setSaving(false);
     }
@@ -389,7 +392,7 @@ export default function EditMyProfilePage() {
         <h1 className="text-2xl font-bold mb-6">Edit my profile</h1>
 
         <InlineError message={error} />
-    
+
         {success && (
           <div className="bg-green-50 text-green-700 p-3 rounded mb-4 text-sm">
             {success}

@@ -26,7 +26,9 @@ export default function NewslettersAdmin() {
       .catch(() => {});
   }
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => {
+    loadAll();
+  }, []);
 
   function selectNewsletter(n: Newsletter) {
     setSelected(n);
@@ -47,9 +49,17 @@ export default function NewslettersAdmin() {
     if (!ta) return;
     const start = ta.selectionStart;
     const end = ta.selectionEnd;
-    const newContent = content.slice(0, start) + before + content.slice(start, end) + after + content.slice(end);
+    const newContent =
+      content.slice(0, start) +
+      before +
+      content.slice(start, end) +
+      after +
+      content.slice(end);
     setContent(newContent);
-    setTimeout(() => { ta.focus(); ta.setSelectionRange(start + before.length, end + before.length); }, 0);
+    setTimeout(() => {
+      ta.focus();
+      ta.setSelectionRange(start + before.length, end + before.length);
+    }, 0);
   }
 
   function insertHeading(prefix: string) {
@@ -65,10 +75,13 @@ export default function NewslettersAdmin() {
     setMessage("");
     try {
       if (selected) {
-        const updated = await backendFetch<Newsletter>(`/newsletters/${selected.id}`, {
-          method: "PUT",
-          body: JSON.stringify({ name, content }),
-        });
+        const updated = await backendFetch<Newsletter>(
+          `/newsletters/${selected.id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({ name, content }),
+          },
+        );
         setSelected(updated);
         setMessage("Saved.");
       } else {
@@ -92,9 +105,12 @@ export default function NewslettersAdmin() {
     setPublishing(true);
     setMessage("");
     try {
-      const updated = await backendFetch<Newsletter>(`/newsletters/${selected.id}/publish`, {
-        method: "POST",
-      });
+      const updated = await backendFetch<Newsletter>(
+        `/newsletters/${selected.id}/publish`,
+        {
+          method: "POST",
+        },
+      );
       setSelected(updated);
       setMessage("Published! Notifications sent.");
       loadAll();
@@ -110,7 +126,12 @@ export default function NewslettersAdmin() {
       <div className="w-64 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <Typography variant="h6">Newsletters</Typography>
-          <button onClick={newNewsletter} className="text-sm text-blue-600 hover:underline">+ New</button>
+          <button
+            onClick={newNewsletter}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            + New
+          </button>
         </div>
         {newsletters.map((n) => (
           <div
@@ -119,14 +140,20 @@ export default function NewslettersAdmin() {
             className={`p-2 rounded cursor-pointer mb-1 text-sm ${selected?.id === n.id ? "bg-blue-50 font-medium" : "hover:bg-gray-50"}`}
           >
             {n.name || "Untitled"}
-            {n.published && <span className="ml-2 text-xs text-green-600">Published</span>}
+            {n.published && (
+              <span className="ml-2 text-xs text-green-600">Published</span>
+            )}
           </div>
         ))}
       </div>
 
       <div className="flex-1 max-w-2xl">
         <Typography variant="h6" className="mb-3">
-          {selected ? (selected.published ? "View Newsletter" : "Edit Newsletter") : "New Newsletter"}
+          {selected
+            ? selected.published
+              ? "View Newsletter"
+              : "Edit Newsletter"
+            : "New Newsletter"}
         </Typography>
         {message && <div className="mb-3 text-sm text-gray-700">{message}</div>}
         <input
@@ -138,14 +165,22 @@ export default function NewslettersAdmin() {
         />
         <div className="flex gap-2 mb-2">
           {["**", "*"].map((m, i) => (
-            <button key={i} onClick={() => wrapSelection(m, m)} disabled={selected?.published}
-              className="border border-gray-300 px-3 py-1 rounded text-sm hover:bg-gray-50 disabled:opacity-40">
+            <button
+              key={i}
+              onClick={() => wrapSelection(m, m)}
+              disabled={selected?.published}
+              className="border border-gray-300 px-3 py-1 rounded text-sm hover:bg-gray-50 disabled:opacity-40"
+            >
               {i === 0 ? <b>B</b> : <i>I</i>}
             </button>
           ))}
           {["# ", "## ", "### "].map((h, i) => (
-            <button key={i} onClick={() => insertHeading(h)} disabled={selected?.published}
-              className="border border-gray-300 px-3 py-1 rounded text-sm hover:bg-gray-50 disabled:opacity-40">
+            <button
+              key={i}
+              onClick={() => insertHeading(h)}
+              disabled={selected?.published}
+              className="border border-gray-300 px-3 py-1 rounded text-sm hover:bg-gray-50 disabled:opacity-40"
+            >
               H{i + 1}
             </button>
           ))}
@@ -160,12 +195,21 @@ export default function NewslettersAdmin() {
         />
         <div className="flex gap-3 mt-3">
           {!selected?.published && (
-            <Button variant="contained" onClick={handleSave} disabled={saving || !name}>
+            <Button
+              variant="contained"
+              onClick={handleSave}
+              disabled={saving || !name}
+            >
               {saving ? "Saving..." : selected ? "Save" : "Create"}
             </Button>
           )}
           {selected && !selected.published && (
-            <Button variant="outlined" color="success" onClick={handlePublish} disabled={publishing}>
+            <Button
+              variant="outlined"
+              color="success"
+              onClick={handlePublish}
+              disabled={publishing}
+            >
               {publishing ? "Publishing..." : "Publish"}
             </Button>
           )}

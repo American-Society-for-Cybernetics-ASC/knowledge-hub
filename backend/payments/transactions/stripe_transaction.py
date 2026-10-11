@@ -23,8 +23,8 @@ class StripeTransaction(TransactionInterface):
 
     transaction_type: Literal["stripe"] = Field(default="stripe")
 
-    payment_id: str # Stripe PaymentIntent id
-    client_secret: str # Allows frontend Stripe elements to complete PaymentIntent
+    payment_id: str  # Stripe PaymentIntent id
+    client_secret: str  # Allows frontend Stripe elements to complete PaymentIntent
 
     @staticmethod
     def create_one_off(payment: Payment) -> StripeTransaction:
@@ -38,7 +38,9 @@ class StripeTransaction(TransactionInterface):
         if intent.client_secret is None:
             raise PaymentError("Payment Intent did not return a valid client secret")
 
-        return StripeTransaction(payment_id=intent.id, client_secret=intent.client_secret)
+        return StripeTransaction(
+            payment_id=intent.id, client_secret=intent.client_secret
+        )
 
     def check_status(self) -> TransactionStatus:
         intent = PaymentIntent.retrieve(self.payment_id)

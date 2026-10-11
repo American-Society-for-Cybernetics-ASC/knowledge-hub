@@ -23,6 +23,7 @@ from .exceptions import (
     NotACurrentMemberError,
 )
 from payments.payment import Payment
+from payments.module import PaymentsModule
 
 MEMBERSHIP_DURATION = timedelta(days=365)
 RENEWAL_WINDOW = timedelta(days=182)
@@ -100,17 +101,14 @@ def purchase_create_membership(
     if not member_type:
         raise MembershipTypeOutOfDateError()
 
-    with session.begin_nested():
-        payment = CreateMembershipProduct(
-            user_id=user_id,
-            amount=member_type.price,
-            currency="usd",  # TODO: currency
-            duration=MEMBERSHIP_DURATION,
-            member_type_id=member_type.id,
-        )
-        session.add(payment)
+    payment = CreateMembershipProduct(
+        user_id=user_id,
+        amount=member_type.price,
+        duration=MEMBERSHIP_DURATION,
+        member_type_id=member_type.id,
+    )
 
-    return Payment.from_db_model(payment)
+    return PaymentsModule().add_payment(session, payment)
 
 
 def purchase_renew_membership(session: Session, user_id: int) -> Payment:
@@ -125,17 +123,14 @@ def purchase_renew_membership(session: Session, user_id: int) -> Payment:
     if member.member_type is None:
         raise MembershipTypeOutOfDateError()
 
-    with session.begin_nested():
-        payment = RenewMembershipProduct(
-            user_id=user_id,
-            amount=member.member_type.price,
-            currency="usd",  # TODO: currency
-            duration=MEMBERSHIP_DURATION,
-            member_type_id=member.member_type.id,
-        )
-        session.add(payment)
+    payment = RenewMembershipProduct(
+        user_id=user_id,
+        amount=member.member_type.price,
+        duration=MEMBERSHIP_DURATION,
+        member_type_id=member.member_type.id,
+    )
 
-    return Payment.from_db_model(payment)
+    return PaymentsModule().add_payment(session, payment)
 
 
 def set_members_type(session: Session, application_id: int, user_id: int):
@@ -251,7 +246,8 @@ def update_member_type(
 
     with session.begin_nested():
         record.name = name or record.name
-        record.price = price or record.price
+        if price is not None:
+            record.price = price
     session.flush()
 
     return record
@@ -273,7 +269,7 @@ def send_membership_dues_reminders(session: Session):
     ):
         delta = now - member.due_date
         email = None
-        print(delta, member.dues_email_step)
+
         match member.dues_email_step:
             case DuesEmailStep.NONE:
                 if delta > DUES_ANNOUNCEMENT_DELTA:

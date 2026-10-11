@@ -1,6 +1,6 @@
 "use client";
 
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 import { backendFetch } from "@/lib/api/client";
 import { ReadMailSender } from "@/types/mail";
 import { NotificationsConfig } from "@/types/notifications";
@@ -13,7 +13,7 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import useSWR from "swr";
 
 export default function Page() {
@@ -27,7 +27,7 @@ export default function Page() {
 }
 
 function ConfigForm() {
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const { data, mutate } = useSWR<NotificationsConfig>(
     "/notifications/config",
     backendFetch,
@@ -44,7 +44,7 @@ function ConfigForm() {
     },
   );
 
-  const [email_provider, setMailSender] = useState<string | "" | undefined>(
+  const [email_provider_id, setMailSender] = useState<string | "" | undefined>(
     undefined,
   );
 
@@ -52,15 +52,15 @@ function ConfigForm() {
     return <Skeleton />;
   }
   const dirty: Partial<NotificationsConfig> = {
-    email_provider,
+    email_provider_id,
   };
   const isDirty = Object.values(dirty).some((p) => p !== undefined);
 
   const current: NotificationsConfig = {
-    email_provider:
-      dirty.email_provider === undefined
-        ? data.email_provider
-        : dirty.email_provider,
+    email_provider_id:
+      dirty.email_provider_id === undefined
+        ? data.email_provider_id
+        : dirty.email_provider_id,
   };
 
   function clear() {
@@ -89,7 +89,7 @@ function ConfigForm() {
           <Select
             labelId="email-sender-label"
             label="Email Sender"
-            value={current.email_provider || "---"}
+            value={current.email_provider_id || "---"}
             onChange={(e) =>
               setMailSender(e.target.value === "---" ? "" : e.target.value)
             }

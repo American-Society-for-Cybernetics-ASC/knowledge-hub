@@ -17,6 +17,7 @@ from .exceptions import (
     MembershipTypeOutOfDateError,
     NotACurrentMemberError,
 )
+from payments.exceptions import CurrencyConversionError
 from .model import ReadMemberType, ReadMember
 from payments.payment import ReadPayment
 from utils import BaseModel
@@ -45,6 +46,8 @@ def purchase_membership(
             )
     except AlreadyAMemberError:
         raise HTTPException(400, "Already a member")
+    except CurrencyConversionError:
+        raise HTTPException(503, "Failed to convert currency")
 
 
 @membership_router.post("/renew")
@@ -66,6 +69,8 @@ def renew_membership(
             400,
             "Your membership type is no longer supported: please reapply for a new membership type",
         )
+    except CurrencyConversionError:
+        raise HTTPException(503, "Failed to convert currency")
 
 
 class UpdateMembership(BaseModel):

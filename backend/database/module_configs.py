@@ -39,6 +39,7 @@ class NotificationsConfig(ModuleConfig, ModuleConfigHelper):
     email_provider_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         ForeignKey(MailSender.id)
     )
+    email_provider: Mapped[Optional[MailSender]] = relationship(MailSender)
 
     @classmethod
     def default(cls) -> NotificationsConfig:

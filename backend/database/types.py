@@ -32,6 +32,15 @@ class ApplicationStatus(str, Enum):
     REVISION_REQUIRED = "revision_required"
 
 
+class Currency(str, Enum):
+    USD = "usd"
+    AUD = "aud"
+    NZD = "nzd"
+    EUR = "eur"
+    GBP = "gbp"
+    CAD = "cad"
+
+
 class ProductType(str, Enum):
     DONATION = "donation"
     CREATE_MEMBERSHIP = "create_membership"

@@ -18,6 +18,7 @@ from sqlalchemy.sql import func
 
 from .types import (
     ApplicationStatus,
+    Currency,
     CronJobType,
     DuesEmailStep,
     MailProviderType,
@@ -193,6 +194,9 @@ class AuthUser(Base):
     last_login = mapped_column(TZDateTime)
     hash_password = mapped_column(String)
 
+    currency: Mapped[Currency] = mapped_column(
+        String, nullable=False, server_default=Currency.USD.value
+    )
     applications: Mapped[list[MembershipApplication]] = relationship()
 
 
@@ -352,14 +356,14 @@ class EmailTemplate(Base):
 
 
 class StaticPage(Base):
-    __tablename__= "static_pages"
+    __tablename__ = "static_pages"
 
     slug = mapped_column(String, primary_key=True, index=True)
     content = mapped_column(String, nullable=False, default="")
 
 
 class Newsletter(Base):
-    __tablename__="newsletters"
+    __tablename__ = "newsletters"
 
     id = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
     name = mapped_column(String, nullable=False)

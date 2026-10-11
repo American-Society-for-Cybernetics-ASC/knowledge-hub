@@ -13,6 +13,7 @@ from database.products import DonationProduct
 from .conftest import TEST_USER_ID
 from payments.payment import PaymentStatus, Payment
 from payments.transactions.stripe_transaction import StripeTransaction
+from payments.module import PaymentsModule
 
 # Test Resources
 
@@ -44,11 +45,11 @@ def mock_stripe_transaction(monkeypatch, mock_payment):
 @pytest.fixture()
 def mock_payment(mock_get_session) -> Payment:
     with mock_get_session() as session:
-        product = DonationProduct(user_id=TEST_USER_ID, amount=10010, currency="usd")
-        session.add(product)
+        payment = PaymentsModule().add_payment(
+            session, DonationProduct(user_id=TEST_USER_ID, amount=10010)
+        )
         session.commit()
-        session.flush()
-        return Payment.from_db_model(product)
+        return payment
 
 
 def test_config(test_server: TestClient):

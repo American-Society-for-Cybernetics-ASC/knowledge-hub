@@ -24,7 +24,7 @@ export default function YourMembership() {
     await backendFetch<ReadPayment>("/membership/renew", {
       method: "POST",
     })
-      .then((payment) => router.push(`/billing/pay/${payment.id}`))
+      .then((payment) => router.push(`/billing/selectProvider/${payment.id}`))
       .catch(addError);
   }
 
