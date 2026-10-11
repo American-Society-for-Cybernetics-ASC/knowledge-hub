@@ -9,14 +9,14 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
-import { use, useContext, useState } from "react";
+import { use, useState } from "react";
 import {
   ReadPayment,
   ReadPaymentOption,
 } from "@/types/payments";
 import useSWR from "swr";
 import { backendFetch } from "@/lib/api/client";
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 import { useRouter } from "next/navigation";
 import { createTransaction } from "@/lib/api/billing";
 import { formatAmount } from "@/lib/format";
@@ -30,7 +30,7 @@ export default function SelectProviderPage({ params }: SelectProviderPageProps) 
   const [payment, setPayment] = useState<ReadPayment | null>(null);
   const [providerId, setProviderId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const router = useRouter();
 
   useSWR<ReadPayment>(`/payments/payments/${paymentId}`, backendFetch, {

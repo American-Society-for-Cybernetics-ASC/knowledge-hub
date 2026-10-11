@@ -3,14 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { getMemberProfile, getMyProfile } from "@/lib/api/members";
 import type { MemberProfile } from "@/types/member";
+import { getErrorMessage } from "@/lib/errors";
 
 type ProfileTarget = "me" | number;
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : "Unable to load the member profile.";
-}
 
 /**
  * Loads either the signed in member's profile or another member's profile.
@@ -31,7 +26,7 @@ export function useMembers(target: ProfileTarget = "me") {
       setProfile(result);
     } catch (error) {
       setProfile(null);
-      setError(getErrorMessage(error));
+      setError(getErrorMessage(error, "Unable to load the member profile."));
     } finally {
       setLoading(false);
     }

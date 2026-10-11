@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { verifyOTP } from "@/lib/api/auth";
+import InlineError from "@/components/layout/InlineError";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function VerifyOTPPage() {
   const router = useRouter();
@@ -35,11 +37,7 @@ export default function VerifyOTPPage() {
       sessionStorage.removeItem("challenge_token");
       window.location.href = "/";
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Invalid code. Please try again.");
-      }
+      setError(getErrorMessage(err, "Invalid code. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -55,11 +53,7 @@ export default function VerifyOTPPage() {
           Enter the 6-digit code from your authenticator app
         </p>
 
-        {error && (
-          <div className="bg-red-50 text-red-700 p-3 rounded mb-4 text-sm">
-            {error}
-          </div>
-        )}
+        <InlineError message={error} />
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

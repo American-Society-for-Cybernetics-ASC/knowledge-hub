@@ -1,27 +1,29 @@
 "use client";
 
-import { createContext, useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
+import { getErrorMessage } from "@/lib/errors";
 import Errors from "./Errors";
 
-export type AddErrorContext = (error: string | { message: string }) => void;
+export type AddErrorContext = (error: unknown) => void;
 
 export const AddErrorContext = createContext<AddErrorContext>((error) => {
-  console.log(error);
+  console.error(error);
 });
+
+export function useAddError(): AddErrorContext {
+  return useContext(AddErrorContext);
+}
 
 export function ErrorWrapper({ children }: { children: React.ReactNode }) {
   const [errors, setErrors] = useState<string[]>([]);
 
+  const addError = useCallback((error: unknown) => {
+    const message = getErrorMessage(error);
+    setErrors((previous) => [...previous, message]);
+  }, []);
+
   return (
-    <AddErrorContext
-      value={(error) => {
-        if (typeof error === "string") {
-          setErrors([...errors, error]);
-        } else {
-          setErrors([...errors, error.message]);
-        }
-      }}
-    >
+    <AddErrorContext value={addError}>
       <Errors errors={errors} setErrors={setErrors} />
       {children}
     </AddErrorContext>
