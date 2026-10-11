@@ -12,12 +12,12 @@ import {
   Typography,
   Skeleton,
 } from "@mui/material";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import useSWR from "swr";
 import PaymentOptionDialog from "./paymentOptionDialog";
 import { Settings } from "@mui/icons-material";
 import PaymentLog from "@/components/features/billing/PaymentLog";
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 import { AdminReadPaymentOption } from "@/types/payments";
 
 export default function Page() {
@@ -35,7 +35,7 @@ export default function Page() {
 }
 
 function FormSection() {
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const { data, mutate } = useSWR<AdminReadPaymentOption[]>(
     "/payments/providers/admin",
     backendFetch,

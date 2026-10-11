@@ -1,4 +1,4 @@
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 import { backendFetch } from "@/lib/api/client";
 import {
   PatchMailSender,
@@ -26,7 +26,7 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function MailSenderDialog({
   isOpen,
@@ -39,7 +39,7 @@ export default function MailSenderDialog({
   option: ReadMailSender | "new";
   mutate: () => void;
 }) {
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
 
   const base: Partial<ReadMailSender> = sender === "new" ? {} : sender;
 

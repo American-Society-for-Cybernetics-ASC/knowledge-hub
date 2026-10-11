@@ -5,14 +5,14 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
-import { use, useContext, useEffect} from "react";
+import { use, useEffect} from "react";
 import {
   ReadPayment,
   ReadTransaction,
 } from "@/types/payments";
 import useSWR from "swr";
 import { backendFetch } from "@/lib/api/client";
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 import { useRouter } from "next/navigation";
 import StripeCheckout from "@/components/features/billing/StripeCheckout";
 import { formatAmount } from "@/lib/format";
@@ -23,7 +23,7 @@ interface PayPageProps {
 
 export default function PayPage({ params }: PayPageProps) {
   const { transactionId } = use(params);
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const router = useRouter();
 
   const { data: transaction, error: transactionError } =

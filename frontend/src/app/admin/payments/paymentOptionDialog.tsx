@@ -1,4 +1,4 @@
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
 import { backendFetch } from "@/lib/api/client";
 import {
   AdminPatchPaymentOption,
@@ -20,7 +20,7 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function PaymentOptionDialog({
   isOpen,
@@ -33,7 +33,7 @@ export default function PaymentOptionDialog({
   option: AdminReadPaymentOption | "new";
   mutate: () => void;
 }) {
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
 
   const base: Partial<AdminReadPaymentOption> = option === "new" ? {} : option;
 
