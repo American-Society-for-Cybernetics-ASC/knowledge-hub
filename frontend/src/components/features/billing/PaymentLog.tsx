@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import useSWR from "swr";
 import { backendFetch } from "@/lib/api/client";
-import { ProductTypes, ReadPayment } from "@/types/payments";
+import { ReadPayment } from "@/types/payments";
 
 const statusType: Record<string, "success" | "warning" | "error" | "default"> =
   {
@@ -40,17 +40,6 @@ const formatDate = (iso: string) =>
     minute: "2-digit",
     hour12: false,
   });
-
-function productDescription(product: ProductTypes) {
-  switch (product.product) {
-    case "donation":
-      return "Donation";
-    case "create_membership":
-      return "Initial membership";
-    case "renew_membership":
-      return "Membership renewal";
-  }
-}
 
 export default function PaymentLog() {
   const {
@@ -105,7 +94,7 @@ export default function PaymentLog() {
                 {payments.map((p) => (
                   <TableRow key={p.id} hover>
                     <TableCell>{formatDate(p.timestamp)}</TableCell>
-                    <TableCell>{productDescription(p.product)}</TableCell>
+                    <TableCell>{p.product_description}</TableCell>
                     <TableCell align="right">
                       {formatAmount(p.amount)}
                     </TableCell>

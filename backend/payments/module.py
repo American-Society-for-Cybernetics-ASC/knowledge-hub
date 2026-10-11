@@ -5,7 +5,7 @@ import stripe
 from sqlalchemy.exc import NoResultFound
 
 
-from .products.handle_product import handle_successful_payment
+from .handle_product import handle_successful_payment
 import database
 from database.types import PaymentStatus, TransactionStatus
 from database import model
@@ -13,7 +13,6 @@ from utils.module_config import get_module_config
 from .payment import Payment
 from .transactions import Transaction
 from .config import PaymentModuleConfig
-from .products import ProductTypes
 from .exceptions import (
     PaymentNotYoursError,
     PaymentProviderNotFoundError,
@@ -28,25 +27,6 @@ stripe.api_key = os.environ.get("STRIPE_API_KEY", "")
 
 
 class PaymentsModule:
-    def create_payment(
-        self, user_id: int, amount: int, currency: str, product: ProductTypes
-    ) -> Payment:
-        """
-        :parameter amount: in the smallest unit of the currency (e.g. cents for usd)
-        """
-        with database.get_session() as session:
-            record = model.Payment(
-                user_id=user_id,
-                amount=amount,
-                currency=currency,
-                status=PaymentStatus.PENDING,
-                product=product.model_dump(mode="json"),
-            )
-            session.add(record)
-            session.commit()
-            session.refresh(record)
-            return Payment.from_db_model(record)
-
     def create_transaction(
         self, user_id: int, payment_id: UUID, provider_id: UUID
     ) -> Transaction:
@@ -101,8 +81,8 @@ class PaymentsModule:
         :raises TransactionNotSuccessful:
         :raises PaymentAlreadyComplete:
         """
-        product: ProductTypes | None = None
-        with database.get_session() as session:
+        complete_product: model.Payment | None = None
+        with database.with_transaction() as session:
             try:
                 transaction_record = session.get_one(model.Transaction, transaction_id)
             except NoResultFound:
@@ -121,13 +101,12 @@ class PaymentsModule:
             ).data.check_status()
             if transaction_record.last_known_status == TransactionStatus.SUCCEEDED:
                 payment_record.status = PaymentStatus.SUCCEEDED
-                product = Payment.from_db_model(payment_record).product
+                complete_product = payment_record
             else:
                 raise TransactionNotSuccessful()
 
-            if product:
-                handle_successful_payment(session, product)
-            session.commit()
+            if complete_product:
+                handle_successful_payment(session, complete_product)
 
     def get_transaction(self, user_id: int, transaction_id: UUID) -> Transaction:
         """

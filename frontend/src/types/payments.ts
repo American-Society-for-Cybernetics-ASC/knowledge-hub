@@ -31,26 +31,7 @@ export interface PaymentsConfig {
 }
 
 export type PaymentStatus = "pending" | "succeeded" | "failed";
-
-export interface RenewMembershipProduct {
-  product: "renew_membership";
-  user_id: number;
-  duration: number;
-}
-
-export interface CreateMembershipProduct {
-  product: "create_membership";
-  user_id: number;
-  duration: number;
-  membership_type_id: string;
-}
-
-export interface DonationProduct {
-  product: "donation";
-}
-
-export type ProductTypes =
-  RenewMembershipProduct | CreateMembershipProduct | DonationProduct;
+export type ProductType = "donation" | "create_membership" | "renew_membership"
 
 export interface ReadPayment {
   id: string;
@@ -59,7 +40,8 @@ export interface ReadPayment {
   amount: number;
   currency: string;
   status: PaymentStatus;
-  product: ProductTypes;
+  product: ProductType;
+  product_description: string;
 }
 
 export interface StripeTransaction {

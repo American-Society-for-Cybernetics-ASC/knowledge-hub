@@ -6,11 +6,12 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 
 from auth_module import user_id
+from database.products import DonationProduct
+import database
 from utils.module_config import BaseModel, get_module_config, set_module_config
 from .config import PaymentOption, PaymentModuleConfig
 from .providers import ServiceName
-from .payment import ReadPayment
-from .products import DonationProduct
+from .payment import Payment, ReadPayment
 from .transactions import Transaction, TransactionTypes
 from .module import PaymentsModule
 from .exceptions import (
@@ -98,14 +99,16 @@ def create_donation(
     if user_id is None:
         raise HTTPException(401, "Unauthorized")
 
-    return ReadPayment.from_payment(
-        payments.create_payment(
+    with database.get_session() as session:
+        product = DonationProduct(
             user_id=user_id,
             amount=body.amount,
-            currency="usd",
-            product=DonationProduct(),
+            currency="usd",  # TODO: currency,
         )
-    )
+        session.add(product)
+        session.commit()
+        session.flush()
+        return ReadPayment.from_payment(Payment.from_db_model(product))
 
 
 # --- /payments/{payment_id}/transactions ---
