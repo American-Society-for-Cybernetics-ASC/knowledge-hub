@@ -5,16 +5,37 @@ import { backendFetch } from "@/lib/api/client";
 
 function renderContent(content: string) {
   return content.split("\n").map((line, i) => {
-    if (line.startsWith("# ")) return <Typography key={i} variant="h4" sx={{ mt: 1 }}>{line.slice(2)}</Typography>;
-    if (line.startsWith("## ")) return <Typography key={i} variant="h5" sx={{ mt: 1 }}>{line.slice(3)}</Typography>;
-    if (line.startsWith("### ")) return <Typography key={i} variant="h6" sx={{ mt: 1 }}>{line.slice(4)}</Typography>;
+    if (line.startsWith("# "))
+      return (
+        <Typography key={i} variant="h4" sx={{ mt: 1 }}>
+          {line.slice(2)}
+        </Typography>
+      );
+    if (line.startsWith("## "))
+      return (
+        <Typography key={i} variant="h5" sx={{ mt: 1 }}>
+          {line.slice(3)}
+        </Typography>
+      );
+    if (line.startsWith("### "))
+      return (
+        <Typography key={i} variant="h6" sx={{ mt: 1 }}>
+          {line.slice(4)}
+        </Typography>
+      );
     const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
     const rendered = parts.map((part, j) => {
-      if (part.startsWith("**") && part.endsWith("**")) return <strong key={j}>{part.slice(2, -2)}</strong>;
-      if (part.startsWith("*") && part.endsWith("*")) return <em key={j}>{part.slice(1, -1)}</em>;
+      if (part.startsWith("**") && part.endsWith("**"))
+        return <strong key={j}>{part.slice(2, -2)}</strong>;
+      if (part.startsWith("*") && part.endsWith("*"))
+        return <em key={j}>{part.slice(1, -1)}</em>;
       return part;
     });
-    return <Typography key={i} variant="body1">{rendered}</Typography>;
+    return (
+      <Typography key={i} variant="body1">
+        {rendered}
+      </Typography>
+    );
   });
 }
 
@@ -33,6 +54,7 @@ export default function StaticContent({ slug, default: defaultText }: Props) {
   }, [slug]);
 
   if (content) return <div>{renderContent(content)}</div>;
-  if (defaultText) return <Typography variant="body1">{defaultText}</Typography>;
+  if (defaultText)
+    return <Typography variant="body1">{defaultText}</Typography>;
   return null;
 }
