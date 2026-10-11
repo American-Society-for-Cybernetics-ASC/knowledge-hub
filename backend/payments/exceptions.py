@@ -33,5 +33,6 @@ class TransactionNotSuccessful(PaymentError):
 class TransactionInProgressError(PaymentError):
     """Raised when a transaction is already in progress"""
 
+
 class CurrencyConversionError(PaymentError):
     """Raised when the the currency conversion failed to be calculated."""

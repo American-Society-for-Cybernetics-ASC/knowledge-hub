@@ -27,9 +27,7 @@ stripe.api_key = os.environ.get("STRIPE_API_KEY", "")
 
 
 class PaymentsModule:
-    def add_payment(
-        self, session: Session, payment: model.Payment
-    ) -> Payment:
+    def add_payment(self, session: Session, payment: model.Payment) -> Payment:
         """
         Save a new product as a payment in the user's selected currency. Free payments immediately succeed.
 
@@ -42,7 +40,7 @@ class PaymentsModule:
             payment.status = PaymentStatus.SUCCEEDED
         else:
             payment.amount = convert_currency(payment.amount, currency)
-        
+
         with session.begin_nested():
             session.add(payment)
 

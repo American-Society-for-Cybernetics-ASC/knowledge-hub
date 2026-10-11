@@ -6,6 +6,7 @@ from .exceptions import CurrencyConversionError
 BASE_CURRENCY = Currency.USD
 CURRENCY_EXCHANGE_URL = "https://api.frankfurter.dev/v2/rates"
 
+
 def convert_currency(amount: int, currency: Currency) -> int:
     """
     Converts from BASE_CURRENCY into `currency` using the latest exchange rate.
@@ -23,7 +24,7 @@ def convert_currency(amount: int, currency: Currency) -> int:
         )
         response.raise_for_status()
         rate = response.json()[0]["rate"]
-    except (httpx.HTTPError, KeyError, IndexError):
+    except httpx.HTTPError, KeyError, IndexError:
         raise CurrencyConversionError(f"Failed to get exchange rate for {currency}")
 
     return round(amount * rate)

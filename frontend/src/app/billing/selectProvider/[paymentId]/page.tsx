@@ -68,9 +68,7 @@ export default function SelectProviderPage({
   if (payment?.status === "succeeded") {
     return (
       <Box sx={{ p: 4, maxWidth: 480 }}>
-        <Typography variant="h6">
-          No Payment Required
-        </Typography>
+        <Typography variant="h6">No Payment Required</Typography>
         <Typography variant="body2" color="text.secondary">
           Your payment has been confirmed!
         </Typography>

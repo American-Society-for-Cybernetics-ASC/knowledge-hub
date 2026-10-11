@@ -343,14 +343,18 @@ def get_providers() -> list[ReadPaymentOption]:
     with database.get_session() as session:
         return list(map(ReadPaymentOption.from_db_model, session.query(PaymentOption)))
 
+
 # --- /currency ---
+
 
 class ReadCurrency(BaseModel):
     currency: Currency
     supported_currencies: list[Currency] = list(Currency)
 
+
 class UpdateCurrency(BaseModel):
     currency: Currency
+
 
 @payments_router.get("/currency")
 def get_currency(
@@ -361,6 +365,7 @@ def get_currency(
         raise HTTPException(401, "Unauthorized")
 
     return ReadCurrency(currency=payments.get_currency(user_id))
+
 
 @payments_router.put("/currency")
 def set_currency(
