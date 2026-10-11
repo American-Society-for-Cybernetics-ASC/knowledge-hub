@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Optional
 
 
-class PermissionTier(Enum):
+class PermissionTier(str, Enum):
     moderator = "moderator"
     manager = "manager"
     adminstrator = "administrator"
@@ -25,6 +25,13 @@ class PermissionTier(Enum):
     def __ge__(self, other):
         if isinstance(other, PermissionTier):
             return self._member_names_.index(self.name) >= self._member_names_.index(
+                other.name
+            )
+        return NotImplemented
+
+    def __lt__(self, other):
+        if isinstance(other, PermissionTier):
+            return self._member_names_.index(self.name) < self._member_names_.index(
                 other.name
             )
         return NotImplemented

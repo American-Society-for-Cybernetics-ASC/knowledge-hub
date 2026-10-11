@@ -3,15 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { searchMembers } from "@/lib/api/members";
 import type { MemberSearchResult } from "@/types/member";
+import { getErrorMessage } from "@/lib/errors";
 
 // Delay to avoid sending API request for every keystroke.
 const SEARCH_DEBOUNCE_MS = 300;
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : "Unable to search for members.";
-}
 
 /**
  * Searches members after the user pauses typing.
@@ -40,7 +35,7 @@ export function useMemberSearch(query: string) {
       setResults(searchResults);
     } catch (error) {
       setResults([]);
-      setError(getErrorMessage(error));
+      setError(getErrorMessage(error, "Unable to search for members."));
     } finally {
       setLoading(false);
     }

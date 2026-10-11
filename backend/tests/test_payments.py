@@ -15,13 +15,14 @@ from payments.transactions.stripe_transaction import StripeTransaction
 
 
 class MockPaymentIntent:
-    def __init__(self, id: str = "", status: str = "") -> None:
+    def __init__(self, id: str = "", status: str = "", client_secret: str = "") -> None:
         self.id = id
         self.status = status
+        self.client_secret = client_secret
 
 
 def mock_create(**kwargs):
-    return MockPaymentIntent(id="pi_test_id")
+    return MockPaymentIntent(id="pi_test_id", client_secret="pi_test_client_secret")
 
 
 def mock_retrieve(payment_id):
@@ -142,7 +143,7 @@ def test_stripe_create_one_off_calls_stripe_with_parameters(
 
     def mock_create_and_record(**kwargs):
         calls.update(kwargs)
-        return MockPaymentIntent(id="pi_test_id")
+        return MockPaymentIntent(id="pi_test_id", client_secret="pi_test_client_secret")
 
     with monkeypatch.context() as m:
         m.setattr(
@@ -158,6 +159,7 @@ def test_stripe_create_one_off_calls_stripe_with_parameters(
             "automatic_payment_methods": {"enabled": True},
         }
         assert transaction.payment_id == "pi_test_id"
+        assert transaction.client_secret == "pi_test_client_secret"
 
 
 def test_stripe_check_always_calls_stripe(monkeypatch, mock_stripe_transaction):
