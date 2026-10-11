@@ -299,7 +299,7 @@ def list_users(
                 "user_id": u.user_id,
                 "email": u.email,
                 "name": u.name,
-                "tier": Permissions.model_validate(u.permissions).tier.value
+                "tier": Permissions.model_validate(u.permissions).tier.value  # type: ignore
                 if u.permissions and Permissions.model_validate(u.permissions).tier
                 else None,
                 "children": {
