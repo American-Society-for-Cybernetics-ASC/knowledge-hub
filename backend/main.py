@@ -9,7 +9,7 @@ import database
 import database.model as dbmodel
 import database.base
 from example_module.routes import example_router
-from cron.routes import cron_router
+from cron.cron_routes import cron_router
 from auth_module.routes import auth_router
 from mail.mail_routes import mail_router
 from mailing_list.routes import mailing_list_router

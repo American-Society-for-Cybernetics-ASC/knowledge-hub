@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 import uuid
 
@@ -18,6 +18,8 @@ from sqlalchemy.sql import func
 
 from .types import (
     ApplicationStatus,
+    CronJobType,
+    DuesEmailStep,
     MailProviderType,
     ModuleName,
     PaymentProviderType,
@@ -39,6 +41,7 @@ class Member(Base):
     member_type_id = mapped_column(UUID, ForeignKey("member_types.id"), nullable=True)
     cancelling = mapped_column(Boolean, nullable=False, default=False)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    last_dues_email: Mapped[DuesEmailStep] = mapped_column(default=DuesEmailStep.NONE)
 
     profile = relationship("Profile", back_populates="member", uselist=False)
     member_type: Mapped[MemberType | None] = relationship(
@@ -236,14 +239,13 @@ class MailingListMember(Base):
     member = relationship("Member", back_populates="mailing_list_memberships")
 
 
-class CronJobTable(Base):
+class CronJob(Base):
     __tablename__ = "cron_jobs"
 
-    id = mapped_column(Integer, primary_key=True, index=True)
-    enabled = mapped_column(Boolean, nullable=False)
-    last_executed = mapped_column(TZDateTime, nullable=False)
-    period = mapped_column(Integer, nullable=False)
-    job: Mapped[dict] = mapped_column(JSON, nullable=False)
+    job_type: Mapped[CronJobType] = mapped_column(primary_key=True, index=True)
+    last_executed: Mapped[datetime] = mapped_column(
+        TZDateTime, default=datetime.now(timezone.utc) - timedelta(days=100)
+    )
 
 
 class MailSender(Base):

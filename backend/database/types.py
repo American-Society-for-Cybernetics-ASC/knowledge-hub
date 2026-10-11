@@ -52,6 +52,17 @@ class ModuleName(str, Enum):
     MEMBER_MATCHING = "member_matching"
 
 
+class DuesEmailStep(str, Enum):
+    NONE = "none"
+    ANNOUNCED = "announced"
+    OVERDUE = "overdue"
+    OVERDUE_REMINDER = "overdue_reminder"
+
+
+class CronJobType(str, Enum):
+    DUES_REMINDERS = "dues_reminders"
+
+
 class TZDateTime(TypeDecorator):
     impl = DateTime
     cache_ok = True
