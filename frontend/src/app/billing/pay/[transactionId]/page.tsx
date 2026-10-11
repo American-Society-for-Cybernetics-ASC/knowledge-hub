@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Skeleton, Typography } from "@mui/material";
-import { use, useEffect } from "react";
+import { use, useContext, useEffect } from "react";
 import { ReadPayment, ReadTransaction } from "@/types/payments";
 import useSWR from "swr";
 import { backendFetch } from "@/lib/api/client";
@@ -50,7 +50,10 @@ export default function PayPage({ params }: PayPageProps) {
         Collaborative Knowledge Hub Membership
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Amount: {payment ? formatAmount(payment.amount) : "Invalid amount"}
+        Amount:{" "}
+        {payment
+          ? formatAmount(payment.amount, payment.currency)
+          : "Invalid amount"}
       </Typography>
 
       {stripeData && payment?.status === "pending" ? (

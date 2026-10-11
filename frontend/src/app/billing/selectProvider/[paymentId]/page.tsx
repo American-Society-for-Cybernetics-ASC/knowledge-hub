@@ -65,6 +65,22 @@ export default function SelectProviderPage({
       });
   }
 
+  if (payment?.status === "succeeded") {
+    return (
+      <Box sx={{ p: 4, maxWidth: 480 }}>
+        <Typography variant="h6">
+          No Payment Required
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Your payment has been confirmed!
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          You may now leave this page or close this window.
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: 4, maxWidth: 480 }}>
       <Typography variant="h5">Pay for your Membership</Typography>
@@ -72,7 +88,10 @@ export default function SelectProviderPage({
         Collaborative Knowledge Hub Membership
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Amount: {payment ? formatAmount(payment.amount) : "Invalid amount"}
+        Amount:{" "}
+        {payment
+          ? formatAmount(payment.amount, payment.currency)
+          : "Invalid amount"}
       </Typography>
 
       {paymentOptionsLoading ? (

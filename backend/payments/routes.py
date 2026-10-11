@@ -8,11 +8,11 @@ from auth_module import authorized, user_id
 from auth_module.model import PermissionTier
 from database.model import PaymentOption
 from database.payment_providers import MockPaymentProvider, StripePaymentProvider
-from database.types import PaymentProviderType, PermissionCategory
+from database.types import Currency, PaymentProviderType, PermissionCategory
 from database.products import DonationProduct
 import database
 from utils import BaseModel
-from .payment import Payment, ReadPayment
+from .payment import ReadPayment
 from .transactions import Transaction, TransactionTypes
 from .module import PaymentsModule
 from .exceptions import (
@@ -23,6 +23,7 @@ from .exceptions import (
     TransactionInProgressError,
     TransactionNotFoundError,
     TransactionNotSuccessful,
+    CurrencyConversionError,
 )
 
 
@@ -224,16 +225,15 @@ def create_donation(
     if user_id is None:
         raise HTTPException(401, "Unauthorized")
 
-    with database.get_session() as session:
-        product = DonationProduct(
-            user_id=user_id,
-            amount=body.amount,
-            currency="usd",  # TODO: currency,
-        )
-        session.add(product)
-        session.commit()
-        session.flush()
-        return ReadPayment.from_payment(Payment.from_db_model(product))
+    try:
+        with database.with_transaction() as session:
+            return ReadPayment.from_payment(
+                payments.add_payment(
+                    session, DonationProduct(user_id=user_id, amount=body.amount)
+                )
+            )
+    except CurrencyConversionError:
+        raise HTTPException(503, "Failed to convert currency")
 
 
 # --- /payments/{payment_id}/transactions ---
@@ -342,3 +342,34 @@ class ReadPaymentOption(BaseModel):
 def get_providers() -> list[ReadPaymentOption]:
     with database.get_session() as session:
         return list(map(ReadPaymentOption.from_db_model, session.query(PaymentOption)))
+
+# --- /currency ---
+
+class ReadCurrency(BaseModel):
+    currency: Currency
+    supported_currencies: list[Currency] = list(Currency)
+
+class UpdateCurrency(BaseModel):
+    currency: Currency
+
+@payments_router.get("/currency")
+def get_currency(
+    payments: Annotated[PaymentsModule, Depends(PaymentsModule)],
+    user_id: Annotated[int | None, Depends(user_id)],
+) -> ReadCurrency:
+    if user_id is None:
+        raise HTTPException(401, "Unauthorized")
+
+    return ReadCurrency(currency=payments.get_currency(user_id))
+
+@payments_router.put("/currency")
+def set_currency(
+    body: UpdateCurrency,
+    payments: Annotated[PaymentsModule, Depends(PaymentsModule)],
+    user_id: Annotated[int | None, Depends(user_id)],
+) -> ReadCurrency:
+    if user_id is None:
+        raise HTTPException(401, "Unauthorized")
+
+    payments.set_currency(user_id, body.currency)
+    return ReadCurrency(currency=body.currency)

@@ -18,6 +18,7 @@ from sqlalchemy.sql import func
 
 from .types import (
     ApplicationStatus,
+    Currency,
     CronJobType,
     DuesEmailStep,
     MailProviderType,
@@ -193,6 +194,7 @@ class AuthUser(Base):
     last_login = mapped_column(TZDateTime)
     hash_password = mapped_column(String)
 
+    currency: Mapped[Currency] = mapped_column(String, nullable=False, server_default=Currency.USD.value)
     applications: Mapped[list[MembershipApplication]] = relationship()
 
 

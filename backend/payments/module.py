@@ -3,6 +3,7 @@ from uuid import UUID
 
 import stripe
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm import Session
 
 from .handle_provider import handle_create_transaction
 from .handle_product import handle_successful_payment
@@ -11,6 +12,7 @@ from database.types import PaymentStatus, TransactionStatus
 from database import model
 from .payment import Payment
 from .transactions import Transaction
+from .currency import Currency, convert_currency
 from .exceptions import (
     PaymentNotYoursError,
     PaymentProviderNotFoundError,
@@ -25,6 +27,30 @@ stripe.api_key = os.environ.get("STRIPE_API_KEY", "")
 
 
 class PaymentsModule:
+    def add_payment(
+        self, session: Session, payment: model.Payment
+    ) -> Payment:
+        """
+        Save a new product as a payment in the user's selected currency. Free payments immediately succeed.
+
+        :parameter payment: a product with 'amount' in the smallest unit of the base currency (e.g. cents for usd)
+        :raises CurrencyConversionError:
+        """
+        currency = session.get_one(model.AuthUser, payment.user_id).currency
+        payment.currency = currency
+        if payment.amount == 0:
+            payment.status = PaymentStatus.SUCCEEDED
+        else:
+            payment.amount = convert_currency(payment.amount, currency)
+        
+        with session.begin_nested():
+            session.add(payment)
+
+        if payment.status == PaymentStatus.SUCCEEDED:
+            handle_successful_payment(session, payment)
+
+        return Payment.from_db_model(payment)
+
     def create_transaction(
         self, user_id: int, payment_id: UUID, provider_id: UUID
     ) -> Transaction:
@@ -134,3 +160,12 @@ class PaymentsModule:
         with database.get_session() as session:
             query = session.query(model.Payment)
             return [Payment.from_db_model(model) for model in query]
+
+    def get_currency(self, user_id: int) -> Currency:
+        with database.get_session() as session:
+            return session.get_one(model.AuthUser, user_id).currency
+
+    def set_currency(self, user_id: int, currency: Currency):
+        with database.get_session() as session:
+            session.get_one(model.AuthUser, user_id).currency = currency
+            session.commit()
