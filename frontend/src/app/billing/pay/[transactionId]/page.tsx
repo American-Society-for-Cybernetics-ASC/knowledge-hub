@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Alert,
   Box,
   Skeleton,
   Typography,
@@ -31,10 +30,10 @@ export default function PayPage({ params }: PayPageProps) {
     useSWR<ReadTransaction>(
       `/payments/transactions/${transactionId}`,
       backendFetch,
-      { shouldRetryOnError: false },
+      { shouldRetryOnError: false, onError: addError },
     );
 
-  const { data: payment } = useSWR<ReadPayment>(
+  const { data: payment, error: paymentError } = useSWR<ReadPayment>(
     transaction ? `/payments/payments/${transaction.payment_id}` : null, 
     backendFetch, 
     { onError: addError },
@@ -59,12 +58,12 @@ export default function PayPage({ params }: PayPageProps) {
         Amount: {payment ? formatAmount(payment.amount) : "Invalid amount"}
       </Typography>
 
-      {transactionError ? (
-        <Alert severity="error">{transactionError.message}</Alert>
-      ) : stripeData && payment?.status === "pending" ? (
+      {stripeData && payment?.status === "pending" ? (
         <StripeCheckout clientSecret={stripeData.client_secret} transactionId={transactionId}/>
       ) : (
-        <Skeleton variant="rounded" height={200} />
+        !transactionError && !paymentError && (
+          <Skeleton variant="rounded" height={200} />
+        )
       )}
     </Box>
   );
