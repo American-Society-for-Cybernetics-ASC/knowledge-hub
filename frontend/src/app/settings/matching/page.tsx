@@ -1,24 +1,31 @@
 "use client";
 
+import InlineError from "@/components/layout/InlineError";
 import { useMemberMatching } from "@/hooks/useMemberMatching";
 
 export default function MatchingSettingsPage() {
-  const { optedOut, loading, actionLoading, error, optOut, optIn } =
+  const { optedOut, loading, actionLoading, error, refresh, optOut, optIn } =
     useMemberMatching();
 
   if (loading) {
     return <p className="text-gray-600 p-4">Loading...</p>;
   }
 
+  if (error) {
+    return (
+      <div className="max-w-md p-6">
+        <InlineError
+          title="Unable to load member matching"
+          message={error}
+          onRetry={() => void refresh()}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-md p-6">
       <h2 className="text-lg font-semibold mb-4">Member Matching</h2>
-
-      {error && (
-        <div className="bg-red-50 text-red-700 p-3 rounded mb-4 text-sm">
-          {error}
-        </div>
-      )}
 
       {optedOut ? (
         <div>

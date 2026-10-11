@@ -280,6 +280,23 @@ def create_transaction(
     except TransactionInProgressError:
         raise HTTPException(400, "Transaction in progress already")
 
+@payments_router.get("/transactions/{transaction_id}")
+def get_transaction(
+    transaction_id: UUID,
+    payments: Annotated[PaymentsModule, Depends(PaymentsModule)],
+    user_id: Annotated[int | None, Depends(user_id)]
+) -> ReadTransaction:
+    if user_id is None:
+        raise HTTPException(401, "Unauthorized")
+
+    try:
+        return ReadTransaction.from_transaction(
+            payments.get_transaction(user_id, transaction_id)
+        )
+    except TransactionNotFoundError:
+        raise HTTPException(404, "Transaction not found")
+    except PaymentNotYoursError:
+        raise HTTPException(400, "Not your payment")
 
 @payments_router.post("/transactions/{transaction_id}/confirm")
 def confirm_transaction(
@@ -292,6 +309,8 @@ def confirm_transaction(
 
     try:
         payments.confirm_transaction(transaction_id)
+    except PaymentAlreadyComplete:
+        return # Treat an already completed payment as a success
     except TransactionNotFoundError:
         raise HTTPException(404, "Transaction not found")
     except TransactionNotSuccessful:
