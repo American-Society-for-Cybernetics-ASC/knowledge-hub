@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useMemberSearch } from "@/hooks/useMemberSearch";
+import InlineError from "@/components/layout/InlineError";
 
 export default function MemberList() {
   const [query, setQuery] = useState("");
@@ -43,23 +44,13 @@ export default function MemberList() {
           </p>
         </section>
       ) : error ? (
-        <section
-          className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4"
-          role="alert"
-        >
-          <h2 className="font-semibold text-red-800">
-            Unable to search members
-          </h2>
-          <p className="mt-1 text-sm text-red-700">{error}</p>
-
-          <button
-            type="button"
-            onClick={() => void refresh()}
-            className="mt-4 rounded bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800"
-          >
-            Retry
-          </button>
-        </section>
+        <div className="mt-6">
+          <InlineError
+            title="Unable to search members"
+            message={error}
+            onRetry={() => void refresh()}
+          />
+        </div>
       ) : loading ? (
         <section className="mt-6" aria-busy="true">
           <p className="text-gray-600">Search members...</p>
@@ -96,7 +87,7 @@ export default function MemberList() {
                     </h2>
 
                     <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      {member.status}
+                      {member.active ? "Active" : "Inactive"}
                     </span>
                   </div>
 

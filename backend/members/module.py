@@ -3,7 +3,6 @@ from typing import Any
 
 from sqlalchemy import select
 
-from membership.model import MemberStatus
 import database
 from database import model as database_model
 from members.model import (
@@ -39,7 +38,7 @@ class MembersModule:
 
         return MemberProfile(
             member_id=member.user_id,
-            status=MemberStatus.calc_expiry(member.due_date),
+            active=member.active,
             content=content,
             tags=tags,
         )
@@ -132,7 +131,7 @@ class MembersModule:
                         MemberSearchResult(
                             member_id=member.user_id,
                             display_name=display_name,
-                            status=member_profile.status,
+                            active=member_profile.active,
                             tags=member_profile.tags,
                             affiliations=affiliations,
                         ),

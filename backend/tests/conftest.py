@@ -1,31 +1,28 @@
 # Define global fixtures
 
-
-from typing import Callable
-import uuid
-
-from fastapi import Request
-
-from payments.config import PaymentModuleConfig, PaymentOption
-from payments.providers.mock_provider import MockPaymentProvider
-from utils.module_config import set_module_config
-from mail.module import MailModuleConfig
-from mail.provider.mock_provider import MockMailProvider
-import database
-from database import model
-from database.base import Base
-import auth_module
-
+# Stops us from running startup scripts
+from pytest import MonkeyPatch
 from settings import SETTINGS
 
-from pytest import MonkeyPatch
-
-# Stops us from running startup scripts
 with MonkeyPatch().context() as m:
     m.setattr(SETTINGS, "testing", True)
     from main import app
 
+from typing import Callable
+import uuid
+
+from mail.model import Email
+from database.payment_providers import MockPaymentProvider
+from .mock_mail_provider import MockMailManager
+import database
+from database import model
+from database.base import Base
+import auth_module
+from database.mail_providers import GmailAppPasswordMailProvider
+from mail import mail_module
+
 import pytest
+from fastapi import Request
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -110,12 +107,6 @@ TEST_USER_ID = 0
 def default_database(mock_get_session: Callable[[], Session]):
     with mock_get_session() as session:
         session.add(
-            model.Module(
-                module_name=MailModuleConfig.module_id(),
-                config=MailModuleConfig(provider=MockMailProvider()).model_dump(),
-            )
-        )
-        session.add(
             model.AuthUser(
                 user_id=TEST_USER_ID,
                 email="test@email.com",
@@ -143,20 +134,42 @@ def override_permissions(request: pytest.FixtureRequest, monkeypatch):
 
 
 @pytest.fixture()
-def mock_provider(mock_get_session) -> uuid.UUID:
-    id = uuid.uuid4()
-    set_module_config(
-        PaymentModuleConfig(
-            payment_options={
-                id: PaymentOption(
-                    name="Example",
-                    description="Example Provider",
-                    provider=MockPaymentProvider(),
-                )
-            }
+def mock_payment_provider(mock_get_session) -> uuid.UUID:
+    with mock_get_session() as session:
+        record = MockPaymentProvider(
+            name="test provider", description="test payment provider from fixture"
         )
-    )
-    return id
+        session.add(record)
+        session.commit()
+        session.flush()
+        return record.id
+
+
+@pytest.fixture()
+def mock_mail_manager(monkeypatch):
+    manager = MockMailManager()
+
+    def mock_mail(mail: Email, provider: model.MailSender):
+        if provider.id in manager.ids:
+            manager.send_mail(mail)
+            return
+        mail_module.handle_send_email(mail, provider)
+
+    with monkeypatch.context() as m:
+        m.setattr("mail.mail_module.handle_send_email", mock_mail)
+        yield manager
+
+
+@pytest.fixture()
+def mock_mail_provider(mock_mail_manager, mock_get_session):
+    with mock_get_session() as session:
+        email_provider = GmailAppPasswordMailProvider(
+            name="mock", description="mock", google_username="", app_password=""
+        )
+        session.add(email_provider)
+        session.commit()
+        mock_mail_manager.register_mock(email_provider.id)
+    return email_provider.id
 
 
 @pytest.fixture()

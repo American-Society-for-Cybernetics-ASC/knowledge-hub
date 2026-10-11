@@ -10,7 +10,7 @@ class AlreadyAMemberError(MembershipError):
     """Raised when the given user is already a member"""
 
 
-class NotAMemberError(MembershipError):
+class NotACurrentMemberError(MembershipError):
     """Raised when the given user isn't a member"""
 
 

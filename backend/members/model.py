@@ -225,7 +225,7 @@ class MemberProfile(BaseModel):
     """The API response for a member profile."""
 
     member_id: int
-    status: str
+    active: bool
     content: ProfileContent
     tags: list[Tag] = Field(default_factory=list)
 
@@ -235,6 +235,6 @@ class MemberSearchResult(BaseModel):
 
     member_id: int
     display_name: str | None = None
-    status: str
+    active: bool
     tags: list[Tag] = Field(default_factory=list)
     affiliations: list[Affiliation] = Field(default_factory=list)

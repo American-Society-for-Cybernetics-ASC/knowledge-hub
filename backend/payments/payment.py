@@ -1,11 +1,8 @@
-from pydantic import TypeAdapter
-
 from uuid import UUID
 from datetime import datetime
 
-from .products import ProductTypes
 import database.model as dbmodel
-from database.types import PaymentStatus
+from database.types import PaymentStatus, ProductType
 from utils import BaseModel
 
 
@@ -16,7 +13,8 @@ class Payment(BaseModel):
     amount: int
     currency: str
     status: PaymentStatus
-    product: ProductTypes
+    product: ProductType
+    product_description: str
 
     @staticmethod
     def from_db_model(model: dbmodel.Payment) -> Payment:
@@ -27,9 +25,8 @@ class Payment(BaseModel):
             amount=model.amount,
             currency=model.currency,
             status=model.status,
-            product=TypeAdapter[ProductTypes](ProductTypes).validate_python(
-                model.product
-            ),
+            product=model.product,
+            product_description=model.product_description(),
         )
 
 
@@ -40,7 +37,8 @@ class ReadPayment(BaseModel):
     amount: int
     currency: str
     status: PaymentStatus
-    product: ProductTypes
+    product: ProductType
+    product_description: str
 
     @staticmethod
     def from_payment(payment: Payment) -> ReadPayment:
@@ -52,4 +50,5 @@ class ReadPayment(BaseModel):
             currency=payment.currency,
             status=payment.status,
             product=payment.product,
+            product_description=payment.product_description,
         )

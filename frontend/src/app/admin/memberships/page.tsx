@@ -11,11 +11,11 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { useContext } from "react";
 import useSWR from "swr";
 import MemberTypes from "./MembershipTypeConfig";
 import MemberStatusChip from "@/components/features/membership/MemberStatusChip";
-import { AddErrorContext } from "@/components/layout/ErrorContext";
+import { useAddError } from "@/components/layout/ErrorContext";
+import ApplicationManagement from "./ApplicationManagement";
 
 export default function Page() {
   return (
@@ -23,6 +23,8 @@ export default function Page() {
       <Typography variant={"h4"}>Memberships</Typography>
       <Typography variant={"h5"}>Member Types</Typography>
       <MemberTypes />
+      <Typography variant={"h5"}>Pending Applications</Typography>
+      <ApplicationManagement />
       <Typography variant={"h5"}>Members</Typography>
       <MembershipList />
     </>
@@ -30,7 +32,7 @@ export default function Page() {
 }
 
 function MembershipList() {
-  const addError = useContext(AddErrorContext);
+  const addError = useAddError();
   const { data } = useSWR<MembershipSummary[]>(
     "/membership/admin/members",
     backendFetch,
@@ -50,8 +52,8 @@ function MembershipTable({ data }: { data: MembershipSummary[] }) {
           <TableCell>Email</TableCell>
           <TableCell>Display Name</TableCell>
           <TableCell>Next Payment Due</TableCell>
+          <TableCell>Type</TableCell>
           <TableCell>Status</TableCell>
-          <TableCell>Cancelled</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -62,11 +64,12 @@ function MembershipTable({ data }: { data: MembershipSummary[] }) {
               <TableCell>{member.email}</TableCell>
               <TableCell>{member.display_name}</TableCell>
               <TableCell>{due_date.toLocaleString()}</TableCell>
+              <TableCell>{member.member_type || "<None Selected>"}</TableCell>
               <TableCell>
-                <MemberStatusChip status={member.status} />
-              </TableCell>
-              <TableCell sx={{ textTransform: "capitalize" }}>
-                {member.cancelled.toString()}
+                <MemberStatusChip
+                  active={member.active}
+                  cancelling={member.cancelling}
+                />
               </TableCell>
             </TableRow>
           );

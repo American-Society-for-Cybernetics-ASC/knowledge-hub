@@ -9,21 +9,21 @@ import database
 import database.model as dbmodel
 import database.base
 from example_module.routes import example_router
-from cron.routes import cron_router
+from cron.cron_routes import cron_router
 from auth_module.routes import auth_router
-from mail.routes import mail_router
+from mail.mail_routes import mail_router
 from mailing_list.routes import mailing_list_router
 from members.routes import members_router
-from membership.routes import membership_router
+from membership.membership_routes import membership_router
 from notifications.routes import notifications_router
 from member_matching.routes import member_matching_router
-from member_application.routes import member_application_router
+from member_application.application_routes import member_application_router
 from payments.routes import payments_router
 from audit_log.routes import audit_router
 from members.model import ProfileContent, ProfileIdentity
 from email_templates.routes import email_templates_router
-from email_templates.module import EmailTemplatesModule
 from pages.routes import pages_router
+from newsletter.routes import newsletter_router
 
 if SETTINGS.local_deployment and not SETTINGS.testing:
     with database.get_session() as session:
@@ -31,9 +31,8 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
         database.base.Base.metadata.drop_all(conn)
         database.base.Base.metadata.create_all(conn)
         conn.commit()
-        session.close()
 
-    AuthModule().register("test@test.com", "test", "Test User")
+    AuthModule().register("test@test.com", "test", "Test Admin")
 
     with database.get_session() as session:
         user = (
@@ -70,11 +69,7 @@ if SETTINGS.local_deployment and not SETTINGS.testing:
 
         session.commit()
 
-# Seed default email templates
-if not SETTINGS.testing:
-    EmailTemplatesModule().seed_defaults()
-
-app = FastAPI()
+app = FastAPI(title="CKH API", version="0.1.0", root_path=SETTINGS.backend_root_path)
 
 app.add_middleware(
     CORSMiddleware,
@@ -99,3 +94,4 @@ app.include_router(payments_router)
 app.include_router(audit_router)
 app.include_router(email_templates_router)
 app.include_router(pages_router)
+app.include_router(newsletter_router)

@@ -1,10 +1,12 @@
+from sqlalchemy.orm import Session
+
 import database
 from database import model
 from .model import EmailTemplateData, EmailTemplateUpdate
 
 
 # Default templates
-TEMPLATES: list[EmailTemplateData] = [
+_TEMPLATES: list[EmailTemplateData] = [
     EmailTemplateData(
         name="new_member_joins",
         subject="Welcome to ASC, {{name}}!",
@@ -29,52 +31,58 @@ TEMPLATES: list[EmailTemplateData] = [
         body="Hi {{name}},\n\nWe have received your payment of {{amount}} on {{date}}. Thank you!\n\nBest regards,\nThe ASC Team",
         variables=["{{name}}", "{{amount}}", "{{date}}"],
     ),
+    EmailTemplateData(
+        name="dues_announce",
+        subject="Upcoming Membership Dues - ASC Membership",
+        body="Hi {{name}},\n\nA reminder that your membership dues are on {{date}}.\n\nBest regards,\nThe ASC Team",
+        variables=["{{name}}", "{{date}}"],
+    ),
+    EmailTemplateData(
+        name="dues_overdue",
+        subject="Membership Dues Overdue - ASC Membership",
+        body="Hi {{name}},\n\nA reminder that your membership dues were due on {{date}}.\n\nBest regards,\nThe ASC Team",
+        variables=["{{name}}", "{{date}}"],
+    ),
+    EmailTemplateData(
+        name="dues_overdue_reminder",
+        subject="Membership Dues Overdue - ASC Membership",
+        body="Hi {{name}},\n\nA reminder that your membership dues were due on {{date}}.\n\nBest regards,\nThe ASC Team",
+        variables=["{{name}}", "{{date}}"],
+    ),
 ]
+TEMPLATES: dict[str, EmailTemplateData] = {data.name: data for data in _TEMPLATES}
 
 
 class EmailTemplatesModule:
-    def seed_defaults(self):
-        """Seed the default templates if they do not exist."""
-        with database.get_session() as session:
-            for template in TEMPLATES:
-                existing = session.get(model.EmailTemplate, template.name)
-                if not existing:
-                    session.add(
-                        model.EmailTemplate(
-                            name=template.name,
-                            subject=template.subject,
-                            body=template.body,
-                            variables=template.variables,
-                        )
-                    )
-            session.commit()
-
     def get_templates(self) -> list[EmailTemplateData]:
         """Get all email templates."""
-        with database.get_session() as session:
-            templates = session.query(model.EmailTemplate).all()
+        with database.with_transaction() as session:
             return [
-                EmailTemplateData(
-                    name=t.name,
-                    subject=t.subject,
-                    body=t.body,
-                    variables=t.variables,
-                )
-                for t in templates
+                template
+                for template in (self.get_template(session, key) for key in TEMPLATES)
+                if template is not None
             ]
 
-    def get_template(self, name: str) -> EmailTemplateData | None:
+    def get_template(self, session: Session, name: str) -> EmailTemplateData | None:
         """Get a specific email template by name."""
-        with database.get_session() as session:
-            template = session.get(model.EmailTemplate, name)
-            if not template:
+        template = session.get(model.EmailTemplate, name)
+        if not template:
+            if name in TEMPLATES:
+                template = model.EmailTemplate(
+                    name=TEMPLATES[name].name,
+                    subject=TEMPLATES[name].subject,
+                    body=TEMPLATES[name].body,
+                    variables=TEMPLATES[name].variables,
+                )
+                session.add(template)
+            else:
                 return None
-            return EmailTemplateData(
-                name=template.name,
-                subject=template.subject,
-                body=template.body,
-                variables=template.variables,
-            )
+        return EmailTemplateData(
+            name=template.name,
+            subject=template.subject,
+            body=template.body,
+            variables=template.variables,
+        )
 
     def update_template(
         self, name: str, update: EmailTemplateUpdate
@@ -102,7 +110,8 @@ class EmailTemplatesModule:
         """
         Render a template by replacing variables with actual values. Returns tuple or None if template not found.
         """
-        template = self.get_template(name)
+        with database.with_transaction() as session:
+            template = self.get_template(session, name)
         if not template:
             return None
 

@@ -10,6 +10,7 @@ export default function AdminNav({ children }: { children: React.ReactNode }) {
       <NavTabs
         links={[
           { label: "Sitewide", href: "/admin" },
+          { label: "Notifications", href: "/admin/notifications" },
           { label: "Audit Log", href: "/admin/audit" },
           { label: "Mail", href: "/admin/mail" },
           { label: "Payments", href: "/admin/payments" },
@@ -17,6 +18,7 @@ export default function AdminNav({ children }: { children: React.ReactNode }) {
           { label: "Email Templates", href: "/admin/email-templates" },
           { label: "Permissions", href: "/admin/permissions" },
           { label: "Pages", href: "/admin/pages" },
+          { label: "Newsletters", href: "/admin/newsletters" }
         ]}
       />
       {children}

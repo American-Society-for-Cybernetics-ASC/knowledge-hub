@@ -8,6 +8,7 @@ import type {
   ProfileMetadata,
   ProfilePublication,
 } from "@/types/member";
+import InlineError from "@/components/layout/InlineError";
 
 interface MemberProfileProps {
   target: "me" | number;
@@ -232,23 +233,12 @@ export default function MemberProfile({
   if (!profile) {
     return (
       <main className="min-h-screen bg-gray-50 px-4 py-8">
-        <div
-          className="mx-auto max-w-3xl rounded-lg border border-red-200 bg-red-50 p-6"
-          role="alert"
-        >
-          <h1 className="text-xl font-semibold text-red-800">
-            Unable to load profile
-          </h1>
-          <p className="mt-2 text-red-700">
-            {error || "This member profile could not be found."}
-          </p>
-          <button
-            type="button"
-            onClick={() => void refresh()}
-            className="mt-4 rounded bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800"
-          >
-            Retry
-          </button>
+        <div className="mx-auto max-w-3xl">
+          <InlineError
+            title="Unable to load profile"
+            message={error || "This member profile could not be found."}
+            onRetry={() => void refresh()}
+          />
         </div>
       </main>
     );
@@ -276,7 +266,7 @@ export default function MemberProfile({
             </div>
 
             <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
-              Membership: {profile.status}
+              Membership: {profile.active ? "Active" : "Inactive"}
             </span>
           </div>
 

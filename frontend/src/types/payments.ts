@@ -1,56 +1,37 @@
 export interface StripePaymentProvider {
-  service_name: "stripe";
+  provider_type: "stripe";
   api_key: string;
   publishable_key: string;
   webhook_secret: string;
 }
 
 export interface MockPaymentProvider {
-  service_name: "mock";
+  provider_type: "mock";
 }
 
 export type PaymentProvider = StripePaymentProvider | MockPaymentProvider;
 
-export interface PaymentOption {
+export interface AdminReadPaymentOption {
+  id: string;
   name: string;
   description: string;
   provider: PaymentProvider;
 }
 
+export type AdminPatchPaymentOption = Partial<
+  Omit<AdminReadPaymentOption, "id">
+>;
+export type AdminPostPaymentOption = Omit<AdminReadPaymentOption, "id">;
+
 export interface ReadPaymentOption {
   id: string;
   name: string;
   description: string;
-  service_name: PaymentProvider["service_name"];
-}
-
-export interface PaymentsConfig {
-  payment_options: {
-    [uuid: string]: PaymentOption;
-  };
+  provider_type: PaymentProvider["provider_type"];
 }
 
 export type PaymentStatus = "pending" | "succeeded" | "failed";
-
-export interface RenewMembershipProduct {
-  product: "renew_membership";
-  user_id: number;
-  duration: number;
-}
-
-export interface CreateMembershipProduct {
-  product: "create_membership";
-  user_id: number;
-  duration: number;
-  membership_type_id: string;
-}
-
-export interface DonationProduct {
-  product: "donation";
-}
-
-export type ProductTypes =
-  RenewMembershipProduct | CreateMembershipProduct | DonationProduct;
+export type ProductType = "donation" | "create_membership" | "renew_membership";
 
 export interface ReadPayment {
   id: string;
@@ -59,7 +40,8 @@ export interface ReadPayment {
   amount: number;
   currency: string;
   status: PaymentStatus;
-  product: ProductTypes;
+  product: ProductType;
+  product_description: string;
 }
 
 export interface StripeTransaction {
