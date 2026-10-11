@@ -44,7 +44,7 @@ function ConfigForm() {
     },
   );
 
-  const [email_provider, setMailSender] = useState<string | "" | undefined>(
+  const [email_provider_id, setMailSender] = useState<string | "" | undefined>(
     undefined,
   );
 
@@ -52,15 +52,15 @@ function ConfigForm() {
     return <Skeleton />;
   }
   const dirty: Partial<NotificationsConfig> = {
-    email_provider,
+    email_provider_id,
   };
   const isDirty = Object.values(dirty).some((p) => p !== undefined);
 
   const current: NotificationsConfig = {
-    email_provider:
-      dirty.email_provider === undefined
-        ? data.email_provider
-        : dirty.email_provider,
+    email_provider_id:
+      dirty.email_provider_id === undefined
+        ? data.email_provider_id
+        : dirty.email_provider_id,
   };
 
   function clear() {
@@ -89,7 +89,7 @@ function ConfigForm() {
           <Select
             labelId="email-sender-label"
             label="Email Sender"
-            value={current.email_provider || "---"}
+            value={current.email_provider_id || "---"}
             onChange={(e) =>
               setMailSender(e.target.value === "---" ? "" : e.target.value)
             }

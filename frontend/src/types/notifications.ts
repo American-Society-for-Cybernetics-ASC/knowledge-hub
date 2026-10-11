@@ -1,3 +1,3 @@
 export interface NotificationsConfig {
-  email_provider: string | "";
+  email_provider_id: string | "";
 }

@@ -52,12 +52,12 @@ def mark_as_read(
 
 
 class ReadNotificationConfig(BaseModel):
-    email_provider: uuid.UUID | Literal[""]
+    email_provider_id: uuid.UUID | Literal[""]
 
     @staticmethod
     def from_db_model(config: NotificationsConfig) -> ReadNotificationConfig:
         return ReadNotificationConfig(
-            email_provider=""
+            email_provider_id=""
             if config.email_provider_id is None
             else config.email_provider_id
         )
@@ -73,7 +73,7 @@ def get_notification_config(
 
 
 class PatchNotificationConfig(BaseModel):
-    email_provider: uuid.UUID | Literal[""] | None = None
+    email_provider_id: uuid.UUID | Literal[""] | None = None
 
 
 @notifications_router.patch("/config")
@@ -83,9 +83,9 @@ def patch_notification_config(
     with database.with_transaction() as session:
         config = get_module_config(session, NotificationsConfig)
 
-        if patch.email_provider == "":
+        if patch.email_provider_id == "":
             config.email_provider_id = None
-        elif patch.email_provider is not None:
-            config.email_provider_id = patch.email_provider
+        elif patch.email_provider_id is not None:
+            config.email_provider_id = patch.email_provider_id
 
         return ReadNotificationConfig.from_db_model(config)
